@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Redefinir senha | Aurea</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#1b2b3f;background:#f4f7fb}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 15% 10%,#e1eef7 0,transparent 35%),#f4f7fb}
+    main{width:min(100%,440px);padding:36px;background:#fff;border:1px solid #e5ebf2;border-radius:16px;box-shadow:0 20px 55px rgba(20,46,75,.10)}
+    .brand{font-size:12px;letter-spacing:.18em;font-weight:800;color:#17436b}h1{font-size:26px;letter-spacing:-.025em;margin:14px 0 8px}
+    .intro{color:#617286;line-height:1.5;margin:0 0 20px}label{display:block;font-size:14px;font-weight:650;margin:18px 0 8px}
+    input{width:100%;padding:13px 14px;border:1px solid #cbd7e2;border-radius:9px;font:inherit;background:#fff;color:#17283c}
+    input:focus{outline:3px solid #d5eafa;border-color:#3275a7}button{width:100%;padding:13px;border:0;border-radius:9px;background:#16466f;color:#fff;font:inherit;font-weight:650;cursor:pointer;margin-top:23px}
+    button:hover{background:#103655}button:disabled{opacity:.55;cursor:wait}#status{line-height:1.45;font-size:14px;color:#53677c}a{color:#16466f;font-weight:650}small{display:block;color:#718196;margin-top:8px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="brand">AUREA · ACESSO SEGURO</div>
+  <h1>Redefinir senha</h1>
+  <p class="intro">Crie uma senha nova para acessar sua conta.</p>
+  <p id="status" role="status">Conferindo o link recebido por e-mail...</p>
+  <form id="form" hidden>
+    <label for="password">Nova senha</label>
+    <input id="password" type="password" autocomplete="new-password" minlength="8" required>
+    <small>Use pelo menos 8 caracteres.</small>
+    <label for="confirm">Confirmar nova senha</label>
+    <input id="confirm" type="password" autocomplete="new-password" minlength="8" required>
+    <button id="save" type="submit">Salvar nova senha</button>
+  </form>
+  <p id="return" hidden><a href="https://agricolalucas.github.io/aurea.brazil/">Abrir o sistema</a></p>
+</main>
+<script>
+(async()=>{
+  const status=document.getElementById('status'), form=document.getElementById('form');
+  const params=new URLSearchParams(location.search), fragment=new URLSearchParams(location.hash.slice(1));
+  if(params.has('error')||fragment.has('error')){status.textContent='Este link expirou ou não é válido. Solicite outro e-mail de redefinição.';return;}
+  if(!window.supabase){status.textContent='Não foi possível carregar a conexão. Confira a internet e recarregue a página.';return;}
+  const client=window.supabase.createClient('https://patvkhyonmtsugppewrt.supabase.co','sb_publishable_BOZdTbjgewaVBUCkKZC2qg_p13r1dZy',{auth:{detectSessionInUrl:true,persistSession:false}});
+  let recovery=false;
+  client.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){recovery=true;form.hidden=false;status.textContent='Digite a nova senha para concluir a redefinição.';}});
+  const {data,error}=await client.auth.getSession();
+  if(error){status.textContent='Não foi possível validar o link. Solicite outro e-mail de redefinição.';return;}
+  if(data.session&&(recovery||fragment.get('type')==='recovery'||params.has('code'))){form.hidden=false;status.textContent='Digite a nova senha para concluir a redefinição.';}
+  else if(!recovery){status.textContent='Abra esta página pelo link de redefinição recebido por e-mail. Se o link expirou, solicite outro.';}
+  form.addEventListener('submit',async(ev)=>{
+    ev.preventDefault();const password=document.getElementById('password').value;
+    if(password!==document.getElementById('confirm').value){status.textContent='As senhas digitadas não são iguais.';return;}
+    const save=document.getElementById('save');save.disabled=true;
+    const {error:changeError}=await client.auth.updateUser({password});
+    if(changeError){status.textContent='Erro ao salvar: '+changeError.message;save.disabled=false;return;}
+    status.textContent='Senha alterada com sucesso. Agora entre no sistema com a nova senha.';
+    form.hidden=true;document.getElementById('return').hidden=false;
+    history.replaceState(null,'',location.pathname);await client.auth.signOut();
+  });
+})().catch(()=>{document.getElementById('status').textContent='Não foi possível validar o link. Recarregue a página ou solicite outro e-mail.';});
+</script>
+</body>
+</html>

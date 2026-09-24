@@ -168,26 +168,26 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <div class="tabs"><button class="tab active" data-tab="userform">Cadastro</button><button class="tab" data-tab="userlist">Lista de USER</button></div>
           <div id="userform" class="tabpane active">
             <div class="grid2">
-              <div><label>Perfil</label><select><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option>Porto / Terminal / Local</option><option>Empresa de Fumigação</option></select></div>
+              <div><label>Perfil</label><select id="uProfile"><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option>Porto / Terminal / Local</option><option>Empresa de Fumigação</option></select></div>
               <div><label>Nome da Empresa / Local</label><input id="uCompany" placeholder="Company / Location Name"></div>
               <div class="wide"><label>Endereço</label><input id="uAddress" placeholder="Full Address"></div>
               <div><label>País</label><input id="uCountry" placeholder="Country"></div><div><label>Email</label><input id="uEmail" type="email" placeholder="email@company.com"></div>
               <div><label>Telefone</label><input id="uPhone" placeholder="+00 ..."></div><div><label>Tax ID / Registro</label><input id="uTaxId" placeholder="Tax ID / Registration"></div><div><label>Nome de Contato</label><input id="uContactName" placeholder="Contact Name"></div>
-              <div><label>Status</label><select><option>Active</option><option>Pending Verification</option><option>Inactive</option></select></div>
+              <div><label>Status</label><select id="uStatus"><option>Active</option><option>Pending Verification</option><option>Inactive</option></select></div>
               <div class="wide">
                 <label>Logo da Empresa</label>
                 <input id="uLogo" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewUserLogo(event)">
-                <div class="sub">A logo cadastrada será usada nos documentos PDF gerados para esta empresa.</div>
+                <div class="sub">Logo exibida somente neste navegador nesta etapa; o arquivo não é enviado ao banco.</div>
                 <div id="uLogoPreviewWrap" style="display:none;margin-top:10px;padding:10px;border:1px solid #e5e7eb;border-radius:10px;align-items:center;gap:14px">
                   <img id="uLogoPreview" alt="Logo da empresa" style="max-width:160px;max-height:70px;object-fit:contain">
                   <div class="sub">Rodapé dos PDFs: Logo + Nome da Empresa + Endereço + Email + Nome de Contato + Telefone.</div>
                 </div>
               </div>
             </div>
-            <div class="toolbar" style="margin-top:12px"><button class="btn primary" onclick="notify('USER salvo.')">Salvar USER</button></div>
+            <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="aesSaveUser" type="button">Salvar USER</button></div>
           </div>
           <div id="userlist" class="tabpane">
-            <div class="tablewrap"><table id="userRegistryTable"><thead><tr><th>Perfil</th><th>Nome da Empresa / Local</th><th>Endereço</th><th>País</th><th>Tax ID / Registro</th><th>Email</th><th>Nome de Contato</th><th>Status</th></tr></thead><tbody>
+            <div class="tablewrap"><table id="userRegistryTable"><thead><tr><th>Perfil</th><th>Nome da Empresa / Local</th><th>Endereço</th><th>País</th><th>Tax ID / Registro</th><th>Email</th><th>Nome de Contato</th><th>Status</th><th>Ação</th></tr></thead><tbody>
               <tr data-profile="Exportador"><td><span class="badge info">Exportador</span></td><td>Aurea Export</td><td>Brazil - Registered Address</td><td>Brazil</td><td>BR-001</td><td>export@aurea.example</td><td>Export Department</td><td><span class="badge ok">Active</span></td></tr>
               <tr data-profile="Importador"><td><span class="badge ok">Importador</span></td><td>Global Agro Foods</td><td>Registered Importer Address</td><td>India</td><td>GST-001</td><td>commercial@globalagro.example</td><td>Purchase Manager</td><td><span class="badge ok">Active</span></td></tr>
               <tr data-profile="Porto / Terminal / Local"><td><span class="badge purple">Porto / Local</span></td><td>Paranaguá Port</td><td>Paranaguá Port Area</td><td>Brazil</td><td>-</td><td>-</td><td>-</td><td><span class="badge ok">Active</span></td></tr>
@@ -7997,6 +7997,111 @@ document.addEventListener('click',e=>{const button=e.target.closest?.('[data-sch
 window.addEventListener('storage',e=>{if(e.key==='aesShippingPrograms')scheduling()});window.addEventListener('aes-shipping-program-updated',scheduling);
 
 const init=()=>{document.querySelectorAll('select option:not([value])').forEach(o=>o.value=o.textContent.trim());const saved=localStorage.getItem('aes_interface_language');current=saved==='pt'?'pt':'en';document.getElementById('aesLanguage').value=current;document.documentElement.lang=current==='pt'?'pt-BR':'en';scheduling();process(document.body);const observer=new MutationObserver(m=>{if(changing)return;let relevant=false;for(const change of m){if(change.type==='childList'){for(const n of change.addedNodes)if(n.nodeType===1||n.nodeType===3){process(n);relevant=true}}else if(change.type==='characterData'){process(change.target);relevant=true}}if(relevant&&!observer.scheduled){observer.scheduled=true;setTimeout(()=>{observer.scheduled=false;scheduling();process(document.body)},120)}});observer.observe(document.body,{subtree:true,childList:true,characterData:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<style>#aesAuthGate{position:fixed;inset:0;z-index:99999;background:#f3f6fa;display:flex;align-items:center;justify-content:center;padding:20px}#aesAuthGate form{width:min(420px,100%);background:white;padding:26px;border:1px solid #dfe5ec;border-radius:14px;box-shadow:0 10px 40px #1232}#aesAuthGate label{display:block;margin:12px 0 4px}#aesAuthGate input{width:100%;padding:10px}#aesAuthMessage{color:#9f2f2f;min-height:22px}#aesForgot{background:none;border:0;box-shadow:none;padding:0;color:#1f5685;text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:500;cursor:pointer}#aesForgot:hover{color:#103a60}#aesForgot:disabled{opacity:.55;cursor:wait}#aesSharedStatus{padding:9px 18px;background:#fff4d5;color:#5d4300;font-size:12px}</style>
+<div id="aesAuthGate"><form id="aesLoginForm"><h2>AUREA · Entrar</h2><label>Email</label><input id="aesLoginEmail" type="email" autocomplete="username" required><label>Senha</label><input id="aesLoginPassword" type="password" autocomplete="current-password" required><p id="aesAuthMessage"></p><div style="text-align:right;margin:7px 0 18px"><button id="aesForgot" type="button">Esqueci minha senha?</button></div><button class="btn primary" type="submit">Entrar</button></form></div>
+<div id="aesSharedStatus">USER conectado ao Supabase · Outros módulos do protótipo ainda são locais · <span id="aesSignedIn"></span> <button id="aesSignOut" class="btn" type="button">Sair</button></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>/* AES USER: first shared module. All other prototype modules still use local state. */
+(() => {
+  const URL = 'https://patvkhyonmtsugppewrt.supabase.co';
+  const KEY = 'sb_publishable_BOZdTbjgewaVBUCkKZC2qg_p13r1dZy';
+  const client = window.supabase?.createClient(URL, KEY);
+  let editId = null;
+  const $ = id => document.getElementById(id);
+  const field = id => ($(id)?.value || '').trim();
+  const errorText = error => error?.message || String(error);
+  function message(value) { $('aesAuthMessage').textContent = value; }
+  function lock(value) {
+    $('aesAuthGate').style.display = value ? 'flex' : 'none';
+    document.querySelector('.app').style.visibility = value ? 'hidden' : 'visible';
+  }
+  async function authorized() {
+    const {data: {user}, error} = await client.auth.getUser();
+    if (error || !user) return false;
+    const member = await client.from('app_members').select('role,active').eq('user_id',user.id).single();
+    if (member.error || !member.data?.active) return false;
+    $('aesSignedIn').textContent = `${user.email} · ${member.data.role}`;
+    return true;
+  }
+  async function loadUsers() {
+    const {data,error} = await client.from('companies')
+      .select('id,name,profile_type,tax_id,country,address,email,phone,contact_name,status')
+      .order('id', {ascending:false});
+    if (error) throw error;
+    const body = document.querySelector('#userRegistryTable tbody');
+    const lookup = $('userLookupResults');
+    body.replaceChildren(); lookup.replaceChildren();
+    for (const u of data) {
+      const row = body.insertRow(); row.dataset.profile = u.profile_type || '';
+      for (const value of [u.profile_type,u.name,u.address,u.country,u.tax_id,u.email,u.contact_name,u.status]) {
+        const cell = row.insertCell(); cell.textContent = value || '—';
+      }
+      const cell = row.insertCell();
+      const edit = document.createElement('button'); edit.type='button'; edit.className='btn'; edit.textContent='Editar';
+      edit.addEventListener('click', () => {
+        editId=u.id;
+        for (const [id,value] of Object.entries({uProfile:u.profile_type,uCompany:u.name,uAddress:u.address,uCountry:u.country,uEmail:u.email,uPhone:u.phone,uTaxId:u.tax_id,uContactName:u.contact_name,uStatus:u.status})) {
+          if ($(id)) $(id).value=value||'';
+        }
+        document.querySelector('#user .tab[data-tab="userform"]')?.click();
+        window.go('user');
+      }); cell.append(edit);
+      const item=document.createElement('div'); item.className='listitem user-lookup-item';
+      item.dataset.search=[u.name,u.profile_type,u.country,u.tax_id].join(' ').toLowerCase();
+      const title=document.createElement('b'); title.textContent=u.name||'—';
+      const detail=document.createElement('div'); detail.className='sub'; detail.textContent=`${u.profile_type||''} · ${u.country||''}`;
+      item.append(title,detail); item.addEventListener('click',()=>window.pickLookup(u.name||'')); lookup.append(item);
+    }
+    window.renderSIPartyLookup?.();
+  }
+  async function saveUser() {
+    const name=field('uCompany'); if (!name) return window.notify('Informe Nome da Empresa / Local.');
+    const record={name,profile_type:field('uProfile'),address:field('uAddress'),country:field('uCountry'),email:field('uEmail'),phone:field('uPhone'),tax_id:field('uTaxId'),contact_name:field('uContactName'),status:field('uStatus')};
+    const button=$('aesSaveUser'); button.disabled=true;
+    try {
+      const request=editId===null ? client.from('companies').insert(record) : client.from('companies').update(record).eq('id',editId);
+      const {error}=await request.select('id').single(); if(error) throw error;
+      await loadUsers(); editId=null; window.clearUser();
+      window.notify('USER salvo no Supabase.');
+    } catch(error) { window.notify('Falha ao salvar: '+errorText(error)); }
+    finally {button.disabled=false;}
+  }
+  async function begin() {
+    lock(true);
+    if(!client) return message('Biblioteca do Supabase indisponível. Verifique a conexão.');
+    try {
+      if (!(await authorized())) return message('Entre com uma conta autorizada do Supabase.');
+      await loadUsers(); lock(false);
+    } catch(error) { message('Não foi possível carregar USER: '+errorText(error)); }
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.app').style.visibility='hidden';
+    $('aesSaveUser').addEventListener('click',saveUser);
+    $('aesLoginForm').addEventListener('submit',async event=>{
+      event.preventDefault(); message('Entrando…');
+      if(!client) return message('Biblioteca do Supabase indisponível.');
+      const {error}=await client.auth.signInWithPassword({email:field('aesLoginEmail'),password:$('aesLoginPassword').value});
+      $('aesLoginPassword').value='';
+      if(error) return message('Falha no login: '+errorText(error));
+      if (!(await authorized())) {await client.auth.signOut();return message('Conta sem acesso ativo em app_members.');}
+      try {await loadUsers();lock(false);} catch(e) {message(errorText(e));}
+    });
+    $('aesForgot').addEventListener('click',async()=>{
+      const email=field('aesLoginEmail');
+      if(!email || !document.getElementById('aesLoginEmail').checkValidity()) return message('Digite seu e-mail no campo acima e clique novamente em Esqueci minha senha.');
+      if(!client) return message('Biblioteca do Supabase indisponível.');
+      const button=$('aesForgot'); button.disabled=true; message('Enviando e-mail de redefinição…');
+      const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:'https://agricolalucas.github.io/aurea.brazil/redefinir-senha.html'});
+      button.disabled=false;
+      message(error ? 'Não foi possível enviar: '+errorText(error) : 'Se este e-mail pertence a uma conta, enviaremos um link. Abra o e-mail e escolha a nova senha na página que aparecer.');
+    });
+    $('aesSignOut').addEventListener('click',async()=>{await client.auth.signOut();lock(true);message('Sessão encerrada.');});
+    const original=window.clearUser;
+    window.clearUser=function(){editId=null;original();$('uProfile').selectedIndex=0;$('uStatus').selectedIndex=0;};
+    begin();
+  });
 })();
 </script>
 </body>
