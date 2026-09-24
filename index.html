@@ -542,10 +542,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
 </section>
 <section id="schedule" class="view">
         <div class="pagehead"><div><h1>Programação</h1><div class="sub">Contratos liberados → rota → próximos navios → programação operacional.</div></div></div>
-        <div class="card"><h3>1. Contratos liberados</h3><div class="sub" style="margin-bottom:10px">O ETD programado deve permanecer dentro do Shipping Forecast da Order. O sistema alerta quando o navio escolhido ultrapassa a Final Date.</div><div class="tablewrap"><table id="releasedContractsTable"><thead><tr><th>Order</th><th>Importer</th><th>Exporter</th><th>Product</th><th>Quantity</th><th>Incoterm</th><th>Shipping Forecast - Initial Date</th><th>Shipping Forecast - Final Date</th><th>Status</th><th>Ação</th></tr></thead><tbody>
-          <tr data-order="EX-1026" data-forecast-start="2026-10-01" data-forecast-end="2026-10-15"><td>EX-1026</td><td>Global Agro Foods</td><td>Aurea Export</td><td>Sesame Seeds</td><td>540 MT</td><td>CIF</td><td>01/10/2026</td><td><b>15/10/2026</b></td><td><span class="badge ok">Liberado</span></td><td><button class="btn contractPick">Programar</button></td></tr>
-          <tr data-order="EX-1031" data-forecast-start="" data-forecast-end=""><td>EX-1031</td><td>Nile Trading</td><td>Aurea Export</td><td>Kidney Beans</td><td>240 MT</td><td>CFR</td><td><span class="sub">Não informado</span></td><td><span class="sub">Não informado</span></td><td><span class="badge ok">Liberado</span></td><td><button class="btn contractPick">Programar</button></td></tr>
-        </tbody></table></div></div>
+        <div class="card"><h3>1. Contratos liberados</h3><div class="sub" style="margin-bottom:10px">O ETD programado deve permanecer dentro do Shipping Forecast da Order. O sistema alerta quando o navio escolhido ultrapassa a Final Date.</div><div class="tablewrap"><table id="releasedContractsTable"><thead><tr><th>Order</th><th>Importer</th><th>Exporter</th><th>Product</th><th>Quantity</th><th>Incoterm</th><th>Shipping Forecast - Initial Date</th><th>Shipping Forecast - Final Date</th><th>Status</th><th>Ação</th></tr></thead><tbody></tbody></table></div></div>
         <div class="card"><h3>2. Rota</h3><div class="grid2">
           <div><label>Local de Embarque</label><div class="lookup"><input id="origin" value="Paranaguá Port"><button class="btn" onclick="openLookup('origin')">🔍</button></div></div>
           <div><label>Local de Desembarque</label><div class="lookup"><input id="destination" value="Nhava Sheva Port"><button class="btn" onclick="openLookup('destination')">🔍</button></div></div>
@@ -7961,7 +7958,7 @@ function scheduling(){
  body.innerHTML=rows.length?rows.map(r=>{const c=r.cells,order=r.dataset.order||c[0]?.textContent||'—';return `<tr><td>${esc(order)}</td><td>${esc(c[1]?.textContent||'—')}</td><td>${esc(c[3]?.textContent||'—')}</td><td>${esc(c[7]?.textContent||'—')}</td><td><span class="badge warn">Pending scheduling</span></td><td><button class="btn" type="button" data-schedule-order="${esc(order)}">Schedule →</button></td></tr>`}).join(''):'<tr><td colspan="6" class="sub">All released orders have been scheduled.</td></tr>';
 }
 document.addEventListener('click',e=>{const button=e.target.closest?.('[data-schedule-order]');if(!button)return;const order=button.dataset.scheduleOrder;go('schedule');[...document.querySelectorAll('#releasedContractsTable tbody tr')].find(r=>r.dataset.order===order)?.querySelector('.contractPick')?.click()});
-window.addEventListener('storage',e=>{if(e.key==='aesShippingPrograms')scheduling()});window.addEventListener('aes-shipping-program-updated',scheduling);
+window.addEventListener('storage',e=>{if(e.key==='aesShippingPrograms')scheduling()});window.addEventListener('aes-shipping-program-updated',scheduling);window.addEventListener('aes-contracts-updated',scheduling);
 
 const init=()=>{document.querySelectorAll('select option:not([value])').forEach(o=>o.value=o.textContent.trim());const saved=localStorage.getItem('aes_interface_language');current=saved==='pt'?'pt':'en';document.getElementById('aesLanguage').value=current;document.documentElement.lang=current==='pt'?'pt-BR':'en';scheduling();process(document.body);const observer=new MutationObserver(m=>{if(changing)return;let relevant=false;for(const change of m){if(change.type==='childList'){for(const n of change.addedNodes)if(n.nodeType===1||n.nodeType===3){process(n);relevant=true}}else if(change.type==='characterData'){process(change.target);relevant=true}}if(relevant&&!observer.scheduled){observer.scheduled=true;setTimeout(()=>{observer.scheduled=false;scheduling();process(document.body)},120)}});observer.observe(document.body,{subtree:true,childList:true,characterData:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
@@ -8016,6 +8013,13 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
         document.querySelector('#user .tab[data-tab="userform"]')?.click();
         window.go('user');
       }); cell.append(edit);
+      const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';
+      del.onclick=async()=>{if(!confirm('Excluir USER '+u.name+'? Esta ação é permanente.'))return;del.disabled=true;
+        try{const {data,error}=await client.from('companies').delete().eq('id',u.id).select('id');if(error)throw error;
+          if(!data?.length)throw Error('Sem permissão para excluir; execute o SQL e entre como administradora.');
+          await loadUsers();window.aesReloadContracts?.();window.notify('USER excluído.');
+        }catch(e){window.notify('Falha ao excluir USER: '+errorText(e))}finally{del.disabled=false}};
+      cell.append(del);
       const item=document.createElement('div'); item.className='listitem user-lookup-item';
       item.dataset.search=[u.name,u.profile_type,u.country,u.tax_id].join(' ').toLowerCase();
       const title=document.createElement('b'); title.textContent=u.name||'—';
@@ -8131,9 +8135,13 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     if(contractResponse.error){status('USER carregado. Erro ao carregar contratos: '+contractResponse.error.message);throw contractResponse.error}
     contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
     const body=$('contractsTable').tBodies[0];body.replaceChildren();
+    const releasedBody=$('releasedContractsTable').tBodies[0];releasedBody.replaceChildren();
+    selectedScheduleOrder=null;
     for(const c of contractResponse.data){
       const d=c.details||{}, row=body.insertRow();
       row.dataset.date=(c.created_at||'').slice(0,10);
+      row.dataset.cancelled=String(c.status).toLowerCase()==='cancelled'?'yes':'no';
+      row.dataset.cancelReason=d.cancel_reason||'';row.dataset.cancelDate=d.cancel_date||'';
       row.dataset.exporter=names.get(Number(c.exporter_id))||'';
       row.dataset.importer=names.get(Number(c.importer_id))||'';
       row.dataset.product=c.product||'';
@@ -8144,12 +8152,50 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       const action=row.insertCell(),button=document.createElement('button');
       button.className='btn';button.type='button';button.textContent='Abrir';
       button.addEventListener('click',()=>window.showContractForm(c.order_number));action.append(button);
+      if(row.dataset.cancelled==='yes'){
+        const badge=document.createElement('span');badge.className='badge bad';badge.textContent='Cancelado';action.append(badge);
+        const why=document.createElement('button');why.type='button';why.className='btn';why.textContent='Motivo';why.onclick=()=>window.showCancelledContractReason(why);action.append(why);
+      }else{
+        const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='Cancelar';cancel.onclick=()=>window.openCancelContract(c.order_number);action.append(cancel);
+        const release=document.createElement('button');release.type='button';release.className='btn';
+        release.textContent=String(c.status).toLowerCase()==='released'?'Liberado':'Liberar';
+        release.disabled=release.textContent==='Liberado';release.onclick=()=>releaseContract(c);action.append(release);
+      }
+      const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';del.onclick=()=>deleteContract(c);action.append(del);
+      if(row.dataset.cancelled!=='yes' && ['released','liberado'].includes(String(c.status).toLowerCase())){
+        const r=releasedBody.insertRow();r.dataset.order=c.order_number;r.dataset.forecastStart=d.shippingForecastStart||'';r.dataset.forecastEnd=d.shippingForecastEnd||'';
+        [c.order_number,row.dataset.importer,row.dataset.exporter,c.product||'—',String(c.quantity_mt??'—')+' MT',d.contractIncoterm||d.cIncoterm||'—',dateBR(d.shippingForecastStart),dateBR(d.shippingForecastEnd)].forEach(x=>r.insertCell().textContent=x);
+        r.insertCell().innerHTML='<span class="badge ok">Liberado</span>';
+        const pick=document.createElement('button');pick.type='button';pick.className='btn contractPick';pick.textContent='Programar';
+        pick.onclick=()=>{releasedBody.querySelectorAll('tr').forEach(tr=>tr.classList.remove('row-selected'));selectedScheduleOrder=r;r.classList.add('row-selected');window.go('schedule');window.notify('Order '+c.order_number+' selecionada.');};
+        r.insertCell().append(pick);
+      }
     }
     $('contractCount').textContent=String(contractResponse.data.length);
     status(`${companyResponse.data.length} empresa(s) USER e ${contractResponse.data.length} contrato(s) carregados do Supabase.`);
+    window.filterContracts?.();window.dispatchEvent(new Event('aes-contracts-updated'));
     window.refreshBookingRequestOrders?.();
     window.renderBookingPendencyOrders?.(contractResponse.data,names,companies);
   }
+  async function releaseContract(c){
+    if(!confirm('Liberar '+c.order_number+' para Programação?'))return;
+    try{const {data,error}=await client.from('contracts').update({status:'released'}).eq('id',c.id).select('id');if(error)throw error;if(!data?.length)throw Error('Sem permissão para liberar.');await load();window.notify('Contrato liberado para Programação.')}
+    catch(e){window.notify('Falha ao liberar: '+e.message)}
+  }
+  async function deleteContract(c){
+    if(!confirm('Excluir permanentemente contrato '+c.order_number+'?'))return;
+    try{const {data,error}=await client.from('contracts').delete().eq('id',c.id).select('id');if(error)throw error;if(!data?.length)throw Error('Sem permissão para excluir; execute o SQL e entre como administradora.');await load();window.notify('Contrato excluído.')}
+    catch(e){window.notify('Falha ao excluir contrato: '+e.message)}
+  }
+  window.confirmCancelContract=async function(){
+    const order=val('cancelContractOrder'),reason=val('cancelContractReason'),date=val('cancelContractDate');
+    if(!reason||!date){window.notify('Informe data e motivo.');return}
+    const c=contracts.get(order);if(!c){window.notify('Contrato não encontrado.');return}
+    try{const {data,error}=await client.from('contracts').update({status:'cancelled',details:{...(c.details||{}),cancel_reason:reason,cancel_date:date}}).eq('id',c.id).select('id');
+      if(error)throw error;if(!data?.length)throw Error('Sem permissão para cancelar.');window.closeCancelContract();await load();window.notify('Contrato cancelado no Supabase.')}
+    catch(e){window.notify('Falha ao cancelar: '+e.message)}
+  };
+  window.aesReloadContracts=()=>load().catch(e=>window.notify('Falha ao carregar contratos: '+e.message));
   function companyId(selectId){
     const id=Number(val(selectId));
     const searchId=selectId==='contractImporterId'?'contractImporterSearch':'contractExporterSearch';
@@ -8260,7 +8306,11 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   function renderRows(){
     const body=$('bankRegistryTable').tBodies[0];body.replaceChildren();
     if(!banks.length){const tr=body.insertRow(),cell=tr.insertCell();cell.colSpan=8;cell.textContent='Nenhum banco cadastrado. Use + Cadastrar Banco.';return}
-    for(const bank of banks){const row=body.insertRow();for(const val of [bank.beneficiary_name,bank.beneficiary_address,bank.bank_name,bank.swift,bank.iban,bank.bank_address,bank.status])row.insertCell().textContent=val||'—';const cell=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Editar';button.addEventListener('click',()=>edit(bank));cell.append(button)}
+    for(const bank of banks){const row=body.insertRow();for(const val of [bank.beneficiary_name,bank.beneficiary_address,bank.bank_name,bank.swift,bank.iban,bank.bank_address,bank.status])row.insertCell().textContent=val||'—';const cell=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Editar';button.addEventListener('click',()=>edit(bank));cell.append(button);
+      const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';
+      del.onclick=async()=>{if(!confirm('Excluir banco '+bank.bank_name+'? Esta ação é permanente.'))return;del.disabled=true;
+        try{const {data,error:failure}=await client().from('bank_accounts').delete().eq('id',bank.id).select('id');if(failure)throw failure;if(!data?.length)throw Error('Sem permissão para excluir; execute o SQL e entre como administradora.');await load();window.notify('Banco excluído.')}
+        catch(failure){error(failure)}finally{del.disabled=false}};cell.append(del)}
   }
   function renderModal(kind){
     const wrap=$(kind==='contract'?'bankLookupResults':'siBankLookupResults');
