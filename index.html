@@ -330,8 +330,8 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <div class="grid4">
           <div><label>Order Number</label><input id="contractOrderNumber" value="EX-1026"></div>
           <div><label>Contract Number</label><input id="contractNumber" placeholder="CT-2026-001"></div>
-          <div><label>Importer</label><div class="lookup"><input id="cImporter" value="Global Agro Foods"><button class="btn" onclick="openLookup('cImporter')">🔍</button></div></div>
-          <div><label>Exporter</label><div class="lookup"><input id="cExporter" value="Aurea Export"><button class="btn" onclick="openLookup('cExporter')">🔍</button></div></div>
+          <div><label for="contractImporterId">Importer</label><select id="contractImporterId" required><option value="">Carregando USER...</option></select><input id="cImporter" type="hidden"></div>
+          <div><label for="contractExporterId">Exporter</label><select id="contractExporterId" required><option value="">Carregando USER...</option></select><input id="cExporter" type="hidden"></div>
           <div><label>Notify</label><div class="lookup"><input id="cNotify"><button class="btn" onclick="openLookup('cNotify')">🔍</button></div></div>
           <div><label>Consignee</label><div class="lookup"><input id="cConsignee" value="Global Agro Foods"><button class="btn" onclick="openLookup('cConsignee')">🔍</button></div></div>
           <div><label>Packing</label><input id="contractPacking" value="25 kg bags"></div>
@@ -8134,6 +8134,12 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     if(companyResponse.error)throw companyResponse.error;
     if(contractResponse.error)throw contractResponse.error;
     names.clear();for(const c of companyResponse.data) names.set(Number(c.id),c.name);
+    for(const [id,input] of [['contractImporterId','cImporter'],['contractExporterId','cExporter']]){
+      const select=$(id),selected=select.value;select.replaceChildren();
+      const empty=document.createElement('option');empty.value='';empty.textContent='Selecione uma empresa cadastrada em USER';select.append(empty);
+      for(const c of companyResponse.data){const option=document.createElement('option');option.value=String(c.id);option.textContent=`${c.name||'Sem nome'} · ID ${c.id}`;select.append(option)}
+      select.value=selected; if(!select.value)$(input).value='';
+    }
     contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
     const body=$('contractsTable').tBodies[0];body.replaceChildren();
     for(const c of contractResponse.data){
@@ -8153,10 +8159,10 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     $('contractCount').textContent=String(contractResponse.data.length);
     window.refreshBookingRequestOrders?.();
   }
-  function companyId(name){
-    const exact=[...names].filter(([,v])=>v?.trim().toLocaleLowerCase()===name.trim().toLocaleLowerCase());
-    if(exact.length!==1)throw new Error(`Cadastre no USER e selecione uma empresa com nome único: ${name||'(vazio)'}.`);
-    return exact[0][0];
+  function companyId(selectId){
+    const id=Number(val(selectId));
+    if(!id || !names.has(id))throw new Error(`Selecione ${selectId==='contractImporterId'?'Importer':'Exporter'} na lista de empresas cadastradas em USER.`);
+    return id;
   }
   async function save(){
     const order=val('contractOrderNumber');
@@ -8164,7 +8170,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     const old=[...contracts.values()].find(c=>c.id===editingId);
     try{
       if([...contracts.values()].some(c=>c.order_number===order && c.id!==editingId))throw new Error('Já existe um contrato com esta Order Number.');
-      const record={order_number:order,contract_number:val('contractNumber')||null,importer_id:companyId(val('cImporter')),exporter_id:companyId(val('cExporter')),product:val('contractProduct')||null,quantity_mt:val('contractQuantityTon')?Number(val('contractQuantityTon')):null,unit_price:val('contractUnitPrice')?Number(val('contractUnitPrice')):null,currency:'USD',port_of_loading:val('contractPortOrigin')||null,port_of_discharge:val('contractPortDestiny')||null,status:old?.status||'draft',details:snapshot()};
+      const record={order_number:order,contract_number:val('contractNumber')||null,importer_id:companyId('contractImporterId'),exporter_id:companyId('contractExporterId'),product:val('contractProduct')||null,quantity_mt:val('contractQuantityTon')?Number(val('contractQuantityTon')):null,unit_price:val('contractUnitPrice')?Number(val('contractUnitPrice')):null,currency:'USD',port_of_loading:val('contractPortOrigin')||null,port_of_discharge:val('contractPortDestiny')||null,status:old?.status||'draft',details:snapshot()};
       if(!record.contract_number)record.contract_number=old?.contract_number||null;
       const response=old?await client.from('contracts').update(record).eq('id',old.id).select('id').single():await client.from('contracts').insert(record).select('id').single();
       if(response.error)throw response.error;
@@ -8173,7 +8179,8 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const original=window.showContractForm;
-    window.showContractForm=function(order){original(order);if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){restore(c.details);$('contractOrderNumber').value=c.order_number;$('contractNumber').value=c.contract_number||'';$('cImporter').value=names.get(Number(c.importer_id))||'';$('cExporter').value=names.get(Number(c.exporter_id))||'';$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;for(const el of fields())if(el.id && el.type!=='hidden')el.value='';$('contractOrderNumber').value='';}};
+    window.showContractForm=function(order){original(order);if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){restore(c.details);$('contractOrderNumber').value=c.order_number;$('contractNumber').value=c.contract_number||'';$('contractImporterId').value=String(c.importer_id||'');$('contractExporterId').value=String(c.exporter_id||'');$('cImporter').value=names.get(Number(c.importer_id))||'';$('cExporter').value=names.get(Number(c.exporter_id))||'';$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;for(const el of fields())if(el.id && el.type!=='hidden')el.value='';$('contractOrderNumber').value='';}};
+    for(const [id,input] of [['contractImporterId','cImporter'],['contractExporterId','cExporter']])$(id).addEventListener('change',()=>{$(input).value=names.get(Number($(id).value))||''});
     window.saveContractLogistics=save;
     const gate=$('aesAuthGate');
     new MutationObserver(()=>{if(gate.style.display==='none')load().catch(e=>window.notify?.('Não foi possível carregar contratos: '+e.message))}).observe(gate,{attributes:true,attributeFilter:['style']});
