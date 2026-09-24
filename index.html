@@ -329,6 +329,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <h3>Dados Principais</h3>
         <div class="grid4">
           <div><label>Order Number</label><input id="contractOrderNumber" value="EX-1026"></div>
+          <div><label>Contract Number</label><input id="contractNumber" placeholder="CT-2026-001"></div>
           <div><label>Importer</label><div class="lookup"><input id="cImporter" value="Global Agro Foods"><button class="btn" onclick="openLookup('cImporter')">🔍</button></div></div>
           <div><label>Exporter</label><div class="lookup"><input id="cExporter" value="Aurea Export"><button class="btn" onclick="openLookup('cExporter')">🔍</button></div></div>
           <div><label>Notify</label><div class="lookup"><input id="cNotify"><button class="btn" onclick="openLookup('cNotify')">🔍</button></div></div>
@@ -8008,6 +8009,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   const URL = 'https://patvkhyonmtsugppewrt.supabase.co';
   const KEY = 'sb_publishable_BOZdTbjgewaVBUCkKZC2qg_p13r1dZy';
   const client = window.supabase?.createClient(URL, KEY);
+  window.aesSharedClient = client;
   let editId = null;
   const $ = id => document.getElementById(id);
   const field = id => ($(id)?.value || '').trim();
@@ -8101,6 +8103,81 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     const original=window.clearUser;
     window.clearUser=function(){editId=null;original();$('uProfile').selectedIndex=0;$('uStatus').selectedIndex=0;};
     begin();
+  });
+})();
+</script>
+<script>/* Contratos no Supabase. Carregar depois do script principal do sistema. */
+(() => {
+  const client=window.aesSharedClient;
+  const $=id=>document.getElementById(id);
+  const names=new Map(), contracts=new Map();
+  let editingId=null;
+  const fields=()=>[...$('contractFormView').querySelectorAll('input,select,textarea')].filter(el=>el.type!=='file' && !el.closest('#contractListView'));
+  const notifyError=e=>window.notify?.('Contrato não salvo: '+(e?.message||String(e)));
+  const val=id=>($(id)?.value||'').trim();
+  const dateBR=v=>v?new Date(v+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+  function snapshot(){
+    const data={}; fields().forEach((el,index)=>{data[el.id||'field_'+index]=el.value});
+    return data;
+  }
+  function restore(data){
+    if(!data)return;
+    fields().forEach((el,index)=>{const key=el.id||'field_'+index;if(Object.hasOwn(data,key))el.value=data[key]});
+    window.calculateContractValues?.();window.toggleContractBroker?.();
+  }
+  async function load(){
+    if(!client)throw new Error('Supabase indisponível.');
+    const [companyResponse,contractResponse]=await Promise.all([
+      client.from('companies').select('id,name').order('id'),
+      client.from('contracts').select('id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,unit_price,currency,port_of_loading,port_of_discharge,status,created_at,details').order('id',{ascending:false})
+    ]);
+    if(companyResponse.error)throw companyResponse.error;
+    if(contractResponse.error)throw contractResponse.error;
+    names.clear();for(const c of companyResponse.data) names.set(Number(c.id),c.name);
+    contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
+    const body=$('contractsTable').tBodies[0];body.replaceChildren();
+    for(const c of contractResponse.data){
+      const d=c.details||{}, row=body.insertRow();
+      row.dataset.date=(c.created_at||'').slice(0,10);
+      row.dataset.exporter=names.get(Number(c.exporter_id))||'';
+      row.dataset.importer=names.get(Number(c.importer_id))||'';
+      row.dataset.product=c.product||'';
+      const amount=Number(c.quantity_mt||0)*Number(c.unit_price||0);
+      const advance=Number(d.contractAdvancePayment||0);
+      const display=[c.order_number,c.contract_number||'—',row.dataset.importer||'—',row.dataset.exporter||'—',d.contractPacking||'—',d.contractContainerType||'—',d.contractQtyContainer||'—',d.contractDescription||'—',c.quantity_mt??'—',c.product||'—',c.unit_price==null?'—':`${c.currency||'USD'} ${c.unit_price}/MT`,d.contractBrokerCommission||'—',c.unit_price==null?'—':`${c.currency||'USD'} ${(amount-advance).toFixed(2)}`,dateBR(d.shippingForecastStart),dateBR(d.shippingForecastEnd)];
+      for(const value of display)row.insertCell().textContent=String(value);
+      const action=row.insertCell(),button=document.createElement('button');
+      button.className='btn';button.type='button';button.textContent='Abrir';
+      button.addEventListener('click',()=>window.showContractForm(c.order_number));action.append(button);
+    }
+    $('contractCount').textContent=String(contractResponse.data.length);
+    window.refreshBookingRequestOrders?.();
+  }
+  function companyId(name){
+    const exact=[...names].filter(([,v])=>v?.trim().toLocaleLowerCase()===name.trim().toLocaleLowerCase());
+    if(exact.length!==1)throw new Error(`Cadastre no USER e selecione uma empresa com nome único: ${name||'(vazio)'}.`);
+    return exact[0][0];
+  }
+  async function save(){
+    const order=val('contractOrderNumber');
+    if(!order) return notifyError(new Error('Informe a Order Number.'));
+    const old=[...contracts.values()].find(c=>c.id===editingId);
+    try{
+      if([...contracts.values()].some(c=>c.order_number===order && c.id!==editingId))throw new Error('Já existe um contrato com esta Order Number.');
+      const record={order_number:order,contract_number:val('contractNumber')||null,importer_id:companyId(val('cImporter')),exporter_id:companyId(val('cExporter')),product:val('contractProduct')||null,quantity_mt:val('contractQuantityTon')?Number(val('contractQuantityTon')):null,unit_price:val('contractUnitPrice')?Number(val('contractUnitPrice')):null,currency:'USD',port_of_loading:val('contractPortOrigin')||null,port_of_discharge:val('contractPortDestiny')||null,status:old?.status||'draft',details:snapshot()};
+      if(!record.contract_number)record.contract_number=old?.contract_number||null;
+      const response=old?await client.from('contracts').update(record).eq('id',old.id).select('id').single():await client.from('contracts').insert(record).select('id').single();
+      if(response.error)throw response.error;
+      await load();window.notify?.('Contrato salvo no Supabase.');
+    }catch(e){notifyError(e)}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    const original=window.showContractForm;
+    window.showContractForm=function(order){original(order);if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){restore(c.details);$('contractOrderNumber').value=c.order_number;$('contractNumber').value=c.contract_number||'';$('cImporter').value=names.get(Number(c.importer_id))||'';$('cExporter').value=names.get(Number(c.exporter_id))||'';$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;for(const el of fields())if(el.id && el.type!=='hidden')el.value='';$('contractOrderNumber').value='';}};
+    window.saveContractLogistics=save;
+    const gate=$('aesAuthGate');
+    new MutationObserver(()=>{if(gate.style.display==='none')load().catch(e=>window.notify?.('Não foi possível carregar contratos: '+e.message))}).observe(gate,{attributes:true,attributeFilter:['style']});
+    if(gate.style.display==='none')load().catch(e=>window.notify?.('Não foi possível carregar contratos: '+e.message));
   });
 })();
 </script>
