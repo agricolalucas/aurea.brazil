@@ -542,16 +542,38 @@ input::placeholder,textarea::placeholder{color:#76869a}
 </section>
 <section id="schedule" class="view">
         <div class="pagehead"><div><h1>Programação</h1><div class="sub">Contratos liberados → rota → próximos navios → programação operacional.</div></div></div>
+        <div class="card aes-stage-card">
+          <div class="pagehead"><div><h3 style="margin:0">Calendário operacional</h3><div class="sub">Selecione a data. Stage e Description aparecem no dia; tarefas concluídas entram no quadro Programação.</div></div>
+          <div class="aes-stage-tools"><button class="btn" type="button" id="aesStagePrev">←</button><strong id="aesStageMonth"></strong><button class="btn" type="button" id="aesStageNext">→</button><button class="btn primary" type="button" id="aesAddStageTask">+ Adicionar tarefa</button></div>
+          <div id="aesStageCalendar" class="aes-stage-calendar"></div>
+          <div id="aesStageDay" class="aes-stage-day" aria-live="polite"></div>
+          <form id="aesStageTaskForm" hidden><h4>Adicionar tarefa à Programação</h4>
+            <div class="grid4">
+              <div><label for="aesTaskDate">Data</label><input id="aesTaskDate" type="date" required></div>
+              <div><label for="aesTaskStage">Stage</label><select id="aesTaskStage"><option>Loading location</option><option>Local Depot Container Coleta</option><option>Local da Estufagem dos Containers</option><option>Date of Fumigation</option><option>Date of Conclusion</option><option>Data Emissão LPCO</option><option>Data Posicionamento MAPA</option><option value="__new__">+ New Stage</option></select><input id="aesTaskNewStage" maxlength="100" placeholder="Nome do novo Stage" hidden></div>
+              <div><label for="aesTaskDescription">Description</label><input id="aesTaskDescription" required placeholder="Descreva a tarefa"></div>
+              <div><label for="aesTaskOwner">Responsável</label><input id="aesTaskOwner" placeholder="Nome"></div>
+            </div><div class="toolbar" style="margin-top:10px"><button class="btn primary" type="submit">Salvar tarefa</button><button class="btn" type="button" id="aesTaskCancel">Cancelar</button></div>
+          </form>
+        </div>
+        <div class="card" id="aesProgramBoard"><div class="pagehead"><div><h3 style="margin:0">Programação</h3><div id="aesProgramBoardCaption" class="sub">Selecione uma Order liberada para acompanhar o cronograma.</div></div><div id="aesProgramBoardRows" class="tablewrap"></div></div>
+        <div class="card" id="aesScheduleSummary">
+          <div class="pagehead"><div><h3 style="margin:0">Resumo da Programação</h3><p class="sub" id="aesScheduleSummaryInfo">Selecione uma Order liberada para consultar as seções 2 a 6.</p></div><button type="button" class="btn" id="aesSummaryRefresh">↻ Atualizar</button></div>
+          <div id="aesScheduleSummarySections"></div>
+        </div>
         <div class="card"><h3>1. Contratos liberados</h3><div class="sub" style="margin-bottom:10px">O ETD programado deve permanecer dentro do Shipping Forecast da Order. O sistema alerta quando o navio escolhido ultrapassa a Final Date.</div><div class="tablewrap"><table id="releasedContractsTable"><thead><tr><th>Order</th><th>Importer</th><th>Exporter</th><th>Product</th><th>Quantity</th><th>Incoterm</th><th>Shipping Forecast - Initial Date</th><th>Shipping Forecast - Final Date</th><th>Status</th><th>Ação</th></tr></thead><tbody></tbody></table></div></div>
-        <div class="card"><h3>2. Rota</h3><div class="grid2">
-          <div><label>Local de Embarque</label><div class="lookup"><input id="origin" value="Paranaguá Port"><button class="btn" onclick="openLookup('origin')">🔍</button></div></div>
-          <div><label>Local de Desembarque</label><div class="lookup"><input id="destination" value="Nhava Sheva Port"><button class="btn" onclick="openLookup('destination')">🔍</button></div></div>
-        </div><div class="toolbar" style="margin-top:12px"><button class="btn" onclick="go('user')">+ Adicionar no USER</button><button class="btn primary" onclick="showVessels()">Buscar Próximos Navios</button></div></div>
-        <div class="card"><h3>3. Próximos navios</h3><div id="vesselHint" class="sub">Selecione origem e destino e clique em “Buscar Próximos Navios”.</div><div id="vesselTable" class="tablewrap" style="margin-top:10px;display:none"><table><thead><tr><th>Shipping Line</th><th>Vessel</th><th>Voyage</th><th>Origin</th><th>Destination</th><th>ETD</th><th>ETA</th><th>Cut-off</th><th>Transit Time</th><th>Ação</th></tr></thead><tbody>
-          <tr><td>MSC</td><td>MSC Aurora</td><td>VA1026</td><td>Paranaguá</td><td>Nhava Sheva</td><td>20/09/2026</td><td>25/10/2026</td><td>18/09/2026</td><td>35 days</td><td><button class="btn vesselPick">Escolher</button></td></tr>
-          <tr><td>Maersk</td><td>Maersk Horizon</td><td>MH882</td><td>Paranaguá</td><td>Nhava Sheva</td><td>26/09/2026</td><td>30/10/2026</td><td>24/09/2026</td><td>34 days</td><td><button class="btn vesselPick">Escolher</button></td></tr>
-          <tr><td>CMA CGM</td><td>CMA CGM Atlas</td><td>CA309</td><td>Paranaguá</td><td>Nhava Sheva</td><td>02/10/2026</td><td>07/11/2026</td><td>30/09/2026</td><td>36 days</td><td><button class="btn vesselPick">Escolher</button></td></tr>
-        </tbody></table></div></div>
+        <div class="card"><h3>2. Route</h3><p class="sub">Rota carregada do contrato selecionado. Digite para escolher outro local cadastrado no USER.</p>
+          <div class="grid2">
+            <div><label for="origin">Loading location</label><input id="origin" list="scheduleUserLocations" autocomplete="off" placeholder="Selecione o contrato ou digite para buscar"></div>
+            <div><label for="destination">Discharge location</label><input id="destination" list="scheduleUserLocations" autocomplete="off" placeholder="Selecione o contrato ou digite para buscar"></div>
+          </div>
+          <datalist id="scheduleUserLocations"></datalist>
+          <div class="toolbar" style="margin-top:12px"><button id="scheduleAddUser" class="btn" type="button" hidden>+ Cadastrar local no USER</button><button class="btn primary" type="button" onclick="showVessels()">Consultar horários nos armadores</button></div>
+        </div>
+        <div class="card"><h3>3. Próximos navios</h3>
+          <p id="vesselHint" class="sub">Escolha uma Order e consulte horários diretamente no armador. Confirme ETD e ETA antes de programar.</p>
+          <div id="vesselTable" style="display:none"></div>
+        </div>
         <div class="card">
 <h2 style="font-size:18px;margin-top:0">4. Dados da Programação</h2>
 <div class="sub" style="margin-bottom:12px">Cronograma operacional organizado por etapa, com os campos relacionados na mesma linha.</div>
@@ -649,15 +671,14 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <div id="bookingRequestWorkspace" style="display:none">
           <div class="card">
             <div class="pagehead"><div><h2 style="margin:0">Freight Request — <span id="brOrderTitle">—</span></h2><div class="sub" id="brContractSummary">—</div></div><div class="toolbar"><button class="btn" onclick="closeBookingRequestWorkspace()">← Voltar</button><button class="btn primary" onclick="saveBookingRequest()">Salvar</button></div></div>
-            <div class="grid4" style="margin-bottom:12px">
-              <div><label>Order</label><input id="brOrder" readonly></div><div><label>Contract</label><input id="brContract" readonly></div>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(5,minmax(165px,1fr));gap:12px;overflow-x:auto;padding-bottom:2px">
-              <div><label>Container Type</label><div class="lookup"><input id="brCntrType" readonly><button class="btn" type="button" title="Editar Container Type" onclick="toggleBookingFieldEdit('brCntrType',this)">✎</button></div></div>
-              <div><label>Container Amount</label><div class="lookup"><input id="brCntrAmount" readonly><button class="btn" type="button" title="Editar Container Amount" onclick="toggleBookingFieldEdit('brCntrAmount',this)">✎</button></div></div>
-              <div><label>Port of Loading</label><div class="lookup"><input id="brPOL" readonly placeholder="Ex.: Paranaguá, BR"><button class="btn" type="button" title="Editar Port of Loading" onclick="toggleBookingFieldEdit('brPOL',this)">✎</button></div></div>
-              <div><label>Port of Discharge</label><div class="lookup"><input id="brPOD" readonly placeholder="Porto de destino"><button class="btn" type="button" title="Editar Port of Discharge" onclick="toggleBookingFieldEdit('brPOD',this)">✎</button></div></div>
-              <div><label>Request Status</label><select id="brStatus"><option>Pending Quotation</option><option>Quoting</option><option>Freight Negotiation</option><option>Booking Requested</option><option>Booking Pending</option><option>Booking Confirmed</option></select></div>
+            <div class="aes-freight-row" role="group" aria-label="Dados da Freight Request">
+              <div><label for="brOrder">Order</label><input id="brOrder" readonly></div>
+              <div><label for="brContract">Contract</label><input id="brContract" readonly></div>
+              <div><label for="brCntrType">Container Type</label><div class="aes-edit-control"><input id="brCntrType" readonly><button class="btn" type="button" aria-label="Editar Container Type" onclick="toggleBookingFieldEdit('brCntrType',this)">✎</button></div></div>
+              <div><label for="brCntrAmount">Container Amount</label><div class="aes-edit-control"><input id="brCntrAmount" readonly><button class="btn" type="button" aria-label="Editar Container Amount" onclick="toggleBookingFieldEdit('brCntrAmount',this)">✎</button></div></div>
+              <div><label for="brPOL">Port of Loading</label><div class="aes-edit-control"><input id="brPOL" readonly><button class="btn" type="button" aria-label="Editar Port of Loading" onclick="toggleBookingFieldEdit('brPOL',this)">✎</button></div></div>
+              <div><label for="brPOD">Port of Discharge</label><div class="aes-edit-control"><input id="brPOD" readonly><button class="btn" type="button" aria-label="Editar Port of Discharge" onclick="toggleBookingFieldEdit('brPOD',this)">✎</button></div></div>
+              <div><label for="brStatus">Request Status</label><select id="brStatus"><option>Pending Quotation</option><option>Quoting</option><option>Freight Negotiation</option><option>Booking Requested</option><option>Booking Pending</option><option>Booking Confirmed</option></select></div>
             </div>
           </div>
 
@@ -4009,17 +4030,28 @@ function closeLookup(){document.getElementById('lookupModal').classList.remove('
 function pickLookup(v){if(lookupTarget)document.getElementById(lookupTarget).value=v;closeLookup()}
 function clearUser(){document.querySelectorAll('#user input').forEach(i=>i.value='');notify('Novo cadastro USER iniciado.')}
 function showVessels(){
-  const table=document.getElementById('vesselTable'), hint=document.getElementById('vesselHint');
-  const origin=(document.getElementById('origin').value||'').toLowerCase(), destination=(document.getElementById('destination').value||'').toLowerCase();
-  let central=[]; try{central=JSON.parse(localStorage.getItem('aes_market_freight_central_v91')||'[]')}catch(e){}
-  const accepted=central.filter(q=>String(q.status||'').toLowerCase()==='accepted' && (!q.pol||origin.includes(String(q.pol).toLowerCase())||String(q.pol).toLowerCase().includes(origin.replace(' port',''))) && (!q.pod||destination.includes(String(q.pod).toLowerCase())||String(q.pod).toLowerCase().includes(destination.replace(' port',''))));
-  const acceptedLines=[...new Set(accepted.map(q=>String(q.line||'').trim().toLowerCase()).filter(Boolean))];
-  let shown=0;
-  table.querySelectorAll('tbody tr').forEach(r=>{const line=(r.cells[0]?.textContent||'').trim().toLowerCase();const ok=acceptedLines.includes(line);r.style.display=ok?'':'none';if(ok){shown++;validateVesselForecast(r)}});
-  table.style.display='block';
-  if(!acceptedLines.length){hint.innerHTML='<span class="badge warn">Nenhum Shipping Line Accepted</span> Para esta rota, somente armadores com status <b>Accepted</b> em Market Freight Quotations podem aparecer.';}
-  else if(!shown){hint.innerHTML='<span class="badge warn">Sem navios cadastrados</span> Shipping Line(s) Accepted: <b>'+accepted.map(q=>q.line).filter(Boolean).join(', ')+'</b>. Cadastre/integre os próximos navios desses armadores.';}
-  else{hint.innerHTML='Exibindo somente Shipping Line com status <b>Accepted</b> em Market Freight Quotations para '+document.getElementById('origin').value+' → '+document.getElementById('destination').value+'.';}
+  const box=document.getElementById('vesselTable'),hint=document.getElementById('vesselHint');
+  const origin=document.getElementById('origin').value.trim(),destination=document.getElementById('destination').value.trim();
+  if(!selectedScheduleOrder){hint.textContent='Selecione primeiro um contrato liberado.';box.style.display='none';return}
+  if(!origin||!destination){hint.textContent='Informe Loading location e Discharge location.';box.style.display='none';return}
+  let quotes=[];try{quotes=JSON.parse(localStorage.getItem('aes_market_freight_central_v91')||'[]')}catch(e){}
+  const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(port|porto|port of)\b/g,'').trim();
+  const lines=new Set(quotes.filter(q=>String(q.status).toLowerCase()==='accepted'&&norm(q.pol)===norm(origin)&&norm(q.pod)===norm(destination)).map(q=>String(q.line||'').trim().toLowerCase()));
+  const carriers=[
+    ['Maersk','https://www.maersk.com/schedules/'],
+    ['MSC','https://www.msc.com/en/search-a-schedule'],
+    ['CMA CGM','https://www.cma-cgm.com/ebusiness/schedules'],
+    ['Hapag-Lloyd','https://www.hapag-lloyd.com/en/online-business/schedule/interactive-schedule.html']
+  ];
+  box.replaceChildren();
+  const list=carriers.filter(([name])=>[...lines].some(line=>line.includes(name.toLowerCase())||name.toLowerCase().includes(line)));
+  hint.textContent=list.length?('Consulte '+origin+' → '+destination+' nos armadores com cotação aceita. Informe a rota no site e confirme a data de partida.'):
+    ('Nenhum armador com cotação Accepted para '+origin+' → '+destination+'. Consulte os sites oficiais e vincule uma cotação aceita para restringir os armadores.');
+  const title=document.createElement('p');title.className='sub';title.textContent='Horários atualizados são exibidos no site do armador; nenhuma disponibilidade é presumida pelo sistema.';box.append(title);
+  for(const [name,url] of (list.length?list:carriers)){
+    const link=document.createElement('a');link.className='btn';link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Consultar '+name+' ↗';link.style.margin='0 8px 8px 0';box.append(link);
+  }
+  box.style.display='block';
 }
 let selectedScheduleOrder=null;
 function parseBRDate(v){const p=String(v||'').split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0]):null}
@@ -4051,7 +4083,7 @@ document.querySelectorAll('.contractPick').forEach(btn=>btn.addEventListener('cl
   selectedScheduleOrder=btn.closest('tr'); selectedScheduleOrder.classList.add('row-selected');
   const f1=selectedScheduleOrder.dataset.forecastStart||'não informado',f2=selectedScheduleOrder.dataset.forecastEnd||'não informado';
   notify('Order '+(selectedScheduleOrder.dataset.order||'')+' selecionada · Shipping Forecast: '+f1+' até '+f2);
-  document.querySelectorAll('#vesselTable tbody tr').forEach(validateVesselForecast);
+  document.getElementById('vesselTable').style.display='none';
 }));
 document.querySelectorAll('.vesselPick').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('.vesselPick').forEach(x=>x.closest('tr').classList.remove('row-selected'));
@@ -4130,7 +4162,9 @@ function saveScheduleProgramming(){
   if(!info){notify('Selecione uma Order em Contratos liberados antes de salvar a programação.');return;}
   if(!date){notify('Informe a Data Embarque antes de salvar a programação.');return;}
   let arr=getShippingPrograms(); const idx=arr.findIndex(x=>x.order===info.order);
-  const rec={...info,date,updatedAt:new Date().toISOString()}; if(idx>=0)arr[idx]=rec;else arr.push(rec);setShippingPrograms(arr);
+  const stageIds=['origin','destination','programLoadingPlace','containerPickupDate','containerPickupDepot','containerPickupCarrier','containerStuffingDate','containerStuffingPlace','fumigationDate','fumigationConclusionDate'];
+  const stages=Object.fromEntries(stageIds.map(id=>[id,document.getElementById(id)?.value||'']));
+  const rec={...(idx>=0?arr[idx]:{}),...info,...stages,date,updatedAt:new Date().toISOString()}; if(idx>=0)arr[idx]=rec;else arr.push(rec);setShippingPrograms(arr);
   syncStartTruckLoading(info.order,date);
   updateShipDateLoadAlert();renderShippingCalendar();
   const same=programsForDate(date),total=same.reduce((a,x)=>a+(Number(x.qty)||0),0);
@@ -6913,10 +6947,22 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
     }
     if(typeof window.refreshCriticalPendencies==='function') window.refreshCriticalPendencies();
   }
-  window.saveBookingPendencies=function(){
+  window.saveBookingPendencies=async function(){
     const order=currentOrder();if(!order||order==='-'){if(typeof notify==='function')notify('Selecione uma Order.');return}
-    const all=loadAll(),d=snapshot();all[order]=d;saveAll(all);updateTable(order,d);
-    if(typeof notify==='function')notify('Pendências salvas e tabela Pendências atualizada.');
+    const d=snapshot(),released=pendingList(d).length===0;
+    const client=window.aesSharedClient;
+    if(!client){window.notify?.('Supabase indisponível. Pendências não foram salvas.');return}
+    try{
+      const {data:contract,error:readError}=await client.from('contracts').select('id,details').eq('order_number',order).single();
+      if(readError)throw readError;
+      const details={...(contract.details||{}),booking_released:released,booking_pendency:d};
+      const {data:updated,error:writeError}=await client.from('contracts').update({details}).eq('id',contract.id).select('id');
+      if(writeError)throw writeError;
+      if(!updated?.length)throw Error('Não foi possível atualizar o contrato no Supabase.');
+      const all=loadAll();all[order]=d;saveAll(all);updateTable(order,d);
+      await window.aesReloadContracts?.();
+      window.notify?.(released?'Pendências concluídas. Contrato liberado para Programação no Supabase.':'Pendências salvas. Contrato aguardando liberação.');
+    }catch(error){window.notify?.('Falha ao salvar liberação no Supabase: '+error.message);return}
     const detail=document.getElementById('bookingPendencyDetail');
     if(detail) detail.style.display='none';
     const table=document.getElementById('bookingPendencyTable');
@@ -8133,6 +8179,20 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     status(companyResponse.data.length?'Empresas USER carregadas. Carregando contratos…':'Nenhuma empresa encontrada em USER. Cadastre importador e exportador primeiro.');
     const contractResponse=await client.from('contracts').select('id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,unit_price,currency,port_of_loading,port_of_discharge,status,created_at,details').order('id',{ascending:false});
     if(contractResponse.error){status('USER carregado. Erro ao carregar contratos: '+contractResponse.error.message);throw contractResponse.error}
+    const savedPendencies=(()=>{try{return JSON.parse(localStorage.getItem('aes_booking_pendency_v106')||'{}')}catch{return {}}})();
+    for(const c of contractResponse.data){
+      const d=savedPendencies[c.order_number];
+      if(!d?.savedAt||c.details?.booking_released===true||String(c.status).toLowerCase()==='cancelled')continue;
+      const needsPermit=d.importPermitRequired==='yes'&&!(d.importPermitNumber&&d.importPermitFile);
+      const needsAdvance=d.advanceRequired==='yes'&&!d.advanceFile;
+      const needsLabel=!(d.clientLabelApproval==='Approved'&&d.clientLabelFile&&d.printedLabelFile);
+      const needsAcid=String(d.acidDestination||'').toLowerCase()==='egypt'&&!(d.acidBookingNumber&&d.acidGeneratedDate&&d.acidExpiresDate);
+      if(needsPermit||needsAdvance||needsLabel||needsAcid)continue;
+      const details={...(c.details||{}),booking_released:true,booking_pendency:d};
+      const result=await client.from('contracts').update({details}).eq('id',c.id).select('id');
+      if(result.error){window.notify?.('Não foi possível sincronizar a liberação de '+c.order_number+': '+result.error.message);continue}
+      if(result.data?.length)c.details=details;
+    }
     contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
     const body=$('contractsTable').tBodies[0];body.replaceChildren();
     const releasedBody=$('releasedContractsTable').tBodies[0];releasedBody.replaceChildren();
@@ -8158,28 +8218,34 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       }else{
         const cancel=document.createElement('button');cancel.type='button';cancel.className='btn';cancel.textContent='Cancelar';cancel.onclick=()=>window.openCancelContract(c.order_number);action.append(cancel);
         const release=document.createElement('button');release.type='button';release.className='btn';
-        release.textContent=String(c.status).toLowerCase()==='released'?'Liberado':'Liberar';
+        release.textContent=(d.booking_released===true||['released','liberado'].includes(String(c.status).toLowerCase()))?'Liberado':'Liberar';
         release.disabled=release.textContent==='Liberado';release.onclick=()=>releaseContract(c);action.append(release);
       }
       const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';del.onclick=()=>deleteContract(c);action.append(del);
-      if(row.dataset.cancelled!=='yes' && ['released','liberado'].includes(String(c.status).toLowerCase())){
+      if(row.dataset.cancelled!=='yes' && (d.booking_released===true||['released','liberado'].includes(String(c.status).toLowerCase()))){
         const r=releasedBody.insertRow();r.dataset.order=c.order_number;r.dataset.forecastStart=d.shippingForecastStart||'';r.dataset.forecastEnd=d.shippingForecastEnd||'';
         [c.order_number,row.dataset.importer,row.dataset.exporter,c.product||'—',String(c.quantity_mt??'—')+' MT',d.contractIncoterm||d.cIncoterm||'—',dateBR(d.shippingForecastStart),dateBR(d.shippingForecastEnd)].forEach(x=>r.insertCell().textContent=x);
         r.insertCell().innerHTML='<span class="badge ok">Liberado</span>';
         const pick=document.createElement('button');pick.type='button';pick.className='btn contractPick';pick.textContent='Programar';
-        pick.onclick=()=>{releasedBody.querySelectorAll('tr').forEach(tr=>tr.classList.remove('row-selected'));selectedScheduleOrder=r;r.classList.add('row-selected');window.go('schedule');window.notify('Order '+c.order_number+' selecionada.');};
+        pick.onclick=()=>{releasedBody.querySelectorAll('tr').forEach(tr=>tr.classList.remove('row-selected'));selectedScheduleOrder=r;r.classList.add('row-selected');
+          const saved=(()=>{try{return JSON.parse(localStorage.getItem('aesShippingPrograms')||'[]').find(x=>x.order===c.order_number)||{}}catch{return {}}})();
+          for(const [id,v] of Object.entries({origin:saved.origin||c.port_of_loading||'',destination:saved.destination||c.port_of_discharge||'',
+            programLoadingPlace:saved.programLoadingPlace||c.port_of_loading||'',containerPickupDepot:saved.containerPickupDepot||'',
+            containerStuffingPlace:saved.containerStuffingPlace||''})){const input=$(id);if(input)input.value=v}
+          for(const id of ['shipDate','containerPickupDate','containerStuffingDate','fumigationDate','fumigationConclusionDate']){const input=$(id);if(input)input.value=saved[id==='shipDate'?'date':id]||''}
+          window.aesRestoreScheduleFields?.(saved);window.aesRefreshScheduleLocations?.();window.aesRenderStageCalendar?.();window.aesRenderScheduleSummary?.();window.go('schedule');window.notify('Order '+c.order_number+' selecionada.');};
         r.insertCell().append(pick);
       }
     }
     $('contractCount').textContent=String(contractResponse.data.length);
     status(`${companyResponse.data.length} empresa(s) USER e ${contractResponse.data.length} contrato(s) carregados do Supabase.`);
-    window.filterContracts?.();window.dispatchEvent(new Event('aes-contracts-updated'));
+    window.filterContracts?.();window.dispatchEvent(new CustomEvent('aes-contracts-updated',{detail:{contracts:contractResponse.data,names:Object.fromEntries(names)}}));
     window.refreshBookingRequestOrders?.();
     window.renderBookingPendencyOrders?.(contractResponse.data,names,companies);
   }
   async function releaseContract(c){
     if(!confirm('Liberar '+c.order_number+' para Programação?'))return;
-    try{const {data,error}=await client.from('contracts').update({status:'released'}).eq('id',c.id).select('id');if(error)throw error;if(!data?.length)throw Error('Sem permissão para liberar.');await load();window.notify('Contrato liberado para Programação.')}
+    try{const {data,error}=await client.from('contracts').update({details:{...(c.details||{}),booking_released:true}}).eq('id',c.id).select('id');if(error)throw error;if(!data?.length)throw Error('Sem permissão para liberar.');await load();window.notify('Contrato liberado para Programação.')}
     catch(e){window.notify('Falha ao liberar: '+e.message)}
   }
   async function deleteContract(c){
@@ -8447,5 +8513,455 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
  };
 })();
 </script>
+<style>
+.aes-freight-row{display:grid;grid-template-columns:repeat(7,minmax(170px,1fr));gap:10px;overflow-x:auto;padding:14px;background:#f7faff;border:1px solid #dbe6f5;border-radius:12px;min-width:0}
+.aes-freight-row>div{min-width:0}.aes-freight-row label{font-size:11px;font-weight:700;white-space:nowrap}
+.aes-freight-row input,.aes-freight-row select{width:100%;box-sizing:border-box;min-width:0}
+.aes-edit-control{display:flex;gap:4px}.aes-edit-control input{flex:1}.aes-edit-control button{flex:none}
+@media(max-width:1250px){.aes-freight-row{grid-template-columns:repeat(4,minmax(170px,1fr))}}
+@media(max-width:720px){.aes-freight-row{grid-template-columns:repeat(2,minmax(145px,1fr))}}
+.aes-stage-tools{display:flex;gap:8px;align-items:center;margin:12px 0}.aes-stage-tools strong{min-width:190px;text-align:center}.aes-stage-tools #aesAddStageTask{margin-left:auto}
+.aes-stage-calendar{display:grid;grid-template-columns:repeat(7,minmax(80px,1fr));gap:5px;overflow:auto}.aes-stage-calendar button{font:inherit;text-align:left;min-height:67px;background:#fff;border:1px solid #d7e2f2;border-radius:8px;padding:7px;color:#16304c;cursor:pointer}
+.aes-stage-calendar button[data-selected=true]{border:2px solid #1655b5;background:#e9f1ff}.aes-stage-calendar button:hover{background:#f0f6ff}
+.aes-stage-calendar small{display:block;color:#315f95;margin-top:4px;font-size:10px}
+.aes-stage-day{padding:12px;margin-top:12px;background:#f8fbff;border:1px solid #dbe6f5;border-radius:9px}
+.aes-stage-day article{padding:8px 0;border-bottom:1px solid #e6edf7}.aes-stage-day article:last-child{border-bottom:0}.aes-stage-day article .btn{margin:5px 6px 0 0}.aes-stage-complete{background:#e9f8ed;color:#146236}.aes-stage-calendar small{line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:720px){.aes-stage-calendar{grid-template-columns:repeat(7,minmax(75px,1fr))}}
+</style>
+<script>
+/* Operational calendar: stages, descriptions and selected Order board. */
+(()=>{
+  const $=id=>document.getElementById(id);
+  const KEY='aes_schedule_tasks_v1';
+  const defs=[
+    {name:'Loading location',date:'shipDate',description:'programLoadingPlace',stored:'date'},
+    {name:'Local Depot Container Coleta',date:'containerPickupDate',description:'containerPickupDepot',stored:'pickupDate'},
+    {name:'Local da Estufagem dos Containers',date:'containerStuffingDate',description:'containerStuffingPlace',stored:'stuffingDate'},
+    {name:'Date of Fumigation',date:'fumigationDate',description:'fumigationCompany',stored:'fumigationDate'},
+    {name:'Date of Conclusion',date:'fumigationConclusionDate',description:'fumigationCompany',stored:'conclusionDate'},
+    {name:'Data Emissão LPCO',date:'lpcoIssueDate',description:'lpcoResponsible',stored:'lpcoIssueDate'},
+    {name:'Data Posicionamento MAPA',date:'mapaPositionDate',description:'mapaPositionPlace',stored:'mapaPositionDate'}
+  ];
+  let cursor=new Date(),selected=new Date().toISOString().slice(0,10),locations=[],lastOrder='';
+  const programs=()=>{try{return JSON.parse(localStorage.getItem('aesShippingPrograms')||'[]')}catch{return []}};
+  const tasks=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return []}};
+  const saveTasks=items=>{localStorage.setItem(KEY,JSON.stringify(items));render()};
+  const stageFields=[
+   {stage:'Loading location',date:'shipDate',description:'programLoadingPlace'},
+   {stage:'Local Depot Container Coleta',date:'containerPickupDate',description:'containerPickupDepot'},
+   {stage:'Local da Estufagem dos Containers',date:'containerStuffingDate',description:'containerStuffingPlace'},
+   {stage:'Date of Fumigation',date:'fumigationDate',description:'fumigationCompany'},
+   {stage:'Date of Conclusion',date:'fumigationConclusionDate',description:'fumigationCompany'},
+   {stage:'Data Emissão LPCO',date:'lpcoIssueDate',description:'lpcoResponsible'},
+   {stage:'Data Posicionamento MAPA',date:'mapaPositionDate',description:'mapaPositionPlace'}
+ ];
+ const taskKey='aes_schedule_tasks_v1';
+ const getTasks=()=>{try{return JSON.parse(localStorage.getItem(taskKey)||'[]')||[]}catch{return []}};
+ const stageForField=id=>stageFields.find(x=>x.date===id||x.description===id);
+ const latestTask=(items,stage)=>items.filter(t=>t.stage===stage).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))[0];
+ const order=()=>typeof selectedScheduleOrder!=='undefined'?(selectedScheduleOrder?.dataset.order||''):'';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  const fmt=date=>date?date.split('-').reverse().join('/'):'—';
+  function ownProgram(){return programs().find(p=>p.order===order())}
+  function events(date){
+    const all=tasks(),result=[];
+    for(const p of programs())for(const def of defs){
+      const actual=p[def.date]||p[def.stored]||'';
+      if(actual!==date)continue;
+      if(all.some(t=>t.order===p.order&&t.stage===def.name&&t.date===date))continue;
+      result.push({id:'',order:p.order,date,stage:def.name,description:p[def.description]||p[def.name]||'',completed:false,auto:true});
+    }
+    return result.concat(all.filter(t=>t.date===date));
+  }
+  function cell(label,value){const td=document.createElement('td');td.textContent=value||'—';td.dataset.label=label;return td}
+  function renderBoard(){
+    const wrap=$('aesProgramBoardRows');if(!wrap)return;
+    const current=order(),p=ownProgram();
+    $('aesProgramBoardCaption').textContent=current?'Order '+current+' · Datas, Stages, Description e status':'Selecione uma Order liberada para acompanhar o cronograma.';
+    wrap.replaceChildren();
+    if(!current){wrap.textContent='Selecione uma Order na seção Contratos liberados.';return}
+    const all=tasks().filter(t=>t.order===current),rows=[];
+    for(const def of defs){
+      const t=all.filter(item=>item.stage===def.name).sort((a,b)=>b.date.localeCompare(a.date))[0];
+      const inputDate=$(def.date)?.value||'',storedDate=p?.[def.date]||p?.[def.stored]||'';
+      const date=t?.date||inputDate||storedDate;
+      const description=t?.description||$(def.description)?.value||p?.[def.description]||'';
+      rows.push({date,stage:def.name,description,completed:!!t?.completed,owner:t?.owner||''});
+    }
+    for(const t of all.filter(t=>!defs.some(d=>d.name===t.stage)))rows.push(t);
+    const table=document.createElement('table');table.style.minWidth='760px';
+    const head=table.createTHead().insertRow();for(const h of ['Data','Stage','Description','Responsável','Status']){const th=document.createElement('th');th.textContent=h;head.append(th)}
+    const body=table.createTBody();
+    for(const r of rows){const tr=body.insertRow();tr.append(cell('Data',fmt(r.date)),cell('Stage',r.stage),cell('Description',r.description),cell('Responsável',r.owner));
+      const status=cell('Status',r.completed?'Concluído':r.date?'Pendente':'A definir');tr.append(status);if(r.completed)tr.className='aes-stage-complete'}
+    wrap.append(table);
+  }
+  function renderDay(){
+    const box=$('aesStageDay');if(!box)return;
+    const rows=events(selected);
+    box.replaceChildren();
+    const heading=document.createElement('strong');heading.textContent=fmt(selected)+' · Stage / Description';box.append(heading);
+    if(!rows.length){const empty=document.createElement('p');empty.className='sub';empty.textContent='Nenhuma etapa ou tarefa nesta data.';box.append(empty)}
+    for(const item of rows){
+      const article=document.createElement('article');article.className=item.completed?'aes-stage-complete':'';
+      const title=document.createElement('b');title.textContent=item.order+' · '+item.stage;article.append(title);
+      const desc=document.createElement('div');desc.textContent='Description: '+(item.description||'—');article.append(desc);
+      if(item.owner){const owner=document.createElement('small');owner.textContent='Responsável: '+item.owner;article.append(owner)}
+      if(item.id){
+        const done=document.createElement('button');done.type='button';done.className='btn';done.textContent=item.completed?'Reabrir':'Concluir';
+        done.onclick=()=>saveTasks(tasks().map(t=>t.id===item.id?{...t,completed:!t.completed}:t));article.append(done);
+        const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Excluir';
+        remove.onclick=()=>{if(confirm('Excluir esta tarefa?'))saveTasks(tasks().filter(t=>t.id!==item.id))};article.append(remove);
+      }else if(item.auto){
+        const done=document.createElement('button');done.type='button';done.className='btn';done.textContent='Concluir';
+        done.onclick=()=>saveTasks([...tasks(),{id:crypto.randomUUID(),order:item.order,date:item.date,stage:item.stage,description:item.description,owner:'',completed:true}]);
+        article.append(done);
+      }
+      box.append(article);
+    }
+  }
+  function render(){
+    const grid=$('aesStageCalendar');if(!grid)return;
+    const current=order();
+    if(current!==lastOrder){lastOrder=current;const p=ownProgram();if(p?.date){selected=p.date;cursor=new Date(p.date+'T12:00:00')}}
+    const y=cursor.getFullYear(),m=cursor.getMonth();
+    $('aesStageMonth').textContent=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(cursor);
+    grid.replaceChildren();
+    for(const day of ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']){const head=document.createElement('b');head.style.textAlign='center';head.textContent=day;grid.append(head)}
+    for(let i=0;i<new Date(y,m,1).getDay();i++)grid.append(document.createElement('span'));
+    for(let day=1,last=new Date(y,m+1,0).getDate();day<=last;day++){
+      const date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0'),rows=events(date),btn=document.createElement('button');
+      btn.type='button';btn.dataset.selected=String(date===selected);
+      const dayNumber=document.createElement('b');dayNumber.textContent=String(day);btn.append(dayNumber);
+      for(const row of rows.slice(0,2)){const label=document.createElement('small');label.textContent=row.stage+' · '+(row.description||'—');btn.append(label)}
+      if(rows.length>2){const more=document.createElement('small');more.textContent='+'+(rows.length-2)+' etapas';btn.append(more)}
+      btn.onclick=()=>{selected=date;$('aesTaskDate').value=date;render()};grid.append(btn);
+    }
+    renderDay();renderBoard();
+  }
+  async function refreshLocations(){
+    const client=window.aesSharedClient;if(!client)return;
+    const {data,error}=await client.from('companies').select('name').order('name');
+    if(error){window.notify?.('Erro ao carregar locais USER: '+error.message);return}
+    locations=(data||[]).map(x=>x.name).filter(Boolean);
+    const list=$('scheduleUserLocations');list.replaceChildren();
+    for(const name of new Set(locations)){const option=document.createElement('option');option.value=name;list.append(option)}
+    toggleAdd();
+  }
+  function toggleAdd(){
+    const missing=['origin','destination'].some(id=>{const v=$(id)?.value.trim();return v&&!locations.some(x=>x.toLowerCase()===v.toLowerCase())});
+    $('scheduleAddUser').hidden=!missing;
+  }
+  function applyStage(date,stage,description){
+    const def=defs.find(d=>d.name===stage);if(!def)return;
+    const dateInput=$(def.date);if(dateInput){dateInput.value=date;dateInput.dispatchEvent(new Event('change',{bubbles:true}))}
+    const detail=$(def.description);if(detail&&detail.type!=='file'&&!detail.readOnly&&description){detail.value=description;detail.dispatchEvent(new Event('input',{bubbles:true}))}
+    // The existing Schedule save persists the mirrored fields after Data Embarque exists.
+    if($('shipDate')?.value&&typeof window.saveScheduleProgramming==='function')window.saveScheduleProgramming();
+  }
+  window.aesRefreshScheduleLocations=toggleAdd;
+  window.aesRenderStageCalendar=render;
+  document.addEventListener('DOMContentLoaded',()=>{
+    $('aesStagePrev').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()-1,1);render()};
+    $('aesStageNext').onclick=()=>{cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,1);render()};
+    $('aesTaskStage').onchange=()=>{const custom=$('aesTaskStage').value==='__new__';$('aesTaskNewStage').hidden=!custom;$('aesTaskNewStage').required=custom;if(custom)$('aesTaskNewStage').focus()};
+    $('aesTaskStage').onfocus=()=>{
+      const select=$('aesTaskStage'),custom=select.querySelector('[value="__new__"]');
+      for(const name of new Set(tasks().map(t=>t.stage).filter(name=>!defs.some(d=>d.name===name)))){
+        if([...select.options].some(o=>o.value===name))continue;
+        const option=document.createElement('option');option.value=name;option.textContent=name;select.insertBefore(option,custom);
+      }
+    };
+    $('aesAddStageTask').onclick=()=>{if(!order()){window.notify?.('Selecione uma Order liberada antes de adicionar a tarefa.');return}
+      $('aesTaskDate').value=selected;$('aesStageTaskForm').hidden=false;$('aesTaskDescription').focus()};
+    $('aesTaskCancel').onclick=()=>{$('aesStageTaskForm').hidden=true};
+    $('aesStageTaskForm').onsubmit=event=>{
+      event.preventDefault();const current=order();if(!current)return;
+      const stage=$('aesTaskStage').value==='__new__'?$('aesTaskNewStage').value.trim():$('aesTaskStage').value;
+      const date=$('aesTaskDate').value,description=$('aesTaskDescription').value.trim();if(!stage||!description||!date)return;
+      const next=tasks();next.push({id:crypto.randomUUID(),order:current,date,stage,description,owner:$('aesTaskOwner').value.trim(),completed:false});
+      localStorage.setItem(KEY,JSON.stringify(next));selected=date;cursor=new Date(date+'T12:00:00');
+      $('aesStageTaskForm').reset();$('aesTaskNewStage').hidden=true;$('aesStageTaskForm').hidden=true;
+      applyStage(date,stage,description);render();window.notify?.('Tarefa adicionada. Data e Stage refletidos nos Dados da Scheduling.');
+    };
+    for(const id of ['origin','destination'])$(id).addEventListener('input',toggleAdd);
+    $('scheduleAddUser').onclick=()=>{
+      const value=['origin','destination'].map(id=>$(id).value.trim()).find(x=>x&&!locations.some(n=>n.toLowerCase()===x.toLowerCase()));
+      window.go('user');document.querySelector('#user .tab[data-tab="userform"]')?.click();if(value)$('uCompany').value=value;
+      window.notify?.('Preencha os dados do novo local e salve no USER.')
+    };
+    for(const def of defs)for(const field of [def.date,def.description])$(field)?.addEventListener('change',render);
+    const priorSave=window.saveScheduleProgramming;
+    window.saveScheduleProgramming=function(){const result=priorSave?.apply(this,arguments);setTimeout(render,0);return result};
+    const auth=$('aesAuthGate');
+    new MutationObserver(()=>{if(auth.style.display==='none')refreshLocations()}).observe(auth,{attributes:true,attributeFilter:['style']});
+    window.addEventListener('aes-contracts-updated',refreshLocations);
+    window.addEventListener('aes-shipping-program-updated',render);
+    window.addEventListener('storage',render);
+    if(auth.style.display==='none')refreshLocations();
+    render();
+  });
+})();
+</script>
+
+
+<style>
+#aesScheduleSummarySections{display:grid;gap:12px}
+.aes-summary-block{border:1px solid #dce6f4;border-radius:12px;overflow:hidden;background:#fff}
+.aes-summary-block summary{cursor:pointer;padding:14px 16px;font-weight:700;background:#f5f9ff;color:#153555;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.aes-summary-block summary::-webkit-details-marker{display:none}.aes-summary-block summary::after{content:"⌄";font-size:18px}.aes-summary-block[open] summary::after{content:"⌃"}
+.aes-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:0 16px;padding:10px 16px}
+.aes-summary-item{padding:11px 0;border-bottom:1px solid #edf1f7;min-width:0}.aes-summary-item small{display:block;color:#63758d;font-size:11px;margin-bottom:3px}.aes-summary-item strong{display:block;overflow-wrap:anywhere;color:#173350;font-size:13px}.aes-summary-footer{padding:0 16px 14px}
+@media(max-width:800px){.aes-summary-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}@media(max-width:520px){.aes-summary-grid{grid-template-columns:1fr}}
+</style>
+<script>
+/* Organized read-only review of Scheduling fields 2–6 for the selected Order. */
+(()=>{
+ const $=id=>document.getElementById(id),KEY='aesShippingPrograms';
+ const defs=[
+  {title:'2. Route',target:'origin',fields:[['Loading location','origin','origin'],['Discharge location','destination','destination']]},
+  {title:'3. Upcoming vessels',target:'scheduleShippingLine',fields:[['Shipping Line','scheduleShippingLine','shippingLine'],['Vessel','scheduleVessel','vessel'],['Voyage','scheduleVoyage','voyage'],['ETD confirmado','scheduleETD','etd'],['ETA confirmada','scheduleETA','eta'],['Consulta no armador','scheduleCarrierSource','carrierSource']]},
+  {title:'4. Dados da Scheduling',target:'shipDate',fields:[['Data Embarque','shipDate','date'],['Loading location','programLoadingPlace','loadingPlace'],['Data Retirada do Container','containerPickupDate','pickupDate'],['Local Depot Container Coleta','containerPickupDepot','pickupDepot'],['Transportadora de Coleta Container','containerPickupCarrier','pickupCarrier'],['Data Desembarque / Estufagem','containerStuffingDate','stuffingDate'],['Local da Estufagem','containerStuffingPlace','stuffingPlace']]},
+  {title:'5. Dados Fumigation',target:'fumigationCompany',fields:[['Empresa Nomeada','fumigationCompany','fumigationCompany'],['Treatment','fumigationTreatment','fumigationTreatment'],['Dosage','fumigationDosage','fumigationDosage'],['Exposition Time','fumigationExposureTime','fumigationExposureTime'],['Temperature Local','fumigationTemperature','fumigationTemperature'],['Date of Fumigation','fumigationDate','fumigationDate'],['Time of Fumigation','fumigationTime','fumigationTime'],['Date of Conclusion','fumigationConclusionDate','conclusionDate'],['Time of Conclusion','fumigationConclusionTime','conclusionTime']]},
+  {title:'6. Dados MAPA e Receita Federal',target:'lpcoIssueDate',fields:[['Data Emissão LPCO','lpcoIssueDate','lpcoIssueDate'],['Responsável pela Emissão','lpcoResponsible','lpcoResponsible'],['Data Posicionamento MAPA','mapaPositionDate','mapaPositionDate'],['Local Posicionamento MAPA','mapaPositionPlace','mapaPositionPlace'],['Nome do Recinto Aduaneiro','customsFacilityName','customsFacilityName'],['Código do Recinto Aduaneiro','customsFacilityCode','customsFacilityCode']]}
+ ];
+ const order=()=>typeof selectedScheduleOrder!=='undefined'?(selectedScheduleOrder?.dataset.order||''):'';
+ const programs=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch{return []}};
+ const fmt=(v,input)=>{if(!v)return 'Não informado';return input?.type==='date'||/^\d{4}-\d{2}-\d{2}$/.test(v)?v.split('-').reverse().join('/'):String(v)};
+ function render(){
+  const root=$('aesScheduleSummarySections');if(!root)return;
+  const current=order(),saved=programs().find(x=>x.order===current)||{};
+  $('aesScheduleSummaryInfo').textContent=current?'Order '+current+' · Conferência dos campos preenchidos':'Selecione uma Order liberada para consultar as seções 2 a 6.';
+  root.replaceChildren();if(!current)return;
+  for(const group of defs){
+   const details=document.createElement('details');details.className='aes-summary-block';details.open=true;
+   const summary=document.createElement('summary');summary.textContent=group.title;details.append(summary);
+   const grid=document.createElement('div');grid.className='aes-summary-grid';
+   const related=getTasks().filter(t=>t.order===current);
+   for(const [label,id,key] of group.fields){
+    const input=$(id),stage=stageForField(id),task=stage?latestTask(related,stage.stage):null;
+    const fromStage=task?(id===stage.date?task.date:id===stage.description?task.description:''):'';
+    const value=String(fromStage||input?.value||saved[key]||saved[id]||'').trim();
+    const row=document.createElement('div');row.className='aes-summary-item';const name=document.createElement('small');name.textContent=label;const content=document.createElement('strong');content.textContent=fmt(value,input);row.append(name,content);grid.append(row)
+   }
+   details.append(grid);const footer=document.createElement('div');footer.className='aes-summary-footer';const edit=document.createElement('button');edit.type='button';edit.className='btn';edit.textContent='Editar esta seção';edit.onclick=()=>$(group.target)?.scrollIntoView({behavior:'smooth',block:'center'});   footer.append(edit);
+   const calendars=group.title.startsWith('4.')?[
+     ['shipDate','📅 View Calendário de Embarques'],['containerPickupDate','📅 Retirada do Container'],['containerStuffingDate','📅 Estufagem']]:
+     group.title.startsWith('5.')?[
+     ['fumigationDate','📅 Fumigation'],['fumigationConclusionDate','📅 Conclusion']]:
+     group.title.startsWith('6.')?[
+     ['lpcoIssueDate','📅 LPCO'],['mapaPositionDate','📅 MAPA']]:[];
+   for(const [id,label] of calendars){const button=document.createElement('button');button.type='button';button.className='btn';button.style.marginLeft='7px';button.textContent=label;
+     button.onclick=()=>{
+       const panel=$(id==='shipDate'?'shippingCalendarPanel':id+'CalendarPanel');
+       if(!panel){window.notify?.('Calendário indisponível nesta página.');return}
+       if(panel.style.display==='none'){
+         if(id==='shipDate')window.toggleShippingCalendar?.();else $(id+'CalendarButton')?.click();
+       }
+       panel.scrollIntoView({behavior:'smooth',block:'start'});
+     };footer.append(button)
+   }
+   details.append(footer);root.append(details);
+  }
+ }
+ function restore(saved){if(!order())return;for(const group of defs)for(const [,id,key] of group.fields){const input=$(id),value=saved?.[key]??saved?.[id];if(!input)continue;if(value!=null)input.value=String(value);else if(!['origin','destination','programLoadingPlace'].includes(id))input.value=''}render()}
+ function persist(){if(!order())return;const all=programs(),i=all.findIndex(x=>x.order===order());if(i<0)return;for(const group of defs)for(const [,id,key] of group.fields){const input=$(id);if(input)all[i][key]=input.value}localStorage.setItem(KEY,JSON.stringify(all));window.dispatchEvent(new Event('aes-shipping-program-updated'))}
+ window.aesRestoreScheduleFields=restore;window.aesRenderScheduleSummary=render;
+ document.addEventListener('DOMContentLoaded',()=>{
+  const box=document.createElement('div');box.className='aes-summary-carrier';
+  const fields=document.createElement('div');fields.className='grid4';
+  for(const [label,id,type,placeholder] of [['Shipping Line','scheduleShippingLine','text','Armador consultado'],['Vessel','scheduleVessel','text','Nome do navio'],['Voyage','scheduleVoyage','text','Viagem'],['Consulta no armador','scheduleCarrierSource','text','Link ou referência'],['ETD confirmado','scheduleETD','date',''],['ETA confirmada','scheduleETA','date','']]){
+    const wrap=document.createElement('div'),caption=document.createElement('label'),input=document.createElement('input');caption.htmlFor=id;caption.textContent=label;input.id=id;input.type=type;input.placeholder=placeholder;wrap.append(caption,input);fields.append(wrap)
+  }
+  box.append(fields);const help=document.createElement('p');help.className='sub';help.textContent='Preencha após consultar o armador e clique em Salvar Programação.';box.append(help);$('vesselTable').insertAdjacentElement('afterend',box);
+  $('aesSummaryRefresh').addEventListener('click',render);
+  $('schedule').addEventListener('input',e=>{if(e.target.matches('input,select,textarea'))render()});  $('schedule').addEventListener('change',event=>{
+    const field=event.target.id,current=order(),link=stageForField(field);
+    if(link&&current){
+      const all=getTasks(),candidates=all.map((t,i)=>({t,i})).filter(x=>x.t.order===current&&x.t.stage===link.stage);
+      const found=candidates.sort((a,b)=>String(b.t.date||'').localeCompare(String(a.t.date||'')))[0];
+      if(found){const task=all[found.i];if(field===link.date&&$(field).value)task.date=$(field).value;
+        if(field===link.description&&$(field).value&&!$(field).readOnly)task.description=$(field).value;
+        localStorage.setItem(taskKey,JSON.stringify(all));window.aesRenderStageCalendar?.()}
+    }
+    render();
+  });
+  $('schedule').addEventListener('click',event=>{
+    const button=event.target.closest('[data-caldate]');if(!button)return;
+    const panel=button.closest('[id$="CalendarPanel"]');const inputId=panel?.id?.replace('CalendarPanel','');
+    if(inputId)setTimeout(()=>$(inputId)?.dispatchEvent(new Event('change',{bubbles:true})),0);
+  });
+  const oldSelect=window.selectShippingCalendarDate;
+  window.selectShippingCalendarDate=function(date){oldSelect?.(date);$('shipDate')?.dispatchEvent(new Event('change',{bubbles:true}))};
+  const prior=window.saveScheduleProgramming;window.saveScheduleProgramming=function(){const result=prior?.apply(this,arguments);persist();render();return result};
+  window.addEventListener('aes-contracts-updated',render);window.addEventListener('aes-shipping-program-updated',render);render();
+ });
+})();
+</script>
+
+<script>
+/* Real contract Orders replace the fixture rows in operational modules. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ let contracts=[],companies={},busy=0,cloudSupported=true;
+ const bookingKey='aes_booking_request_v86';
+ const localBookings=()=>{try{return JSON.parse(localStorage.getItem(bookingKey)||'{}')||{}}catch{return {}}};
+ const schedules=()=>{try{return JSON.parse(localStorage.getItem('aesShippingPrograms')||'[]')||[]}catch{return []}};
+ const str=v=>v==null?'':String(v);
+ const fmtDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(str(v))?v.split('-').reverse().join('/'):str(v)||'—';
+ const num=v=>Number(String(v??0).replace(',','.').replace(/[^0-9.-]/g,''))||0;
+ const cell=(row,value,element='td')=>{const c=document.createElement(element);c.textContent=str(value)||'—';row.append(c);return c};
+ const button=(label,fn)=>{const b=document.createElement('button');b.type='button';b.className='btn primary';b.textContent=label;b.addEventListener('click',fn);return b};
+ const empty=(body,count,message)=>{if(body.rows.length)return;const tr=body.insertRow(),td=tr.insertCell();td.colSpan=count;td.className='sub';td.textContent=message};
+ const active=()=>contracts.filter(c=>c.order_number&&String(c.status||'').toLowerCase()!=='cancelled');
+ const schedule=order=>schedules().find(p=>p.order===order)||{};
+ const booking=(order,c)=>{
+   const d=localBookings()[order]||{},details=c.details||{},bd=details.booking_request||{};
+   return {...bd,...d,number:str(d.brBookingNo||bd.brBookingNo||bd.booking_number||details.booking_number).trim(),
+     line:str(d.brLine||bd.brLine||bd.shipping_line).trim()};
+ };
+ function renderContainers(){
+   const body=$('orderContainersTable')?.tBodies[0];if(!body)return;body.replaceChildren();
+   for(const c of active()){
+     const order=c.order_number,d=c.details||{},b=booking(order,c),tr=body.insertRow();
+     const qty=num(b.brCntrAmount||d.contractQtyContainer);
+     const records=window.orderContainerRecords?.[order]||[];
+     tr.dataset.order=order;tr.dataset.booking=b.number;tr.dataset.line=b.line;
+     const orderCell=cell(tr,order);orderCell.style.fontWeight='700';
+     cell(tr,b.number||'Aguardando booking');cell(tr,companies[c.importer_id]||'—');cell(tr,c.product||'—');
+     cell(tr,b.line||'—');cell(tr,b.brCntrType||d.contractContainerType||'—');cell(tr,qty||'—');
+     const added=cell(tr,records.length);added.id='ocAdded-'+order;
+     const pending=cell(tr,Math.max(0,qty-records.length));pending.id='ocPending-'+order;
+     const risk=tr.insertCell(),riskBadge=document.createElement('span');riskBadge.id='ocDetention-'+order;riskBadge.className='badge';riskBadge.textContent='No data';risk.append(riskBadge);
+     const state=tr.insertCell(),stateBadge=document.createElement('span');stateBadge.id='ocStatus-'+order;stateBadge.className='badge warn';state.append(stateBadge);
+     const add=button(!qty?'Informe Cntrs Amount':records.length?'Ver / Adicionar':'+ Adicionar Container',()=>window.openContainerModal(order,b.number||'',qty));
+     add.disabled=!qty;tr.insertCell().append(add);
+     if(qty)window.updateOrderContainerRow?.(order,qty);
+     else{stateBadge.textContent='Quantidade pendente';pending.textContent='—'}
+   }
+   empty(body,12,'Nenhum contrato cadastrado em Contracts.');
+   window.filterOrderContainers?.();
+ }
+ function renderLoading(){
+   const body=$('loading')?.querySelector('.card table tbody');if(!body)return;body.replaceChildren();
+   for(const c of active()){
+     const order=c.order_number,d=c.details||{},p=schedule(order),tr=body.insertRow(),qtyKg=Math.round(num(c.quantity_mt)*1000);
+     cell(tr,order);cell(tr,c.product||'—');cell(tr,d.contractContainerType||booking(order,c).brCntrType||'—');
+     const total=cell(tr,qtyKg.toLocaleString('en-US')+' kg');total.id='loadingTotal-'+order;total.dataset.totalKg=str(qtyKg);
+     const shipped=cell(tr,'0 kg');shipped.id='loadingShipped-'+order;
+     const balance=cell(tr,qtyKg.toLocaleString('en-US')+' kg');balance.id='loadingBalance-'+order;
+     const start=cell(tr,fmtDate(p.date));start.id='startTruckLoading-'+order;
+     const stuff=cell(tr,fmtDate(p.stuffingDate||p.containerStuffingDate));stuff.id='loadingStuffingDate-'+order;
+     const place=cell(tr,p.loadingPlace||p.programLoadingPlace||c.port_of_loading||'—');place.id='loadingPlace-'+order;
+     cell(tr,p.stuffingPlace||p.containerStuffingPlace||'—');
+     const actions=tr.insertCell();actions.append(button('+ Lançar Caminhão',()=>window.openTruckModal(order)));
+     const summary=document.createElement('div');summary.id='truckSummary-'+order;summary.className='sub';summary.style.marginTop='6px';actions.append(summary);
+     window.refreshTruckControl?.(order);
+   }
+   empty(body,11,'Nenhum contrato cadastrado em Contracts.');
+ }
+ function renderReleasing(){
+   const body=$('releasing')?.querySelector('.card .tablewrap table tbody');if(!body)return;body.replaceChildren();
+   for(const c of active()){
+     const order=c.order_number,b=booking(order,c),d=c.details||{},p=schedule(order),tr=body.insertRow();
+     cell(tr,order);cell(tr,b.number||'Aguardando booking');cell(tr,b.brCntrType||d.contractContainerType||'—');
+     cell(tr,b.brCntrAmount||d.contractQtyContainer||'—');
+     cell(tr,b.brConfirmedFreeTime?b.brConfirmedFreeTime+' days':'—');cell(tr,p.pickupDepot||p.containerPickupDepot||c.port_of_loading||'—');
+     for(const value of [b.brEmptyRelease,p.date,p.stuffingDate||p.containerStuffingDate,p.mapaPositionDate,
+       p.fumigationDate,p.conclusionDate||p.fumigationConclusionDate,b.brDraftDeadline,b.brDocsCutoff,
+       b.brConfirmedFreeTime?fmtDate(b.brETA):'',b.brETD])cell(tr,fmtDate(value));
+     for(const value of ['Pending','Pending','Pending','Open',b.number?'Operational':'Booking pending'])cell(tr,value);
+   }
+   empty(body,21,'Nenhum contrato cadastrado em Contracts.');
+ }
+ function renderAfter(){
+   const body=$('afterShippingTable')?.tBodies[0];if(!body)return;body.replaceChildren();
+   for(const c of active()){
+     const order=c.order_number,b=booking(order,c);if(!b.number)continue;
+     const d=c.details||{},p=schedule(order),tr=body.insertRow();
+     const etd=b.brETD||p.etd||'',eta=b.brETA||p.eta||'';
+     Object.assign(tr.dataset,{booking:b.number,shippingLine:b.line,agency:b.brAgency||'',port:c.port_of_discharge||'',
+       product:c.product||'',etd,eta});
+     const first=tr.insertCell(),strong=document.createElement('b');strong.textContent=order;first.append(strong);
+     const alert=document.createElement('div');alert.id='awbAlert-'+order;alert.className='badge bad';alert.style.marginTop='6px';first.append(alert);
+     cell(tr,c.product||'—');cell(tr,Math.round(num(c.quantity_mt)*1000).toLocaleString('en-US'));
+     cell(tr,c.port_of_discharge||'—');cell(tr,b.number);cell(tr,b.brVessel||p.vessel||'—');
+     cell(tr,b.line||'—');cell(tr,b.brAgency||'—');cell(tr,b.brCntrType||d.contractContainerType||'—');
+     cell(tr,b.brCntrAmount||d.contractQtyContainer||'—');
+     const etdCell=cell(tr,fmtDate(etd));etdCell.id='etd-'+order;
+     const etaCell=cell(tr,fmtDate(eta));etaCell.id='eta-'+order;
+     const action=tr.insertCell();action.append(button('Docs Tracking',()=>window.openDocsTracking(order)));
+     const summary=document.createElement('div');summary.id='docsTrackingSummary-'+order;summary.className='sub';summary.style.marginTop='6px';action.append(summary);
+     const tracking=window.docsTrackingData?.[order]||{};
+     summary.textContent='Courier: '+(tracking.courier||'—')+' · AWB: '+(tracking.awb||'—')+' · Chegada Docs: '+(tracking.arrival||'—');
+     window.refreshAwbAlert?.(order,tracking.awb||'');
+   }
+   empty(body,13,'Nenhum contrato com número de Booking salvo.');
+   window.applyAfterFilters?.();
+   const action=$('after')?.querySelector('.card:last-child > .toolbar button');
+   if(action){action.textContent='↻ Atualizar Orders com Booking';action.onclick=()=>refresh()}
+ }
+ function renderAll(){renderContainers();renderLoading();renderReleasing();renderAfter()}
+ async function refresh(){
+   const client=window.aesSharedClient,request=++busy;if(!client||$('aesAuthGate')?.style.display!=='none')return;
+   const [c,n]=await Promise.all([
+     client.from('contracts').select('id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,port_of_loading,port_of_discharge,status,details').order('id',{ascending:false}),
+     client.from('companies').select('id,name')
+   ]);
+   if(request!==busy)return;
+   if(c.error||n.error){window.notify?.('Falha ao carregar contratos das operações: '+(c.error||n.error).message);return}
+   contracts=c.data||[];companies=Object.fromEntries((n.data||[]).map(x=>[x.id,x.name]));renderAll();
+ }
+ async function restoreCloudBookings(){
+   const client=window.aesSharedClient;if(!client||!cloudSupported)return;
+   const {data,error}=await client.from('aes_booking_requests').select('order_number,booking_number,shipping_line,status,payload,updated_at');
+   if(error){if(['42P01','PGRST205'].includes(error.code))cloudSupported=false;return}
+   const local=localBookings();let changed=false;
+   for(const row of data||[]){
+     const incoming=row.payload&&typeof row.payload==='object'?row.payload:{};
+     const localDate=Date.parse(local[row.order_number]?.savedAt||0)||0,cloudDate=Date.parse(row.updated_at||0)||0;
+     if(localDate>cloudDate)continue;
+     local[row.order_number]={...local[row.order_number],...incoming,brBookingNo:row.booking_number||incoming.brBookingNo||'',
+       brLine:row.shipping_line||incoming.brLine||'',status:row.status||incoming.status||'',savedAt:row.updated_at};
+     changed=true;
+   }
+   if(changed){localStorage.setItem(bookingKey,JSON.stringify(local));window.refreshBookingRequestOrders?.();renderAll()}
+ }
+ const priorSave=window.saveBookingRequest;
+ window.saveBookingRequest=function(...args){
+   const result=priorSave?.apply(this,args),order=$('brOrder')?.value.trim(),data=localBookings()[order];
+   if(order&&data){
+     data.savedAt=new Date().toISOString();
+     const all=localBookings();all[order]=data;localStorage.setItem(bookingKey,JSON.stringify(all));
+     if(cloudSupported&&window.aesSharedClient){
+       const payload=Object.fromEntries(Object.entries(data).filter(([key,value])=>key!=='quotes'&&key!=='proposalData'&&typeof value!=='object'));
+       const c=contracts.find(x=>x.order_number===order);
+       window.aesSharedClient.from('aes_booking_requests').upsert({
+         order_number:order,contract_id:c?.id||null,booking_number:data.brBookingNo||null,
+         shipping_line:data.brLine||null,status:data.status||'Pending Quotation',
+         payload,updated_at:data.savedAt
+       },{onConflict:'order_number'}).then(({error})=>{
+         if(error){if(['42P01','PGRST205'].includes(error.code))cloudSupported=false;
+           if(!args[0])window.notify?.('Booking salvo neste navegador; Supabase: '+error.message)}
+       });
+     }
+     renderAll();
+   }
+   return result;
+ };
+ window.addEventListener('aes-contracts-updated',event=>{
+   const detail=event.detail;
+   if(detail?.contracts){contracts=detail.contracts;companies=detail.names||{};renderAll();restoreCloudBookings()}
+   else refresh();
+ });
+ document.addEventListener('DOMContentLoaded',()=>{
+   const gate=$('aesAuthGate');
+   new MutationObserver(()=>{if(gate.style.display==='none')refresh().then(restoreCloudBookings)}).observe(gate,{attributes:true,attributeFilter:['style']});
+   if(gate.style.display==='none')refresh().then(restoreCloudBookings);
+ });
+ window.addEventListener('storage',e=>{if([bookingKey,'aesShippingPrograms'].includes(e.key))renderAll()});
+})();
+</script>
+
 </body>
 </html>
