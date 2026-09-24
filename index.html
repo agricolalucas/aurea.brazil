@@ -702,10 +702,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <button class="btn primary" onclick="applyBookingFilters()">Aplicar Filtros</button>
             <button class="btn" onclick="clearBookingFilters()">Limpar</button>
           </div>
-<div class="tablewrap"><table id="bookingPendencyTable"><thead><tr><th>Number Contact</th><th>Importer</th><th>Exporter</th><th>Packing</th><th>Cntrs Type</th><th>Products</th><th>Origin</th><th>Destiny</th><th>Shipment</th><th>Pendências</th><th>Detalhes / Documentos</th><th>Note</th></tr></thead><tbody>
-          <tr><td>EX-1026</td><td>Global Agro Foods</td><td>Aurea</td><td>25 kg</td><td>40'HC</td><td>Sesame</td><td>Brazil</td><td>India</td><td>Sep/26</td><td><span class="badge bad">Import Permit</span><span class="badge warn">Label Approval</span><span class="badge bad">Advance Payment</span><div><span class="badge info">3 pendências</span></div></td><td><button class="btn primary" onclick="openBookingPendencyDetail('EX-1026')">Abrir Pendências</button></td><td><span class="badge bad">Booking bloqueado</span></td></tr>
-          <tr><td>EX-1028</td><td>Asia Foods</td><td>Aurea</td><td>25 kg</td><td>40'HC</td><td>Sesame</td><td>Brazil</td><td>China</td><td>Oct/26</td><td><span class="badge ok">Sem pendências</span></td><td><button class="btn" onclick="openBookingPendencyDetail('EX-1028')">Abrir</button></td><td><span class="badge ok">Liberado</span></td></tr>
-        </tbody></table></div>
+<div class="tablewrap"><table id="bookingPendencyTable"><thead><tr><th>Number Contact</th><th>Importer</th><th>Exporter</th><th>Packing</th><th>Cntrs Type</th><th>Products</th><th>Origin</th><th>Destiny</th><th>Shipment</th><th>Pendências</th><th>Detalhes / Documentos</th><th>Note</th></tr></thead><tbody></tbody></table></div>
           <div class="toolbar" style="justify-content:flex-end;margin-top:12px">
             <button class="btn primary" onclick="exportBookingExcel()">Gerar Excel</button>
           </div>
@@ -6940,6 +6937,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
   };
   // Restaura o resumo salvo da tabela ao abrir/recarregar o sistema.
   const all=loadAll();Object.keys(all).forEach(order=>updateTable(order,all[order]));
+  window.refreshBookingPendencySummaries=()=>{const saved=loadAll();Object.keys(saved).forEach(order=>updateTable(order,saved[order]))};
 })();
 </script>
 
@@ -8123,7 +8121,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   async function load(){
     if(!client)throw new Error('Supabase indisponível.');
     status('Carregando empresas cadastradas em USER…');
-    const companyResponse=await client.from('companies').select('id,name').order('id');
+    const companyResponse=await client.from('companies').select('id,name,country').order('id');
     if(companyResponse.error){status('Erro ao carregar USER: '+companyResponse.error.message);throw companyResponse.error}
     companies=companyResponse.data||[];
     names.clear();for(const c of companies) names.set(Number(c.id),c.name);
@@ -8150,6 +8148,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     $('contractCount').textContent=String(contractResponse.data.length);
     status(`${companyResponse.data.length} empresa(s) USER e ${contractResponse.data.length} contrato(s) carregados do Supabase.`);
     window.refreshBookingRequestOrders?.();
+    window.renderBookingPendencyOrders?.(contractResponse.data,names,companies);
   }
   function companyId(selectId){
     const id=Number(val(selectId));
@@ -8356,6 +8355,46 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
  function previewSI(){window.generateShippingInstructionPreviewOriginal();render('siPreviewLabel')}
  function pdf(){const popup=window.open('','_blank');if(!popup)return msg('Permita pop-ups para salvar o PDF.');try{previewSI();const cloneNode=$('shippingInstructionModal').querySelector('.card').cloneNode(true);cloneNode.querySelector('.toolbar')?.remove();const order=val('contractOrderNumber')||'SEM-ORDER';const html=`<!doctype html><html><head><meta charset="utf-8"><title>Shipping Instruction ${esc(order)}</title><style>@page{size:A4;margin:14mm}body{font:11px/1.4 Arial,sans-serif;color:#17345d}h1{font-size:20px;border-bottom:3px solid #17345d;padding-bottom:10px}h3{font-size:12px;margin:15px 0 6px}.sub{white-space:pre-wrap}hr{border:0;border-top:1px solid #ddd}.aes-label-canvas{position:relative!important;border:1px solid #333!important;width:160mm!important;height:94mm!important;max-width:none!important;padding:0!important;break-inside:avoid}.aes-label-item{position:absolute;font-size:9px;max-width:43%;white-space:pre-line}.aes-label-item b{font-size:8px}.aes-label-rows{display:flex;flex-direction:column;gap:3mm;padding:5mm 20mm 5mm 5mm!important}.aes-label-rows .aes-label-item{position:static;display:flex;align-items:flex-start;gap:2mm;max-width:100%}.aes-label-rows .aes-label-item span{white-space:pre-line}.aes-label-rows .aes-label-item.aes-label-stacked{display:block}.aes-label-image{position:absolute;max-width:16%;max-height:18%}.aes-veg-logo{position:absolute;border:2px solid green;color:green;padding:1px 6px;font-size:16px}.noprint{text-align:right}@media print{.noprint{display:none}}</style></head><body><h1>SHIPPING INSTRUCTION</h1><b>Order: ${esc(order)}</b> · ${esc(new Date().toLocaleDateString('pt-BR'))}${cloneNode.innerHTML}<div class="noprint"><button onclick="window.print()">Imprimir / Salvar como PDF</button></div></body></html>`;popup.document.write(html);popup.document.close();popup.focus();setTimeout(()=>popup.print(),450)}catch(e){popup.close();msg('Erro ao gerar PDF: '+e.message)}}
  document.addEventListener('DOMContentLoaded',()=>{window.openNewLabelModel=open;window.closeNewLabelModel=close;window.saveNewLabelModel=save;window.generateShippingInstructionPreviewOriginal=window.generateShippingInstructionPreview;window.generateShippingInstructionPreview=previewSI;window.generateShippingInstructionPDF=pdf;window.applyLabelModel=apply;$('siLabelModel').addEventListener('change',apply);$('labelModelImage').addEventListener('change',upload);$('labelLayoutFlow').addEventListener('change',()=>{draft.flow=$('labelLayoutFlow').value;renderFields();render('labelDesignerCanvas',draft,true)});$('labelDesignerVeg').addEventListener('change',()=>{draft.veg=$('labelDesignerVeg').checked;render('labelDesignerCanvas',draft,true)});for(const id of ['labelImageX','labelImageY'])$(id).addEventListener('input',()=>{draft.imageX=Number($('labelImageX').value)||82;draft.imageY=Number($('labelImageY').value)||5;render('labelDesignerCanvas',draft,true)});for(const id of ['siLabelProduct','siLabelOrigin','siLabelNetWeight','siLabelLot','siLabelPackingDate','siLabelExpiryDate','siLabelPacker','siLabelFssai','siConsignee'])$(id)?.addEventListener('input',()=>{render('labelPreview');if(draft)render('labelDesignerCanvas',draft,true)});render('labelPreview');const gate=$('aesAuthGate');new MutationObserver(()=>{if(gate.style.display==='none')load()}).observe(gate,{attributes:true,attributeFilter:['style']});if(gate.style.display==='none')load()});
+})();
+</script>
+<script>/* Booking Pendency usa as mesmas Orders carregadas em Contracts do Supabase. */
+(() => {
+ const $=id=>document.getElementById(id);
+ const text=(cell,value)=>{cell.textContent=String(value??'—')};
+ window.renderBookingPendencyOrders=function(contracts,names,companies){
+  const body=$('bookingPendencyTable')?.tBodies[0];if(!body)return;
+  body.replaceChildren();
+  const countries=new Map((companies||[]).map(c=>[Number(c.id),c.country||'']));
+  if(!contracts.length){const row=body.insertRow(),cell=row.insertCell();cell.colSpan=12;cell.className='sub';cell.textContent='Nenhuma Order cadastrada em Contracts.';$('bookingPendencyDetail').style.display='none';return}
+  for(const contract of contracts){
+   const d=contract.details||{},row=body.insertRow(),order=contract.order_number;
+   const importer=names.get(Number(contract.importer_id))||'—',exporter=names.get(Number(contract.exporter_id))||'—';
+   const destination=countries.get(Number(contract.importer_id))||d.contractPortDestiny||contract.port_of_discharge||'—';
+   const shipment=d.shippingForecastStart||d.shippingForecastEnd||'';
+   row.dataset.order=order;row.dataset.destination=destination;row.dataset.advance=d.contractAdvanceRequired==='yes'?(d.contractAdvancePercent ? d.contractAdvancePercent+'%' : d.contractAdvancePayment||'') : ''; 
+   for(const value of [order,importer,exporter,d.contractPacking||'—',d.contractContainerType||'—',contract.product||'—',contract.port_of_loading||'—',contract.port_of_discharge||'—',shipment||'—'])text(row.insertCell(),value);
+   const pending=row.insertCell();const badge=document.createElement('span');badge.className='badge warn';badge.textContent='Verificar pendências';pending.append(badge);
+   const action=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn primary';button.textContent='Abrir pendências';button.addEventListener('click',()=>window.openBookingPendencyDetail(order));action.append(button);
+   const note=row.insertCell();const state=document.createElement('span');state.className='badge warn';state.textContent='Aguardando verificação';note.append(state);
+  }
+  window.refreshBookingPendencySummaries?.();
+  window.applyBookingFilters?.();
+ };
+ const oldOpen=window.openBookingPendencyDetail;
+ window.openBookingPendencyDetail=function(order){
+  oldOpen(order);
+  const row=[...$('bookingPendencyTable').tBodies[0].rows].find(r=>r.dataset.order===order);
+  if(!row)return;
+  const hasSaved=(()=>{try{return Object.hasOwn(JSON.parse(localStorage.getItem('aes_booking_pendency_v106')||'{}'),order)}catch{return false}})();
+  if(!hasSaved){
+   const country=row.dataset.destination||'';
+   $('acidDestination').value=country;
+   $('advanceRequired').value=row.dataset.advance.trim()?'yes':'no';
+   $('advanceContractTerm').value=row.dataset.advance||'Sem Advance no contrato';
+   $('importPermitRequired').value='yes';
+   window.updateImportPermitRequirement?.();window.updateAdvanceRequirement?.();window.updateAcidBookingStatus?.();
+  }
+ };
 })();
 </script>
 </body>
