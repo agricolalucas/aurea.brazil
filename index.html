@@ -173,7 +173,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
               <div class="wide"><label>Endereço</label><input id="uAddress" placeholder="Full Address"></div>
               <div><label>País</label><input id="uCountry" placeholder="Country"></div><div><label>Email</label><input id="uEmail" type="email" placeholder="email@company.com"></div>
               <div><label>Telefone</label><input id="uPhone" placeholder="+00 ..."></div><div><label>Tax ID / Registro</label><input id="uTaxId" placeholder="Tax ID / Registration"></div><div><label>Nome de Contato</label><input id="uContactName" placeholder="Contact Name"></div>
-              <div><label>Status</label><select id="uStatus"><option>Active</option><option>Pending Verification</option><option>Inactive</option></select></div>
+              <div><label>IEC (India)</label><input id="uIec" placeholder="Importer Exporter Code"></div><div><label>GSTIN (India)</label><input id="uGst" placeholder="GST registration"></div><div><label>FSSAI No. (India)</label><input id="uFssai" placeholder="FSSAI licence number"></div><div><label>Status</label><select id="uStatus"><option>Active</option><option>Pending Verification</option><option>Inactive</option></select></div>
               <div class="wide">
                 <label>Logo da Empresa</label>
                 <input id="uLogo" type="file" accept="image/png,image/jpeg,image/webp" onchange="previewUserLogo(event)">
@@ -215,10 +215,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <div class="tablewrap">
               <table id="bankRegistryTable">
                 <thead><tr><th>Beneficiary Name</th><th>Beneficiary Address</th><th>Bank</th><th>SWIFT</th><th>IBAN</th><th>Bank Address</th><th>Status</th><th>Ação</th></tr></thead>
-                <tbody>
-                  <tr><td>Aurea Export</td><td>Registered Beneficiary Address</td><td>Wio Bank PJSC</td><td>WIOBAEADXXX</td><td>AE500860000009880802999</td><td>Etihad Airways Centre, 5th Floor, Abu Dhabi, UAE</td><td><span class="badge ok">Active</span></td><td><button class="btn" onclick="editBank('Wio Bank PJSC','WIOBAEADXXX','AE500860000009880802999','Etihad Airways Centre, 5th Floor, Abu Dhabi, UAE')">Editar</button></td></tr>
-                  <tr><td>Aaurea India Agribusiness LLP</td><td>Registered Beneficiary Address, India</td><td>Axis Bank Ltd</td><td>AXISINBBXXX</td><td>-</td><td>India</td><td><span class="badge ok">Active</span></td><td><button class="btn" onclick="editBank('Axis Bank Ltd','AXISINBBXXX','-','India')">Editar</button></td></tr>
-                </tbody>
+                <tbody></tbody>
               </table>
             </div>
           </div>
@@ -234,7 +231,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
               <div><label>Status</label><select id="regBankStatus"><option>Active</option><option>Inactive</option></select></div>
             </div>
             <div class="toolbar" style="margin-top:12px">
-              <button class="btn primary" onclick="saveBank()">Salvar Banco</button>
+              <button id="aesSaveBank" class="btn primary" type="button" onclick="saveBank()">Salvar Banco</button>
               <button class="btn" onclick="clearBankForm()">Limpar</button>
             </div>
           </div>
@@ -321,6 +318,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
 </div>
 
 <div id="contractFormView" style="display:none">
+  <p id="contractCloudStatus" role="status" style="margin:0 0 12px;padding:10px 14px;background:#edf5ff;color:#17436b;border-radius:8px">Conectando ao Supabase…</p>
   <div class="toolbar" style="margin-bottom:12px"><button class="btn" onclick="showContractList()">← Voltar para Lista de Contratos</button><span class="badge info" id="editingContractBadge">Novo Contrato</span></div>
   <div class="card">
     <div class="tabs"><button class="tab active" data-tab="c1">Dados Gerais</button><button class="tab" data-tab="c8">Shipping Instruction</button></div>
@@ -330,10 +328,10 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <div class="grid4">
           <div><label>Order Number</label><input id="contractOrderNumber" value="EX-1026"></div>
           <div><label>Contract Number</label><input id="contractNumber" placeholder="CT-2026-001"></div>
-          <div><label for="contractImporterId">Importer</label><select id="contractImporterId" required><option value="">Carregando USER...</option></select><input id="cImporter" type="hidden"></div>
-          <div><label for="contractExporterId">Exporter</label><select id="contractExporterId" required><option value="">Carregando USER...</option></select><input id="cExporter" type="hidden"></div>
+          <div><label for="contractImporterSearch">Importer</label><div class="company-combobox"><input id="contractImporterSearch" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="contractImporterSearchResults" placeholder="Buscar empresa por nome" autocomplete="off"><div id="contractImporterSearchResults" class="company-combobox-results" role="listbox" hidden></div></div><input id="contractImporterId" type="hidden"><input id="cImporter" type="hidden"></div>
+          <div><label for="contractExporterSearch">Exporter</label><div class="company-combobox"><input id="contractExporterSearch" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="contractExporterSearchResults" placeholder="Buscar empresa por nome" autocomplete="off"><div id="contractExporterSearchResults" class="company-combobox-results" role="listbox" hidden></div></div><input id="contractExporterId" type="hidden"><input id="cExporter" type="hidden"></div>
           <div><label>Notify</label><div class="lookup"><input id="cNotify"><button class="btn" onclick="openLookup('cNotify')">🔍</button></div></div>
-          <div><label>Consignee</label><div class="lookup"><input id="cConsignee" value="Global Agro Foods"><button class="btn" onclick="openLookup('cConsignee')">🔍</button></div></div>
+          <div><label>Consignee</label><div class="lookup"><input id="cConsignee" value="Global Agro Foods"><button id="contractConsigneeLookup" class="btn" type="button" onclick="openLookup('cConsignee')">🔍</button></div><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:500"><input id="consigneeSameAsImporter" type="checkbox" style="width:auto;margin:0">Consignee igual ao Importer</label></div>
           <div><label>Packing</label><input id="contractPacking" value="25 kg bags"></div>
           <div><label>Broker</label><select id="contractHasBroker" onchange="toggleContractBroker()"><option value="no" selected>No Broker</option><option value="yes">Yes - Has Broker</option></select></div>
           <div id="contractBrokerSelectWrap" style="display:none"><label>Select Broker</label><div class="lookup"><input id="contractBroker" placeholder="Buscar broker cadastrado no USER" readonly><button class="btn" type="button" onclick="openBrokerLookup()">🔍</button></div></div>
@@ -505,7 +503,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <h3 style="margin:0">5. Label Format</h3>
             <div class="sub">Selecione um modelo pré-cadastrado; o layout escolhido será incluído no PDF da Shipping Instruction.</div>
           </div>
-          <button class="btn" onclick="notify('Cadastro de novo modelo de label aberto no protótipo.')">+ Novo Modelo de Label</button>
+          <button class="btn" type="button" onclick="openNewLabelModel()">+ Novo Modelo de Label</button>
         </div>
 
         <div class="grid3">
@@ -521,29 +519,21 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <div><label>Product Name</label><input id="siLabelProduct" value="Sesame Seeds"></div>
           <div><label>Net Weight</label><input id="siLabelNetWeight" value="25 KG"></div>
           <div><label>Country of Origin</label><input id="siLabelOrigin" value="BRAZIL"></div>
-          <div><label>Packing Date</label><input id="siLabelPackingDate" type="date"></div>
+          <div><label>Lot Number</label><input id="siLabelLot" placeholder="Lot / Batch"></div><div><label>FSSAI No #</label><input id="siLabelFssai" placeholder="Carregado do Importer em USER"></div><div><label>Production Date</label><input id="siLabelPackingDate" type="date"></div>
           <div><label>Expiry Date</label><input id="siLabelExpiryDate" type="date"></div>
           <div class="wide"><label>Packer Name & Address</label><textarea id="siLabelPacker" placeholder="Packer company name and full address"></textarea></div>
         </div>
 
         <div class="card" style="box-shadow:none;margin-top:12px;background:#fafafa">
-          <h3 style="margin-top:0">Pré-visualização do Label</h3>
-          <div id="labelPreview" style="border:2px solid #222;padding:18px;max-width:460px;background:white">
-            <div style="font-size:18px;font-weight:800;margin-bottom:12px">STANDARD EXPORT LABEL</div>
-            <div><b>PRODUCT:</b> <span data-label="product">Sesame Seeds</span></div>
-            <div><b>NET WEIGHT:</b> <span data-label="weight">25 KG</span></div>
-            <div><b>COUNTRY OF ORIGIN:</b> <span data-label="origin">BRAZIL</span></div>
-            <div><b>PACKING DATE:</b> <span data-label="packing">-</span></div>
-            <div><b>EXPIRY DATE:</b> <span data-label="expiry">-</span></div>
-            <div><b>PACKER:</b> <span data-label="packer">-</span></div>
-          </div>
+          
+          <div id="labelPreview" class="aes-label-canvas" aria-label="Pré-visualização do Label"></div>
         </div>
       </div>
 
       <div class="toolbar" style="margin-top:12px">
-        <button class="btn primary" onclick="generateShippingInstructionPreview()">Gerar Shipping Instruction PDF</button>
+        <button class="btn primary" onclick="generateShippingInstructionPDF()">Gerar Shipping Instruction PDF</button>
         <button class="btn" onclick="generateShippingInstructionPreview()">Visualizar</button>
-        <button class="btn" onclick="notify('Shipping Instruction salva no contrato.')">Salvar Shipping Instruction</button>
+        <button class="btn" onclick="saveContractLogistics()">Salvar Shipping Instruction</button>
       </div>
     </div>
 
@@ -3643,12 +3633,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div><h1 style="font-size:18px">Buscar Bank Data para Documentos</h1><div class="sub">Selecione o banco que deve constar nas instruções de envio documental.</div></div>
       <button class="btn" onclick="closeSIBankLookup()">Fechar</button>
     </div>
-    <div class="listitem" onclick="pickSIBank('Wio Bank PJSC','WIOBAEADXXX','AE500860000009880802999','Etihad Airways Centre, 5th Floor, Abu Dhabi, UAE')">
-      <b>Wio Bank PJSC</b><div class="sub">SWIFT: WIOBAEADXXX · IBAN: AE500860000009880802999</div>
-    </div>
-    <div class="listitem" onclick="pickSIBank('Axis Bank Ltd','AXISINBBXXX','-','India')">
-      <b>Axis Bank Ltd</b><div class="sub">SWIFT: AXISINBBXXX · India</div>
-    </div>
+    <div style="margin:10px 0"><label for="siBankLookupSearch">Buscar banco ou beneficiário</label><input id="siBankLookupSearch" type="search" placeholder="Digite para buscar em Bank Data" autocomplete="off"></div><div id="siBankLookupResults"></div>
     <div class="toolbar" style="margin-top:10px">
       <button class="btn primary" onclick="closeSIBankLookup();go('bank')">+ Cadastrar Novo Banco</button>
     </div>
@@ -3686,7 +3671,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div id="siPreviewLabel" style="border:2px solid #222;padding:18px;max-width:460px"></div>
 
       <div class="toolbar" style="justify-content:flex-end;margin-top:16px">
-        <button class="btn primary" onclick="notify('PDF da Shipping Instruction gerado no protótipo.')">Gerar PDF</button>
+        <button class="btn primary" onclick="generateShippingInstructionPDF()">Gerar PDF</button>
       </div>
     </div>
   </div>
@@ -3698,12 +3683,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div><h1 style="font-size:18px">Buscar Bank Data</h1><div class="sub">Selecione um banco previamente cadastrado.</div></div>
       <button class="btn" onclick="closeBankLookup()">Fechar</button>
     </div>
-    <div class="listitem" onclick="pickBank('Wio Bank PJSC','WIOBAEADXXX','AE500860000009880802999','Etihad Airways Centre, 5th Floor, Abu Dhabi, UAE')">
-      <b>Wio Bank PJSC</b><div class="sub">SWIFT: WIOBAEADXXX · IBAN: AE500860000009880802999</div>
-    </div>
-    <div class="listitem" onclick="pickBank('Axis Bank Ltd','AXISINBBXXX','-','India')">
-      <b>Axis Bank Ltd</b><div class="sub">SWIFT: AXISINBBXXX · India</div>
-    </div>
+    <div style="margin:10px 0"><label for="bankLookupSearch">Buscar banco ou beneficiário</label><input id="bankLookupSearch" type="search" placeholder="Digite para buscar em Bank Data" autocomplete="off"></div><div id="bankLookupResults"></div>
     <div class="toolbar" style="margin-top:10px">
       <button class="btn primary" onclick="closeBankLookup();go('bank')">+ Cadastrar Novo Banco</button>
     </div>
@@ -4343,18 +4323,7 @@ function getVal(id){
 function escHtml(v){
   return (v||'-').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
-function applyLabelModel(){
-  const model=getVal('siLabelModel');
-  const names={
-    standard:'STANDARD EXPORT LABEL',
-    india:'INDIA IMPORT LABEL',
-    egypt:'EGYPT IMPORT LABEL',
-    china:'CHINA IMPORT LABEL'
-  };
-  const preview=document.getElementById('labelPreview');
-  if(preview) preview.querySelector('div').textContent=names[model]||'EXPORT LABEL';
-  updateLabelPreview();
-}
+function applyLabelModel(){updateLabelPreview()}
 function updateLabelPreview(){
   const preview=document.getElementById('labelPreview');
   if(!preview) return;
@@ -4398,9 +4367,8 @@ function generateShippingInstructionPreview(){
     ? '<b>Bank:</b> '+escHtml(siBank.bank)+'<br><b>SWIFT:</b> '+escHtml(siBank.swift)+'<br><b>IBAN:</b> '+escHtml(siBank.iban)+'<br><b>Bank Address:</b> '+escHtml(siBank.address)+'<br><b>Instructions:</b> '+escHtml(getVal('siBankInstructions'))
     : 'Nenhum Bank Data selecionado.';
 
-  const modelText=document.querySelector('#labelPreview > div')?.textContent || 'EXPORT LABEL';
   document.getElementById('siPreviewLabel').innerHTML=
-    '<div style="font-size:18px;font-weight:800;margin-bottom:12px">'+escHtml(modelText)+'</div>'+
+
     '<div><b>PRODUCT:</b> '+escHtml(getVal('siLabelProduct'))+'</div>'+
     '<div><b>NET WEIGHT:</b> '+escHtml(getVal('siLabelNetWeight'))+'</div>'+
     '<div><b>COUNTRY OF ORIGIN:</b> '+escHtml(getVal('siLabelOrigin'))+'</div>'+
@@ -8029,14 +7997,14 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   async function loadUsers() {
     const {data,error} = await client.from('companies')
-      .select('id,name,profile_type,tax_id,country,address,email,phone,contact_name,status')
+      .select('id,name,profile_type,tax_id,country,address,email,phone,contact_name,status,iec,gst,fssai_number')
       .order('id', {ascending:false});
     if (error) throw error;
     const body = document.querySelector('#userRegistryTable tbody');
     const lookup = $('userLookupResults');
     body.replaceChildren(); lookup.replaceChildren();
     for (const u of data) {
-      const row = body.insertRow(); row.dataset.profile = u.profile_type || '';
+      const row = body.insertRow(); row.dataset.profile = u.profile_type || ''; row.dataset.companyId = String(u.id);
       for (const value of [u.profile_type,u.name,u.address,u.country,u.tax_id,u.email,u.contact_name,u.status]) {
         const cell = row.insertCell(); cell.textContent = value || '—';
       }
@@ -8044,7 +8012,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       const edit = document.createElement('button'); edit.type='button'; edit.className='btn'; edit.textContent='Editar';
       edit.addEventListener('click', () => {
         editId=u.id;
-        for (const [id,value] of Object.entries({uProfile:u.profile_type,uCompany:u.name,uAddress:u.address,uCountry:u.country,uEmail:u.email,uPhone:u.phone,uTaxId:u.tax_id,uContactName:u.contact_name,uStatus:u.status})) {
+        for (const [id,value] of Object.entries({uProfile:u.profile_type,uCompany:u.name,uAddress:u.address,uCountry:u.country,uEmail:u.email,uPhone:u.phone,uTaxId:u.tax_id,uContactName:u.contact_name,uIec:u.iec,uGst:u.gst,uFssai:u.fssai_number,uStatus:u.status})) {
           if ($(id)) $(id).value=value||'';
         }
         document.querySelector('#user .tab[data-tab="userform"]')?.click();
@@ -8060,7 +8028,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   async function saveUser() {
     const name=field('uCompany'); if (!name) return window.notify('Informe Nome da Empresa / Local.');
-    const record={name,profile_type:field('uProfile'),address:field('uAddress'),country:field('uCountry'),email:field('uEmail'),phone:field('uPhone'),tax_id:field('uTaxId'),contact_name:field('uContactName'),status:field('uStatus')};
+    const record={name,profile_type:field('uProfile'),address:field('uAddress'),country:field('uCountry'),email:field('uEmail'),phone:field('uPhone'),tax_id:field('uTaxId'),contact_name:field('uContactName'),iec:field('uIec')||null,gst:field('uGst')||null,fssai_number:field('uFssai')||null,status:field('uStatus')};
     const button=$('aesSaveUser'); button.disabled=true;
     try {
       const request=editId===null ? client.from('companies').insert(record) : client.from('companies').update(record).eq('id',editId);
@@ -8106,40 +8074,63 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   });
 })();
 </script>
+<style>
+.company-combobox{position:relative}
+.company-combobox-results:not([hidden]){display:block;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:260px;overflow:auto;z-index:1000;background:#fff;border:1px solid #cbd8eb;border-radius:10px;box-shadow:0 12px 28px rgba(17,43,76,.16)}
+.company-combobox-option{display:flex;justify-content:space-between;gap:12px;width:100%;padding:11px 13px;border:0;border-bottom:1px solid #e9eef6;background:#fff;color:#142b48;text-align:left;cursor:pointer;font:inherit}
+.company-combobox-option:hover,.company-combobox-option:focus{background:#eaf2ff;outline:none}
+.company-combobox-option small{color:#687990;white-space:nowrap}
+.company-combobox-empty{padding:13px;color:#687990}
+</style>
 <script>/* Contratos no Supabase. Carregar depois do script principal do sistema. */
 (() => {
   const client=window.aesSharedClient;
   const $=id=>document.getElementById(id);
   const names=new Map(), contracts=new Map();
+  let companies=[];
   let editingId=null;
   const fields=()=>[...$('contractFormView').querySelectorAll('input,select,textarea')].filter(el=>el.type!=='file' && !el.closest('#contractListView'));
   const notifyError=e=>window.notify?.('Contrato não salvo: '+(e?.message||String(e)));
   const val=id=>($(id)?.value||'').trim();
+  const status=value=>{if($('contractCloudStatus'))$('contractCloudStatus').textContent=value};
   const dateBR=v=>v?new Date(v+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+  const normalized=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().trim();
+  const companyFields=[['contractImporterId','contractImporterSearch','cImporter'],['contractExporterId','contractExporterSearch','cExporter']];
+  function closeCompanyMenus(){for(const [,searchId] of companyFields){$(searchId+'Results').hidden=true;$(searchId).setAttribute('aria-expanded','false')}}
+  function chooseCompany(id,searchId,hiddenId,company){$(id).value=String(company.id);$(searchId).value=company.name||'';$(hiddenId).value=company.name||'';closeCompanyMenus();if(id==='contractImporterId')syncConsignee()}
+  function showCompanySuggestions(id,searchId,hiddenId){
+    closeCompanyMenus();
+    const menu=$(searchId+'Results'),query=normalized($(searchId).value);
+    menu.replaceChildren();
+    const matches=companies.filter(c=>normalized(c.name).includes(query)||String(c.id).includes(query)).slice(0,12);
+    if(!matches.length){const empty=document.createElement('div');empty.className='company-combobox-empty';empty.textContent=companies.length?'Nenhuma empresa encontrada.':'Nenhuma empresa cadastrada em USER.';menu.append(empty)}
+    for(const c of matches){const button=document.createElement('button');button.type='button';button.setAttribute('role','option');button.className='company-combobox-option';button.textContent=c.name||'Sem nome';const idText=document.createElement('small');idText.textContent='ID '+c.id;button.append(idText);button.addEventListener('mousedown',event=>event.preventDefault());button.addEventListener('click',()=>chooseCompany(id,searchId,hiddenId,c));menu.append(button)}
+    menu.hidden=false;$(searchId).setAttribute('aria-expanded','true');
+  }
   function snapshot(){
-    const data={}; fields().forEach((el,index)=>{data[el.id||'field_'+index]=el.value});
+    const data={}; fields().forEach((el,index)=>{data[el.id||'field_'+index]=el.type==='checkbox'?el.checked:el.value});
+    if(window.selectedBankData)data._selectedBankData=window.selectedBankData;
+    if(window.selectedSIBankData)data._selectedSIBankData=window.selectedSIBankData;
     return data;
   }
   function restore(data){
     if(!data)return;
-    fields().forEach((el,index)=>{const key=el.id||'field_'+index;if(Object.hasOwn(data,key))el.value=data[key]});
+    window.selectedBankData=data._selectedBankData||null;
+    window.selectedSIBankData=data._selectedSIBankData||null;
+    fields().forEach((el,index)=>{const key=el.id||'field_'+index;if(Object.hasOwn(data,key)){if(el.type==='checkbox')el.checked=Boolean(data[key]);else el.value=data[key]}});
     window.calculateContractValues?.();window.toggleContractBroker?.();
   }
   async function load(){
     if(!client)throw new Error('Supabase indisponível.');
-    const [companyResponse,contractResponse]=await Promise.all([
-      client.from('companies').select('id,name').order('id'),
-      client.from('contracts').select('id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,unit_price,currency,port_of_loading,port_of_discharge,status,created_at,details').order('id',{ascending:false})
-    ]);
-    if(companyResponse.error)throw companyResponse.error;
-    if(contractResponse.error)throw contractResponse.error;
-    names.clear();for(const c of companyResponse.data) names.set(Number(c.id),c.name);
-    for(const [id,input] of [['contractImporterId','cImporter'],['contractExporterId','cExporter']]){
-      const select=$(id),selected=select.value;select.replaceChildren();
-      const empty=document.createElement('option');empty.value='';empty.textContent='Selecione uma empresa cadastrada em USER';select.append(empty);
-      for(const c of companyResponse.data){const option=document.createElement('option');option.value=String(c.id);option.textContent=`${c.name||'Sem nome'} · ID ${c.id}`;select.append(option)}
-      select.value=selected; if(!select.value)$(input).value='';
-    }
+    status('Carregando empresas cadastradas em USER…');
+    const companyResponse=await client.from('companies').select('id,name').order('id');
+    if(companyResponse.error){status('Erro ao carregar USER: '+companyResponse.error.message);throw companyResponse.error}
+    companies=companyResponse.data||[];
+    names.clear();for(const c of companies) names.set(Number(c.id),c.name);
+    for(const [id,searchId,hiddenId] of companyFields){const company=companies.find(c=>String(c.id)===$(id).value);if(company)chooseCompany(id,searchId,hiddenId,company)}
+    status(companyResponse.data.length?'Empresas USER carregadas. Carregando contratos…':'Nenhuma empresa encontrada em USER. Cadastre importador e exportador primeiro.');
+    const contractResponse=await client.from('contracts').select('id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,unit_price,currency,port_of_loading,port_of_discharge,status,created_at,details').order('id',{ascending:false});
+    if(contractResponse.error){status('USER carregado. Erro ao carregar contratos: '+contractResponse.error.message);throw contractResponse.error}
     contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
     const body=$('contractsTable').tBodies[0];body.replaceChildren();
     for(const c of contractResponse.data){
@@ -8157,35 +8148,214 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       button.addEventListener('click',()=>window.showContractForm(c.order_number));action.append(button);
     }
     $('contractCount').textContent=String(contractResponse.data.length);
+    status(`${companyResponse.data.length} empresa(s) USER e ${contractResponse.data.length} contrato(s) carregados do Supabase.`);
     window.refreshBookingRequestOrders?.();
   }
   function companyId(selectId){
     const id=Number(val(selectId));
-    if(!id || !names.has(id))throw new Error(`Selecione ${selectId==='contractImporterId'?'Importer':'Exporter'} na lista de empresas cadastradas em USER.`);
+    const searchId=selectId==='contractImporterId'?'contractImporterSearch':'contractExporterSearch';
+    if(!id || !names.has(id) || normalized($(searchId).value)!==normalized(names.get(id)))throw new Error(`Selecione ${selectId==='contractImporterId'?'Importer':'Exporter'} nas sugestões de empresas cadastradas em USER.`);
     return id;
+  }
+  function syncConsignee(){
+    const same=$('consigneeSameAsImporter').checked;
+    $('cConsignee').readOnly=same;
+    const consigneeLookup=$('contractConsigneeLookup');
+    if(consigneeLookup)consigneeLookup.disabled=same;
+    if(same)$('cConsignee').value=names.get(Number($('contractImporterId').value))||'';
   }
   async function save(){
     const order=val('contractOrderNumber');
     if(!order) return notifyError(new Error('Informe a Order Number.'));
     const old=[...contracts.values()].find(c=>c.id===editingId);
     try{
+      syncConsignee();
       if([...contracts.values()].some(c=>c.order_number===order && c.id!==editingId))throw new Error('Já existe um contrato com esta Order Number.');
       const record={order_number:order,contract_number:val('contractNumber')||null,importer_id:companyId('contractImporterId'),exporter_id:companyId('contractExporterId'),product:val('contractProduct')||null,quantity_mt:val('contractQuantityTon')?Number(val('contractQuantityTon')):null,unit_price:val('contractUnitPrice')?Number(val('contractUnitPrice')):null,currency:'USD',port_of_loading:val('contractPortOrigin')||null,port_of_discharge:val('contractPortDestiny')||null,status:old?.status||'draft',details:snapshot()};
       if(!record.contract_number)record.contract_number=old?.contract_number||null;
       const response=old?await client.from('contracts').update(record).eq('id',old.id).select('id').single():await client.from('contracts').insert(record).select('id').single();
       if(response.error)throw response.error;
       await load();window.notify?.('Contrato salvo no Supabase.');
-    }catch(e){notifyError(e)}
+    }catch(e){status('Erro ao salvar contrato: '+(e?.message||String(e)));notifyError(e)}
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const original=window.showContractForm;
-    window.showContractForm=function(order){original(order);if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){restore(c.details);$('contractOrderNumber').value=c.order_number;$('contractNumber').value=c.contract_number||'';$('contractImporterId').value=String(c.importer_id||'');$('contractExporterId').value=String(c.exporter_id||'');$('cImporter').value=names.get(Number(c.importer_id))||'';$('cExporter').value=names.get(Number(c.exporter_id))||'';$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;for(const el of fields())if(el.id && el.type!=='hidden')el.value='';$('contractOrderNumber').value='';}};
-    for(const [id,input] of [['contractImporterId','cImporter'],['contractExporterId','cExporter']])$(id).addEventListener('change',()=>{$(input).value=names.get(Number($(id).value))||''});
+    window.showContractForm=function(order){original(order);closeCompanyMenus();if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){$('consigneeSameAsImporter').checked=false;restore(c.details);$('contractOrderNumber').value=c.order_number;$('contractNumber').value=c.contract_number||'';for(const [id,searchId,hiddenId] of companyFields){const companyId=id==='contractImporterId'?c.importer_id:c.exporter_id;$(id).value=String(companyId||'');$(searchId).value=names.get(Number(companyId))||'';$(hiddenId).value=$(searchId).value}$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;window.selectedBankData=null;window.selectedSIBankData=null;for(const el of fields()){if(el.type==='checkbox')el.checked=false;else if(el.id)el.value=''}$('contractOrderNumber').value='';}syncConsignee()};
+    for(const [id,searchId,hiddenId] of companyFields){const input=$(searchId),menu=$(searchId+'Results');input.addEventListener('input',()=>{$(id).value='';$(hiddenId).value='';if(id==='contractImporterId')syncConsignee();showCompanySuggestions(id,searchId,hiddenId)});input.addEventListener('focus',()=>showCompanySuggestions(id,searchId,hiddenId));input.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')];const current=options.indexOf(document.activeElement);if(event.key==='Escape'){closeCompanyMenus();input.blur()}else if(event.key==='ArrowDown' && !menu.hidden){event.preventDefault();options[0]?.focus()}else if(event.key==='Enter' && !menu.hidden && options.length){event.preventDefault();options[0].click()}});menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(event.key==='ArrowDown'){event.preventDefault();options[(i+1)%options.length]?.focus()}else if(event.key==='ArrowUp'){event.preventDefault();if(i===0)input.focus();else options[i-1]?.focus()}else if(event.key==='Escape'){event.preventDefault();closeCompanyMenus();input.focus()}})}
+    document.addEventListener('click',event=>{if(!event.target.closest('.company-combobox'))closeCompanyMenus()});
+    $('consigneeSameAsImporter').addEventListener('change',syncConsignee);
     window.saveContractLogistics=save;
     const gate=$('aesAuthGate');
-    new MutationObserver(()=>{if(gate.style.display==='none')load().catch(e=>window.notify?.('Não foi possível carregar contratos: '+e.message))}).observe(gate,{attributes:true,attributeFilter:['style']});
-    if(gate.style.display==='none')load().catch(e=>window.notify?.('Não foi possível carregar contratos: '+e.message));
+    const refresh=()=>load().catch(e=>{status('Erro na conexão: '+e.message);window.notify?.('Não foi possível carregar contratos: '+e.message)});
+    new MutationObserver(()=>{if(gate.style.display==='none')refresh()}).observe(gate,{attributes:true,attributeFilter:['style']});
+    if(gate.style.display==='none')refresh();
   });
+})();
+</script>
+<style>
+.aes-user-combobox{position:relative;min-width:0}.aes-user-combobox input{width:100%}
+.aes-user-suggestions:not([hidden]){position:absolute;display:block;left:0;right:0;top:calc(100% + 4px);max-height:250px;overflow:auto;z-index:1100;background:#fff;border:1px solid #cbd8eb;border-radius:10px;box-shadow:0 12px 28px rgba(17,43,76,.16)}
+.aes-user-option{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:10px 12px;background:#fff;border:0;border-bottom:1px solid #edf0f6;font:inherit;text-align:left;cursor:pointer;color:#142b48}
+.aes-user-option:hover,.aes-user-option:focus{background:#eaf2ff;outline:none}.aes-user-option small{color:#687990;font-size:11px}.aes-user-empty{padding:12px;color:#687990}
+</style>
+<script>/* Busca única dos cadastros reais de USER. */
+(() => {
+  const ids=['cNotify','cConsignee','contractBroker','siShipper','siConsignee','siNotify1','siNotify2','origin','destination','programLoadingPlace','containerPickupCarrier','containerStuffingPlace','fumigationCompany','lpcoResponsible','s2Provider','truckLoadingPlace'];
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+  const rows=()=>[...document.querySelectorAll('#userRegistryTable tbody tr')].map(row=>{const c=row.cells;return {id:row.dataset.companyId||'',name:c[1]?.textContent.trim()||'',profile:row.dataset.profile||'',country:c[3]?.textContent.trim()||'',address:c[2]?.textContent.trim()||'',tax:c[4]?.textContent.trim()||'',email:c[5]?.textContent.trim()||'',contact:c[6]?.textContent.trim()||''}}).filter(u=>u.name&&u.name!=='—');
+  const close=()=>document.querySelectorAll('.aes-user-suggestions').forEach(m=>{m.hidden=true;m.previousElementSibling?.setAttribute('aria-expanded','false')});
+  function install(input){
+    if(!input||input.dataset.userAutocomplete)return;
+    input.dataset.userAutocomplete='true';input.readOnly=false;
+    const parent=input.parentElement;
+    const button=[...parent.children].find(n=>n.tagName==='BUTTON'&&(/openLookup|openUserLookupFor|openSIPartyLookup|openBrokerLookup|openFumigationUserLookup|openDocResponsibleLookup|showLoadingPlaceSuggestions/.test(n.getAttribute('onclick')||'')));
+    if(button)button.remove();
+    if(input.id==='truckLoadingPlace'){
+      input.removeAttribute('oninput');input.removeAttribute('onfocus');
+      document.getElementById('loadingPlaceSuggestions')?.remove();
+    }
+    parent.classList.add('aes-user-combobox');
+    parent.classList.remove('lookup');
+    parent.style.display='block';
+    input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');input.setAttribute('autocomplete','off');
+    if(!input.placeholder||input.placeholder.includes('Buscar dados'))input.placeholder='Buscar empresa em USER';
+    const menu=document.createElement('div');menu.className='aes-user-suggestions';menu.hidden=true;menu.setAttribute('role','listbox');input.after(menu);input.setAttribute('aria-controls',input.id+'Suggestions');menu.id=input.id+'Suggestions';
+    function choose(u){
+      if(input.id.startsWith('si')&&input.id!=='siBankData'&&typeof window.selectSIParty==='function'){window.siPartyTarget=input.id; /* let siPartyTarget is global lexical */ siPartyTarget=input.id;window.selectSIParty(u)}
+      else if(input.id.startsWith('docResp-')&&typeof window.selectDocResponsible==='function'){window.aesDocResponsibleTarget=input.id.slice(8);window.selectDocResponsible(u.name)}
+      else {input.value=u.name;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}))}
+      input.dataset.companyId=u.id;close();
+    }
+    function show(){
+      if(input.readOnly||input.disabled)return;
+      close();menu.replaceChildren();
+      const q=norm(input.value);
+      const matches=rows().filter(u=>norm([u.name,u.profile,u.country,u.tax].join(' ')).includes(q)).slice(0,12);
+      for(const u of matches){const option=document.createElement('button');option.type='button';option.className='aes-user-option';option.setAttribute('role','option');const name=document.createElement('span');name.textContent=u.name;const extra=document.createElement('small');extra.textContent=[u.profile,u.country].filter(Boolean).join(' · ');option.append(name,extra);option.addEventListener('mousedown',e=>e.preventDefault());option.addEventListener('click',()=>choose(u));menu.append(option)}
+      if(!matches.length){const empty=document.createElement('div');empty.className='aes-user-empty';empty.textContent=rows().length?'Nenhum cadastro encontrado.':'Nenhuma empresa cadastrada em USER.';menu.append(empty)}
+      menu.hidden=false;input.setAttribute('aria-expanded','true');
+    }
+    input.addEventListener('focus',show);
+    input.addEventListener('input',()=>{input.dataset.companyId='';if(input.id==='cConsignee'&&document.getElementById('consigneeSameAsImporter')?.checked){close();return}show()});
+    input.addEventListener('keydown',e=>{if(e.key==='Escape'){close();input.blur()}else if(e.key==='ArrowDown'&&!menu.hidden){e.preventDefault();menu.querySelector('button')?.focus()}else if(e.key==='Enter'&&!menu.hidden){const b=menu.querySelector('button');if(b){e.preventDefault();b.click()}}});
+    menu.addEventListener('keydown',e=>{const b=[...menu.querySelectorAll('button')],i=b.indexOf(document.activeElement);if(e.key==='Escape'){close();input.focus()}else if(e.key==='ArrowDown'){e.preventDefault();b[(i+1)%b.length]?.focus()}else if(e.key==='ArrowUp'){e.preventDefault();if(i===0)input.focus();else b[i-1]?.focus()}});
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    ids.forEach(id=>install(document.getElementById(id)));
+    document.querySelectorAll('input[id^="docResp-"]').forEach(install);
+    document.addEventListener('pointerdown',e=>{if(!e.target.closest('.aes-user-combobox'))close()});
+  });
+})();
+</script>
+<style>.bank-lookup-item{display:flex;flex-direction:column;gap:4px;width:100%;padding:12px;background:#fff;border:0;border-bottom:1px solid #e9eef6;text-align:left;cursor:pointer;color:#142b48;font:inherit}.bank-lookup-item:hover,.bank-lookup-item:focus{background:#eaf2ff}.bank-lookup-item small{color:#687990}</style>
+<script>/* Bank Data compartilhado no Supabase. */
+(() => {
+  const $=id=>document.getElementById(id);
+  let banks=[], editId=null, loading=false;
+  const client=()=>window.aesSharedClient;
+  const value=id=>($(id)?.value||'').trim();
+  const error=e=>window.notify?.('Bank Data: '+(e?.message||String(e)));
+  const columns='id,beneficiary_name,beneficiary_address,bank_name,swift,iban,bank_address,status';
+  const display=b=>({id:b.id,beneficiary:b.beneficiary_name||'',beneficiaryAddress:b.beneficiary_address||'',bank:b.bank_name||'',swift:b.swift||'',iban:b.iban||'',address:b.bank_address||'',status:b.status||'Active'});
+  const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function renderRows(){
+    const body=$('bankRegistryTable').tBodies[0];body.replaceChildren();
+    if(!banks.length){const tr=body.insertRow(),cell=tr.insertCell();cell.colSpan=8;cell.textContent='Nenhum banco cadastrado. Use + Cadastrar Banco.';return}
+    for(const bank of banks){const row=body.insertRow();for(const val of [bank.beneficiary_name,bank.beneficiary_address,bank.bank_name,bank.swift,bank.iban,bank.bank_address,bank.status])row.insertCell().textContent=val||'—';const cell=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Editar';button.addEventListener('click',()=>edit(bank));cell.append(button)}
+  }
+  function renderModal(kind){
+    const wrap=$(kind==='contract'?'bankLookupResults':'siBankLookupResults');
+    const search=value(kind==='contract'?'bankLookupSearch':'siBankLookupSearch');
+    wrap.replaceChildren();
+    const found=banks.filter(b=>normalize([b.bank_name,b.beneficiary_name,b.swift,b.iban].join(' ')).includes(normalize(search)));
+    if(!found.length){const empty=document.createElement('div');empty.className='sub';empty.style.padding='12px';empty.textContent=banks.length?'Nenhum banco encontrado.':'Nenhum banco cadastrado em Bank Data.';wrap.append(empty)}
+    for(const b of found){const item=document.createElement('button');item.type='button';item.className='bank-lookup-item';const title=document.createElement('strong');title.textContent=b.bank_name;const caption=document.createElement('small');caption.textContent=[b.beneficiary_name,b.swift,b.iban].filter(Boolean).join(' · ');item.append(title,caption);item.addEventListener('click',()=>{const data=display(b);if(kind==='contract'){window.selectedBankData=data;$('contractBankData').value=b.bank_name+' | '+(b.swift||b.beneficiary_name);window.closeBankLookup()}else{window.selectedSIBankData=data;$('siBankData').value=b.bank_name+' | '+(b.swift||b.beneficiary_name);const details=$('siBankDetails');if(details){details.replaceChildren();details.textContent=[b.beneficiary_name,b.bank_name,b.swift,b.iban,b.bank_address].filter(Boolean).join(' · ')}window.closeSIBankLookup()}});wrap.append(item)}
+  }
+  function edit(b){editId=b.id;for(const [id,key] of Object.entries({regBeneficiaryName:'beneficiary_name',regBeneficiaryAddress:'beneficiary_address',regBankName:'bank_name',regBankSwift:'swift',regBankIban:'iban',regBankAddress:'bank_address',regBankStatus:'status'}))$(id).value=b[key]||'';window.go('bank');window.activateBankTab('bankForm')}
+  async function load(){
+    if(!client()||loading)return;
+    loading=true;
+    try{const {data,error:failure}=await client().from('bank_accounts').select(columns).order('id',{ascending:false});if(failure)throw failure;banks=data||[];renderRows();renderModal('contract');renderModal('si')}
+    catch(failure){error(failure);const body=$('bankRegistryTable').tBodies[0];body.replaceChildren();const cell=body.insertRow().insertCell();cell.colSpan=8;cell.textContent='Não foi possível carregar bancos: '+(failure?.message||String(failure))}
+    finally{loading=false}
+  }
+  async function save(){
+    const data={beneficiary_name:value('regBeneficiaryName'),beneficiary_address:value('regBeneficiaryAddress')||null,bank_name:value('regBankName'),swift:value('regBankSwift')||null,iban:value('regBankIban')||null,bank_address:value('regBankAddress')||null,status:value('regBankStatus')||'Active'};
+    if(!data.beneficiary_name||!data.bank_name){error(new Error('Preencha Beneficiary Name e Bank.'));return}
+    const button=$('aesSaveBank');button.disabled=true;
+    try{if(!client())throw new Error('Supabase indisponível.');const request=editId===null?client().from('bank_accounts').insert(data):client().from('bank_accounts').update(data).eq('id',editId);const {error:failure}=await request.select('id').single();if(failure)throw failure;await load();editId=null;window.clearBankForm();window.activateBankTab('bankList');window.notify?.('Banco salvo no Supabase.')}
+    catch(failure){error(failure)}finally{button.disabled=false}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    window.saveBank=save;
+    window.clearBankForm=()=>{editId=null;for(const id of ['regBeneficiaryName','regBeneficiaryAddress','regBankName','regBankSwift','regBankIban','regBankAddress'])$(id).value='';$('regBankStatus').value='Active'};
+    window.openBankLookup=()=>{renderModal('contract');$('bankLookupModal').classList.add('open');$('bankLookupSearch').focus()};
+    window.openSIBankLookup=()=>{renderModal('si');$('siBankLookupModal').classList.add('open');$('siBankLookupSearch').focus()};
+    $('bankLookupSearch').addEventListener('input',()=>renderModal('contract'));
+    $('siBankLookupSearch').addEventListener('input',()=>renderModal('si'));
+    const gate=$('aesAuthGate');
+    new MutationObserver(()=>{if(gate.style.display==='none')load()}).observe(gate,{attributes:true,attributeFilter:['style']});
+    if(gate.style.display==='none')load();
+  });
+})();
+</script>
+<div id="newLabelModelModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="newLabelModelTitle"><div class="modalbox" style="max-width:1060px;max-height:92vh;overflow:auto">
+<div class="pagehead"><div><h2 id="newLabelModelTitle">Criar modelo de label</h2><div class="sub">Na opção Em linhas, os campos aparecem um abaixo do outro com o valor à frente. Para arrastar, escolha Posição livre.</div></div><button class="btn" type="button" onclick="closeNewLabelModel()">Fechar</button></div>
+<div class="grid2"><div><label for="newLabelModelName">Nome do modelo</label><input id="newLabelModelName" placeholder="Ex.: India — Sesame 25 KG" maxlength="100"></div><div><label for="labelModelImage">Imagem JPG</label><input id="labelModelImage" type="file" accept="image/jpeg,.jpg,.jpeg"></div></div>
+<div class="grid2" style="margin:12px 0"><label style="display:flex;gap:8px;align-items:center"><input id="labelDesignerVeg" type="checkbox" style="width:auto"> Exibir símbolo vegetariano FSSAI</label><div style="display:flex;gap:10px"><label>Imagem / logo X % <input id="labelImageX" type="number" min="0" max="85" value="82"></label><label>Y % <input id="labelImageY" type="number" min="0" max="88" value="5"></label></div></div>
+<div class="aes-label-editor"><div><h3>Campos e títulos</h3><label for="labelLayoutFlow">Formato dos campos no label</label><select id="labelLayoutFlow"><option value="rows">Em linhas — título e valor à frente</option><option value="free">Posição livre — arrastar campos</option></select><p class="sub">Altere o título e escolha o formato de cada campo abaixo.</p><div id="labelDesignerFields"></div><div class="sub">Para dados do importador, selecione Consignee no USER e cadastre IEC, GSTIN e FSSAI no perfil.</div></div><div><h3>Posicionamento</h3><div id="labelDesignerCanvas" class="aes-label-canvas"></div></div></div>
+<div class="toolbar" style="justify-content:flex-end;margin-top:18px"><button id="saveLabelModelButton" class="btn primary" type="button" onclick="saveNewLabelModel()">Salvar modelo</button></div></div></div><style>.aes-label-canvas.aes-label-rows{display:flex;flex-direction:column;gap:7px;padding:16px 85px 16px 18px!important;overflow:auto}.aes-label-rows .aes-label-item{position:static;display:flex;align-items:flex-start;gap:6px;max-width:100%;white-space:normal}.aes-label-rows .aes-label-item b{flex:none;max-width:45%;white-space:normal}.aes-label-rows .aes-label-item span{white-space:pre-line}.aes-label-rows .aes-label-item.aes-label-stacked{display:block}.aes-designer-field{grid-template-columns:25px minmax(70px,1fr) minmax(120px,145px) 65px!important}</style><style>.aes-label-canvas{position:relative;box-sizing:border-box;width:100%;max-width:620px;aspect-ratio:1.7;border:2px solid #29405f!important;background:white;overflow:hidden;padding:0!important}.aes-label-item{position:absolute;max-width:43%;font-size:11px;color:#182a43;white-space:pre-line;overflow-wrap:anywhere;line-height:1.35;touch-action:none}.aes-label-item b,.aes-label-item span{display:block}.aes-label-item b{font-size:10px;letter-spacing:.02em}.aes-label-image{position:absolute;max-width:16%;max-height:18%;object-fit:contain}.aes-veg-logo{position:absolute;border:2px solid green;color:green;font-size:19px;line-height:1;padding:0 5px}.aes-label-editor{display:grid;grid-template-columns:minmax(250px,1fr) minmax(360px,1.6fr);gap:20px}.aes-designer-field{display:grid;grid-template-columns:25px 1fr 70px;align-items:center;gap:7px;margin-bottom:6px}.aes-designer-field input[type=checkbox]{width:auto}.aes-designer-field input:not([type=checkbox]){min-width:0}.aes-designer-field small{color:#667890}@media(max-width:750px){.aes-label-editor{grid-template-columns:1fr}}</style><script>/* Editor dos modelos de label. A imagem JPG é compactada antes de salvar no banco. */
+(() => {
+ const $=id=>document.getElementById(id),val=id=>($(id)?.value||'').trim();
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const msg=s=>window.notify?.(s);
+ const BASE=[['product','PRODUCT NAME',5,8],['origin','ORIGIN',5,21],['weight','NET WEIGHT',5,34],['lot','LOT NUMBER',5,47],['production','PRODUCTION DATE',5,60],['expiry','EXPIRY DATE',5,73],['packer','PACKED AND EXPORTED BY',52,8],['importer','IMPORTED BY',52,35],['fssai','FSSAI NO #',52,75]];
+ const INDIA={name:'India Import Label',flow:'rows',items:BASE.map(([key,label,x,y])=>({key,label,x,y,show:true})),image:'',imageX:82,imageY:5,veg:true};
+ let models=[],active=null,draft=null,importers=[],image='';
+ const clone=o=>structuredClone(o);
+ const live=()=>({product:val('siLabelProduct'),origin:val('siLabelOrigin'),weight:val('siLabelNetWeight'),lot:val('siLabelLot'),production:val('siLabelPackingDate'),expiry:val('siLabelExpiryDate'),packer:(()=>{const name=val('contractExporterSearch')||val('cExporter');const u=importers.find(x=>x.name===name);return val('siLabelPacker')||[u?.name||name,u?.address,u?.country].filter(Boolean).join('\n')})(),importer:(()=>{const name=val('siConsignee')||val('contractImporterSearch');const u=importers.find(x=>x.name===name);return [u?.name||name,u?.address,u?.country,u?.iec?'IEC: '+u.iec:'',u?.gst?'GST: '+u.gst:''].filter(Boolean).join('\n')})(),fssai:(()=>{const u=importers.find(x=>x.name===(val('siConsignee')||val('contractImporterSearch')));return val('siLabelFssai')||u?.fssai_number||''})()});
+ function selected(){const v=val('siLabelModel');return v==='india'?INDIA:models.find(x=>'custom-'+x.id===v)?.layout||null}
+ function design(){return draft||active||selected()||{flow:'rows',items:BASE.filter(x=>!['importer','fssai','lot','production'].includes(x[0])).map(([key,label,x,y])=>({key,label,x,y,show:true})),image:'',veg:false}}
+ function render(where,layout=design(),editable=false){
+  const root=$(where);if(!root)return;
+  root.replaceChildren();root.classList.add('aes-label-canvas');
+  const rows=layout.flow!=='free';root.classList.toggle('aes-label-rows',rows);
+  const values=live();
+  for(const item of layout.items||[]){
+   if(item.show===false)continue;
+   const box=document.createElement('div');box.className='aes-label-item';box.dataset.key=item.key;
+   box.classList.toggle('aes-label-stacked',item.format==='stacked');
+   if(!rows){box.style.left=Math.max(0,Math.min(85,Number(item.x)||0))+'%';box.style.top=Math.max(0,Math.min(88,Number(item.y)||0))+'%'}
+   const strong=document.createElement('b');strong.textContent=item.label+':';
+   const body=document.createElement('span');body.textContent=values[item.key]||'—';box.append(strong,body);
+   if(editable&&!rows){box.style.cursor='move';box.addEventListener('pointerdown',ev=>{ev.preventDefault();box.setPointerCapture(ev.pointerId);const rect=root.getBoundingClientRect();const move=e=>{item.x=Math.round(Math.max(0,Math.min(85,((e.clientX-rect.left)/rect.width)*100)));item.y=Math.round(Math.max(0,Math.min(88,((e.clientY-rect.top)/rect.height)*100)));box.style.left=item.x+'%';box.style.top=item.y+'%'};box.addEventListener('pointermove',move);box.addEventListener('pointerup',()=>{box.removeEventListener('pointermove',move);renderFields()},{once:true})})}
+   root.append(box)
+  }
+  if(layout.veg){const veg=document.createElement('div');veg.className='aes-veg-logo';veg.textContent='●';veg.title='FSSAI vegetarian mark';veg.style.left=(layout.imageX??82)+'%';veg.style.top=(layout.imageY??5)+'%';root.append(veg)}
+  if(layout.image){const img=document.createElement('img');img.src=layout.image;img.alt='Imagem do modelo';img.className='aes-label-image';img.style.left=(layout.imageX??82)+'%';img.style.top=(layout.imageY??5)+'%';root.append(img)}
+ }
+ function renderFields(){
+  const wrap=$('labelDesignerFields');wrap.replaceChildren();
+  for(const item of draft.items){
+   const row=document.createElement('div');row.className='aes-designer-field';
+   const check=document.createElement('input');check.type='checkbox';check.checked=item.show!==false;check.setAttribute('aria-label','Exibir '+item.label);check.addEventListener('change',()=>{item.show=check.checked;render('labelDesignerCanvas',draft,true)});
+   const label=document.createElement('input');label.value=item.label;label.placeholder='Título';label.setAttribute('aria-label','Título do campo');label.addEventListener('input',()=>{item.label=label.value;render('labelDesignerCanvas',draft,true)});
+   const format=document.createElement('select');format.setAttribute('aria-label','Formato de '+item.label);
+   for(const [value,title] of [['inline','Título: valor'],['stacked','Título acima']]){const o=document.createElement('option');o.value=value;o.textContent=title;format.append(o)}
+   format.value=item.format||'inline';format.addEventListener('change',()=>{item.format=format.value;render('labelDesignerCanvas',draft,true)});
+   const coords=document.createElement('small');coords.textContent=draft.flow==='free'?`${item.x}% · ${item.y}%`:'';
+   row.append(check,label,format,coords);wrap.append(row)
+  }
+ }
+ async function load(){const client=window.aesSharedClient;if(!client)return;const [templates,users]=await Promise.all([client.from('label_templates').select('id,name,layout,product,net_weight,country_origin,packing_date,expiry_date,packer').order('id',{ascending:false}),client.from('companies').select('id,name,address,country,iec,gst,fssai_number')]);if(templates.error){msg('Modelos de label: '+templates.error.message);return}if(users.error){msg('Dados do importador: '+users.error.message);return}models=templates.data||[];importers=users.data||[];const select=$('siLabelModel'),current=select.value;select.querySelectorAll('option[data-custom]').forEach(o=>o.remove());for(const model of models){const o=document.createElement('option');o.value='custom-'+model.id;o.textContent=model.name;o.dataset.custom='true';select.append(o)}if([...select.options].some(o=>o.value===current))select.value=current;render('labelPreview')}
+ function apply(){active=null;const v=val('siLabelModel'),m=models.find(x=>'custom-'+x.id===v);if(m){for(const [id,key] of Object.entries({siLabelProduct:'product',siLabelOrigin:'country_origin',siLabelNetWeight:'net_weight',siLabelPackingDate:'packing_date',siLabelExpiryDate:'expiry_date',siLabelPacker:'packer'}))$(id).value=m[key]||''}render('labelPreview')}
+ function open(){draft=clone(selected()||INDIA);draft.items=draft.items?.length?draft.items:clone(INDIA.items);$('newLabelModelName').value='';$('labelModelImage').value='';$('labelDesignerVeg').checked=!!draft.veg;draft.flow=draft.flow||'rows';$('labelLayoutFlow').value=draft.flow;renderFields();render('labelDesignerCanvas',draft,true);$('newLabelModelModal').classList.add('open');$('newLabelModelName').focus()}
+ function close(){$('newLabelModelModal').classList.remove('open');draft=null}
+ async function save(){const name=val('newLabelModelName');if(!name)return msg('Informe o nome do modelo.');const client=window.aesSharedClient;if(!client)return msg('Supabase indisponível.');const button=$('saveLabelModelButton');button.disabled=true;try{draft.veg=$('labelDesignerVeg').checked;draft.imageX=Number($('labelImageX').value)||82;draft.imageY=Number($('labelImageY').value)||5;const record={name,product:val('siLabelProduct')||null,net_weight:val('siLabelNetWeight')||null,country_origin:val('siLabelOrigin')||null,packing_date:val('siLabelPackingDate')||null,expiry_date:val('siLabelExpiryDate')||null,packer:val('siLabelPacker')||null,layout:draft};const {data,error}=await client.from('label_templates').insert(record).select('id').single();if(error)throw error;await load();$('siLabelModel').value='custom-'+data.id;active=clone(draft);close();render('labelPreview');msg('Modelo salvo no Supabase.')}catch(e){msg('Modelo não salvo: '+(e?.message||String(e)))}finally{button.disabled=false}}
+ async function upload(ev){const file=ev.target.files?.[0];if(!file)return;if(file.type!=='image/jpeg')return msg('Envie uma imagem JPG.');if(file.size>4e6)return msg('JPG muito grande. Use até 4 MB.');try{const img=new Image(),url=URL.createObjectURL(file);await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url});const scale=Math.min(1,500/img.width,350/img.height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);const data=canvas.toDataURL('image/jpeg',.67);if(data.length>240000)throw new Error('Imagem maior que 180 KB após compactação. Use outra imagem.');draft.image=data;render('labelDesignerCanvas',draft,true)}catch(e){msg('JPG não carregado: '+e.message)}}
+ function previewSI(){window.generateShippingInstructionPreviewOriginal();render('siPreviewLabel')}
+ function pdf(){const popup=window.open('','_blank');if(!popup)return msg('Permita pop-ups para salvar o PDF.');try{previewSI();const cloneNode=$('shippingInstructionModal').querySelector('.card').cloneNode(true);cloneNode.querySelector('.toolbar')?.remove();const order=val('contractOrderNumber')||'SEM-ORDER';const html=`<!doctype html><html><head><meta charset="utf-8"><title>Shipping Instruction ${esc(order)}</title><style>@page{size:A4;margin:14mm}body{font:11px/1.4 Arial,sans-serif;color:#17345d}h1{font-size:20px;border-bottom:3px solid #17345d;padding-bottom:10px}h3{font-size:12px;margin:15px 0 6px}.sub{white-space:pre-wrap}hr{border:0;border-top:1px solid #ddd}.aes-label-canvas{position:relative!important;border:1px solid #333!important;width:160mm!important;height:94mm!important;max-width:none!important;padding:0!important;break-inside:avoid}.aes-label-item{position:absolute;font-size:9px;max-width:43%;white-space:pre-line}.aes-label-item b{font-size:8px}.aes-label-rows{display:flex;flex-direction:column;gap:3mm;padding:5mm 20mm 5mm 5mm!important}.aes-label-rows .aes-label-item{position:static;display:flex;align-items:flex-start;gap:2mm;max-width:100%}.aes-label-rows .aes-label-item span{white-space:pre-line}.aes-label-rows .aes-label-item.aes-label-stacked{display:block}.aes-label-image{position:absolute;max-width:16%;max-height:18%}.aes-veg-logo{position:absolute;border:2px solid green;color:green;padding:1px 6px;font-size:16px}.noprint{text-align:right}@media print{.noprint{display:none}}</style></head><body><h1>SHIPPING INSTRUCTION</h1><b>Order: ${esc(order)}</b> · ${esc(new Date().toLocaleDateString('pt-BR'))}${cloneNode.innerHTML}<div class="noprint"><button onclick="window.print()">Imprimir / Salvar como PDF</button></div></body></html>`;popup.document.write(html);popup.document.close();popup.focus();setTimeout(()=>popup.print(),450)}catch(e){popup.close();msg('Erro ao gerar PDF: '+e.message)}}
+ document.addEventListener('DOMContentLoaded',()=>{window.openNewLabelModel=open;window.closeNewLabelModel=close;window.saveNewLabelModel=save;window.generateShippingInstructionPreviewOriginal=window.generateShippingInstructionPreview;window.generateShippingInstructionPreview=previewSI;window.generateShippingInstructionPDF=pdf;window.applyLabelModel=apply;$('siLabelModel').addEventListener('change',apply);$('labelModelImage').addEventListener('change',upload);$('labelLayoutFlow').addEventListener('change',()=>{draft.flow=$('labelLayoutFlow').value;renderFields();render('labelDesignerCanvas',draft,true)});$('labelDesignerVeg').addEventListener('change',()=>{draft.veg=$('labelDesignerVeg').checked;render('labelDesignerCanvas',draft,true)});for(const id of ['labelImageX','labelImageY'])$(id).addEventListener('input',()=>{draft.imageX=Number($('labelImageX').value)||82;draft.imageY=Number($('labelImageY').value)||5;render('labelDesignerCanvas',draft,true)});for(const id of ['siLabelProduct','siLabelOrigin','siLabelNetWeight','siLabelLot','siLabelPackingDate','siLabelExpiryDate','siLabelPacker','siLabelFssai','siConsignee'])$(id)?.addEventListener('input',()=>{render('labelPreview');if(draft)render('labelDesignerCanvas',draft,true)});render('labelPreview');const gate=$('aesAuthGate');new MutationObserver(()=>{if(gate.style.display==='none')load()}).observe(gate,{attributes:true,attributeFilter:['style']});if(gate.style.display==='none')load()});
 })();
 </script>
 </body>
