@@ -150,8 +150,111 @@ input::placeholder,textarea::placeholder{color:#76869a}
 .aes-scheduling-table th:nth-child(1){width:86px}.aes-scheduling-table th:nth-child(2){width:24%}.aes-scheduling-table th:nth-child(3){width:32%}.aes-scheduling-table th:nth-child(4){width:22%}.aes-scheduling-table th:nth-child(5){width:90px}
 @media(max-width:1180px){.aes-scheduling-table{min-width:720px}}
 </style>
-</head>
-<body>
+<style>#aesTraderEditor[hidden],#aesTraderList[hidden]{display:none!important}.aes-trader-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:17px}.aes-trader-totals>div{padding:15px;border:1px solid #d8e4ef;border-radius:10px;background:#f6f9fd}.aes-trader-totals small{display:block;color:#5e7086;font-size:11px;margin-bottom:5px}.aes-trader-totals strong{font-size:17px;color:#183d66}.aes-trader-totals .negative{color:#ad2535}@media(max-width:850px){.aes-trader-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style>
+.aes-trader-pane[hidden]{display:none!important}.aes-trader-pane{padding:18px 4px}
+.aes-trader-pane h3{color:#183d66;margin:4px 0 10px}
+.aes-trader-doc-table,.aes-trader-task-table{min-width:1050px}
+.aes-trader-doc-table input,.aes-trader-doc-table select,.aes-trader-task-table input,.aes-trader-task-table select{min-width:110px;width:100%}
+.aes-trader-doc-table input[type=file]{width:160px;min-width:160px;font-size:11px}
+.aes-trader-doc-table td:first-child input{min-width:185px}
+.aes-trader-task-table td:first-child input{min-width:260px}
+</style><style>
+.aes-trader-sidebyside{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:25px}
+.aes-trader-side-card{min-width:0;border:1px solid #ccdaeb;border-radius:12px;background:#fff;overflow:hidden}
+.aes-trader-side-head{padding:16px 18px;background:#f0f6fc;border-bottom:1px solid #d7e4f0}
+.aes-trader-side-head span{font-size:11px;font-weight:800;letter-spacing:.08em;color:#2a67a1}
+.aes-trader-side-head h3{margin:4px 0;color:#183d66;font-size:17px}
+.aes-trader-side-head p{margin:0;color:#62758b;font-size:12px}
+.aes-trader-parties{display:grid;grid-template-columns:1fr;gap:8px;padding:16px 18px}
+.aes-trader-parties label{display:block;margin:0 0 4px;font-weight:700;color:#4d6076}
+.aes-trader-parties select{width:100%}
+.aes-trader-commercial{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px 18px}.aes-trader-commercial .wide{grid-column:1/-1}.aes-trader-commercial textarea{width:100%}.aes-trade-tabs{display:flex;gap:8px;border-bottom:1px solid #d8e4f1;margin:15px 0}.aes-trade-tabs button{padding:10px 16px;border:0;background:transparent;color:#526a82;font-weight:750;cursor:pointer;border-bottom:3px solid transparent}.aes-trade-tabs button.active{color:#19558a;border-bottom-color:#1873c8}.aes-trade-payments-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.aes-trade-payment-card{border:1px solid #d8e4f1;border-radius:12px;background:#fbfdff;padding:16px;min-width:0}.aes-trade-payment-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.aes-trade-payment-head span{font-size:11px;font-weight:800;color:#2272ba}.aes-trade-payment-head h3{margin:3px 0;color:#173e68;font-size:17px}.aes-trade-payment-head p{margin:0;color:#6b7e92;font-size:12px}.aes-trade-payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:15px 0}.aes-trade-payment-summary>div{padding:10px;border-radius:8px;background:#eef5fc}.aes-trade-payment-summary small{display:block;color:#58718a;font-size:11px}.aes-trade-payment-summary strong{display:block;margin-top:4px;color:#173e68;font-size:14px}.aes-trade-payment-table{min-width:780px}.aes-trade-payment-table input{min-width:100px;width:100%;box-sizing:border-box}.aes-trade-payment-table input[type="date"]{min-width:135px}.aes-trade-payment-table input[type="number"]{min-width:110px}@media(max-width:1050px){.aes-trade-payments-grid{grid-template-columns:1fr}}.aes-trader-side-terms{display:grid;gap:11px;padding:0 18px 18px}.aes-trader-side-terms textarea{width:100%}.aes-trader-common-si{padding:18px;border:1px solid #ccdaeb;border-radius:12px;margin-top:16px;background:#fafcff}
+.aes-trader-block-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.aes-trader-block-head h3{margin:0 0 4px;color:#183d66}.aes-trader-block-head p{margin:0}
+.aes-trader-pane{margin-top:18px;border:1px solid #dbe5f0;border-radius:12px;padding:18px}
+@media(max-width:900px){.aes-trader-sidebyside{grid-template-columns:1fr}.aes-trader-block-head{align-items:flex-start;flex-direction:column}}
+</style><style>
+#bookingrequest .br-hero{display:flex;justify-content:space-between;align-items:center;gap:18px;border-radius:14px;padding:24px 26px;background:linear-gradient(110deg,#103057,#174d80);color:#fff;margin-bottom:12px}
+#bookingrequest .br-hero h1{margin:4px 0;font-size:25px;color:#fff}#bookingrequest .br-hero p{margin:0;color:#dceafd;font-size:14px}
+#bookingrequest .br-kicker{font-size:11px;letter-spacing:.1em;font-weight:800;color:#4d94dd}#bookingrequest .br-hero .br-kicker{color:#8ac8ff}
+#bookingrequest .br-hero-actions,.br-catalogue-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#bookingrequest .br-hero-actions .btn:not(.primary){background:#fff;color:#123b66}
+#bookingrequest .br-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:15px}
+#bookingrequest .br-flow>div{display:flex;gap:9px;align-items:center;padding:10px 12px;border:1px solid #d7e4f1;border-radius:9px;background:#f7fbff;color:#28445f;font-weight:700;font-size:12px}
+#bookingrequest .br-flow b,.br-step{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:#1873c8;color:#fff;font-size:12px}
+#bookingrequest .br-section-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+#bookingrequest .br-section-head h2,#bookingrequest .br-section-head h3{font-size:17px;margin:0;color:#173b63}
+#bookingrequest .br-section-head p{font-size:12px;color:#667c92;margin:3px 0 0}
+#bookingrequest .br-catalogue-actions,#bookingrequest #brRouteToggle{margin-left:auto}
+#bookingrequest .br-orders-card,#bookingrequest .br-catalogue,#bookingrequest .br-workspace>.card{border:1px solid #d7e4f1;border-radius:12px}
+#bookingrequest .br-catalogue{background:#fbfdff}
+#bookingrequest #brQuoteCatalogueBody[hidden],#bookingrequest #brRouteQuotesDetail[hidden]{display:none!important}
+#bookingrequest .br-filters{background:#f7faff;padding:12px;border-radius:9px;border:1px solid #e0e9f3}
+#bookingrequest #brAcceptedQuotesTable{min-width:1150px!important}#bookingrequest #brQuotesTable{min-width:1150px!important}
+#bookingrequest .aes-freight-row{background:#f7fbff;border:1px solid #e2ebf5;border-radius:10px;padding:12px}
+#bookingrequest.br-workspace-active .br-orders-card,#bookingrequest.br-workspace-active .br-catalogue{display:none}
+#bookingrequest #bookingRequestWorkspace{display:none!important}#bookingrequest .br-inline-responsible{display:block;margin-top:6px;min-width:170px;width:100%}#bookingrequest .br-agent-row{display:flex;gap:6px}#bookingrequest .br-agent-row input{flex:1;min-width:180px}#bookingrequest .br-agent-row button{white-space:nowrap}#bookingrequest .br-agent-field{grid-column:span 2}#bookingrequest .br-inline-proposal{min-width:270px;max-width:350px;width:100%}#bookingrequest .br-quote-hint{display:block;color:#647c95;margin-top:4px}#bookingrequest .br-inline-actions .btn{white-space:nowrap}#bookingrequest .br-inline-actions{flex-wrap:wrap;min-width:230px}
+#bookingrequest .br-booking-overlay:not([hidden]){position:fixed;inset:0;z-index:1000;background:#102a43a8;display:grid;place-items:center;padding:16px}
+#bookingrequest .br-booking-overlay[hidden]{display:none!important}#bookingrequest .br-booking-dialog{width:min(1050px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:14px;box-shadow:0 24px 70px #071c3670}#bookingrequest .br-booking-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 14px;color:#173b63;border-bottom:1px solid #dce6f0}#bookingrequest .br-booking-dialog-head h2{margin:4px 0 0;font-size:20px}#bookingrequest .br-booking-dialog{width:min(940px,96vw);padding:14px 18px}#bookingrequest .br-modal-section{padding:15px 12px;border-bottom:1px solid #e3eaf2}#bookingrequest .br-modal-section h3{font-size:15px;color:#183f69;margin:0 0 11px}#bookingrequest .br-modal-section .sub{margin:-5px 0 10px}#bookingrequest .br-modal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}#bookingrequest .br-modal-grid label{display:block;margin-bottom:4px;font-size:12px;font-weight:700;color:#3a5470}#bookingrequest .br-modal-grid input{width:100%;box-sizing:border-box}#bookingrequest .br-span-all{grid-column:1/-1}#bookingrequest .br-agent-field{grid-column:span 2}#bookingrequest .br-text-add{border:0;background:none;color:#23649e;font-size:11px;font-weight:700;padding:3px 0;white-space:nowrap;cursor:pointer}#bookingrequest .br-manual-agent:not([hidden]){display:flex;gap:6px;margin-top:6px}#bookingrequest .br-manual-agent[hidden]{display:none}#bookingrequest .br-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 12px 4px}@media(max-width:760px){#bookingrequest .br-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#bookingrequest .br-agent-field{grid-column:1/-1}}@media(max-width:540px){#bookingrequest .br-modal-grid{grid-template-columns:1fr}#bookingrequest .br-agent-field{grid-column:auto}}
+#bookingrequest .br-inline-number{min-width:145px;width:155px}#bookingrequest .br-inline-status{min-width:170px;width:180px}#bookingrequest .br-inline-actions{display:flex;gap:5px}#bookingrequest .br-schedule-summary{padding:14px 16px;border:1px solid #c9dced;border-radius:10px;background:#f5faff;color:#234562;line-height:1.6}
+#bookingrequest .br-stage-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+@media(max-width:900px){#bookingrequest .br-hero{align-items:flex-start;flex-direction:column}#bookingrequest .br-flow{grid-template-columns:repeat(2,1fr)}#bookingrequest .br-section-head{flex-wrap:wrap}.br-catalogue-actions{width:100%}}
+</style><style>
+#finance .fin-inline-card{padding:12px 14px;margin-bottom:12px}
+#finance .fin-inline-card h2{font-size:14px;margin:0 0 8px;font-weight:700}
+#finance .fin-entry-line{width:100%;border-collapse:collapse}
+#finance .fin-entry-line th{font-size:10px;white-space:nowrap;padding:6px 8px;text-align:left}
+#finance .fin-entry-line td{padding:7px 6px;min-width:110px;vertical-align:middle}
+#finance .fin-entry-line td:last-child{min-width:75px}
+#finance .fin-entry-line input,#finance .fin-entry-line select{height:34px;margin:0;font-size:11px;padding:6px 8px;min-width:110px;width:100%}
+#finance .fin-entry-line input[type=file]{width:170px;min-width:170px;padding:5px}
+#finance .fin-entry-line .btn{height:34px;padding:6px 12px;white-space:nowrap;font-size:11px}
+#financeOrderWorkspace .pagehead{margin:10px 0!important}
+#financeOrderWorkspace .pagehead h2{font-size:17px}
+#financeOrderWorkspace>.card:not(.fin-inline-card){padding:12px 14px}
+#financeOrderWorkspace label{font-size:10px;margin-bottom:3px}
+#financeOrderWorkspace input[readonly]{height:30px;font-size:11px}
+</style><style>
+.shell{min-width:0}
+.export-flow-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;padding:10px 18px;background:#fff;border-bottom:1px solid #dce5ee;scrollbar-width:thin}
+.export-flow-tabs .export-flow-tab{display:flex;align-items:center;justify-content:center;gap:6px;flex:1 0 auto;width:auto;margin:0;padding:10px 9px;border:1px solid #dce5ee;border-radius:7px;color:#40556b;background:#f6f8fb;text-align:center;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:none}
+.export-flow-tabs .export-flow-tab:hover{color:#1558b0;background:#edf4ff;border-color:#b4cef4}
+.export-flow-tabs .export-flow-tab.active{color:#fff;background:#1558b0;border-color:#1558b0;box-shadow:none}
+.export-step{font-size:10px;font-weight:700;opacity:.65}
+.export-flow-tab:focus-visible{outline:3px solid #79b9ff;outline-offset:2px}
+@media(max-width:980px){.export-flow-tabs{padding:8px 10px}.export-flow-tabs .export-flow-tab{padding:9px 10px;font-size:11px}}
+</style><style>
+/* Barra das etapas de exportação: contraste escuro. */
+.export-flow-tabs{background:#0e1f33;border-bottom:2px solid #203e60}
+.export-flow-tabs .export-flow-tab{background:#1b3552;border-color:#365474;color:#f1f6fc;font-weight:700}
+.export-flow-tabs .export-flow-tab:hover{background:#2d5077;border-color:#769bc2;color:#fff}
+.export-flow-tabs .export-flow-tab.active{background:#245fc0;border-color:#84b5ff;color:#fff;box-shadow:inset 0 -3px 0 #b4d2ff}
+.export-flow-tabs .export-step{opacity:1;color:#aec5df}
+.export-flow-tabs .export-flow-tab.active .export-step{color:#fff}
+</style><style>
+/* Lista de contratos ampliada até as laterais da área de trabalho. */
+#contract .contract-list-wide{margin-left:calc(-1 * clamp(15px,2.2vw,32px) + 6px);margin-right:calc(-1 * clamp(15px,2.2vw,32px) + 6px);padding:14px 8px}
+#contract .contract-list-wide>.pagehead{padding:0 8px}
+#contract .contract-list-wide>.tablewrap{width:100%;border-radius:8px}
+#contractsTable th,#contractsTable td{padding-left:10px;padding-right:10px}
+#contractsTable th:nth-child(3),#contractsTable th:nth-child(4){min-width:210px}
+#contractsTable td:nth-child(3),#contractsTable td:nth-child(4){min-width:210px;max-width:270px;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+@media(max-width:980px){#contract .contract-list-wide{margin-left:-9px;margin-right:-9px;padding:12px 6px}}
+</style><style>
+/* Área vertical ampliada para a Lista de Contratos. */
+#contract .contract-list-wide>.tablewrap{height:clamp(380px,55vh,700px);overflow:auto}
+#contractsTable thead{position:sticky;top:0;z-index:2}
+#contractsTable thead th{background:#eaf0f7}
+#contractsTable tbody td{padding-top:18px;padding-bottom:18px}
+@media(max-width:650px){#contract .contract-list-wide>.tablewrap{height:420px}}
+</style><style>
+#booking .booking-pendency-tall{height:clamp(380px,55vh,700px);overflow:auto}
+#bookingPendencyTable thead{position:sticky;top:0;z-index:2}
+#bookingPendencyTable thead th{background:#eaf0f7}
+#bookingPendencyTable tbody td{padding-top:18px;padding-bottom:18px}
+@media(max-width:650px){#booking .booking-pendency-tall{height:420px}}
+</style></head>
+<body><datalist id="aesCarrierList"></datalist><datalist id="aesBookingAgentList"></datalist><datalist id="aesBookingResponsibleList"></datalist>
 <div class="app">
   <aside class="sidebar">
     <div class="logo">AUREA <span>EXPORT SYSTEM</span><small>AES · Export Management ERP</small></div>
@@ -161,17 +264,10 @@ input::placeholder,textarea::placeholder{color:#76869a}
     <button class="navbtn" data-view="user"><span class="ico">◉</span>User</button>
     <button class="navbtn" data-view="bank"><span class="ico">▰</span>Bank data</button>
     <button class="navbtn" data-view="access"><span class="ico">🔐</span>Access</button>
-    <button class="navbtn" data-view="contract"><span class="ico">▤</span>Contrato</button>
+    <button class="navbtn" data-view="trader"><span class="ico">◇</span>Compra e revenda</button>
     <div class="group">Operação</div>
-    <button class="navbtn" data-view="schedule"><span class="ico">◫</span>Programação</button>
-    <button class="navbtn" data-view="bookingrequest"><span class="ico">⚓</span>Booking Request</button>
-    <button class="navbtn" data-view="booking"><span class="ico">⚑</span>Booking Pendency</button>
     <button class="navbtn" data-view="ordercontainers"><span class="ico">▦</span>Order Containers</button>
-    <button class="navbtn" data-view="loading"><span class="ico">▣</span>Loading</button>
-    <button class="navbtn" data-view="releasing"><span class="ico">✓</span>Releasing</button>
-    <button class="navbtn" data-view="after"><span class="ico">➜</span>After Shipping</button>
     <div class="group">Documentação</div>
-    <button class="navbtn" data-view="docs"><span class="ico">▥</span>Documentos</button>
     <button class="navbtn" data-view="broker"><span class="ico">◆</span>Despachante</button>
     <div class="group">Financeiro</div>
     <button class="navbtn" data-view="servicehub"><span class="ico">▧</span>Serviços Contratados</button>
@@ -186,6 +282,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div class="userbox"><label for="aesLanguage" class="language-label">Language</label><select id="aesLanguage" aria-label="Interface language" onchange="aesSetLanguage(this.value)"><option value="en">English</option><option value="pt">Português</option></select><div class="avatar">PG</div><div><b style="font-size:12px">Paula Gobbi</b><div class="sub" style="margin:0">Administrador</div></div></div>
     </div>
 
+    <nav id="exportFlowTabs" class="export-flow-tabs" aria-label="Etapas da exportação"><button type="button" class="navbtn export-flow-tab" data-view="contract"><span class="export-step">01</span><span>Contratos</span></button><button type="button" class="navbtn export-flow-tab" data-view="booking"><span class="export-step">02</span><span>Pendências do booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="schedule"><span class="export-step">03</span><span>Programação de Exportação</span></button><button type="button" class="navbtn export-flow-tab" data-view="bookingrequest"><span class="export-step">04</span><span>Solicitação de Booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="loading"><span class="export-step">05</span><span>Carregamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="releasing"><span class="export-step">06</span><span>Liberação em andamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="after"><span class="export-step">07</span><span>Após o embarque</span></button><button type="button" class="navbtn export-flow-tab" data-view="docs"><span class="export-step">08</span><span>Documentos</span></button></nav>
     <main class="content">
       <section id="dashboard" class="view active">
         <div class="pagehead"><div><h1>Dashboard Executivo</h1><div class="sub">Controle geral das exportações e pendências críticas.</div></div><button class="btn primary" onclick="go('contract')">+ Novo Contrato</button></div>
@@ -214,7 +311,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <div class="tabs"><button class="tab active" data-tab="userform">Cadastro</button><button class="tab" data-tab="userlist">Lista de USER</button></div>
           <div id="userform" class="tabpane active">
             <div class="grid2">
-              <div><label>Perfil</label><select id="uProfile"><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option>Porto / Terminal / Local</option><option>Empresa de Fumigação</option></select></div>
+              <div><label>Perfil</label><select id="uProfile"><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option>Porto / Terminal / Local</option><option>Empresa de Fumigação</option><option>Agente de Carga</option><option>Armador</option></select></div>
               <div><label>Nome da Empresa / Pessoal</label><input id="uCompany" placeholder="Nome da Empresa / Pessoal"></div>
               <div class="wide"><label>Endereço</label><input id="uAddress" placeholder="Full Address"></div>
               <div><label>País</label><input id="uCountry" placeholder="Country"></div><div><label>Tax ID / Registro</label><input id="uTaxId" placeholder="Tax ID / Registration"></div>
@@ -349,7 +446,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card contract-list-wide">
     <div class="pagehead" style="margin-bottom:10px"><div><h3 style="margin:0">Lista de Contratos</h3><div class="sub"><span id="contractCount">6</span> contratos encontrados</div></div></div>
     <div class="tablewrap">
       <table id="contractsTable">
@@ -363,6 +460,11 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <tr data-date="2026-07-30" data-exporter="Aurea Agrobusiness" data-importer="Nile Trading" data-product="Kidney Beans"><td>EX-1008</td><td>CT-2026-1008</td><td>Nile Trading</td><td>Aurea Agrobusiness</td><td>25 kg bags</td><td>20' GP</td><td>10</td><td>Kidney Beans – Crop 2026</td><td>250</td><td>Kidney Beans</td><td>USD 910/MT</td><td>USD 11/MT</td><td>USD 137,500</td><td>01/08/2026</td><td>15/08/2026</td><td><button class="btn" onclick="showContractForm('EX-1008')">Abrir</button> <button class="btn" onclick="openCancelContract('EX-1008')">Excluir</button></td></tr>
         </tbody>
       </table>
+    </div>
+    <div id="contractListTotals" style="display:flex;flex-wrap:wrap;gap:28px;align-items:center;margin-top:12px;padding:14px 18px;background:#142b46;color:#fff;border-radius:8px" aria-live="polite">
+      <div><span style="font-size:12px;color:#c9d7e8">Quantidade de contêineres</span><strong id="contractTotalContainers" style="display:block;font-size:22px;margin-top:3px">0</strong></div>
+      <div><span style="font-size:12px;color:#c9d7e8">Quantidade em toneladas</span><strong id="contractTotalTonnes" style="display:block;font-size:22px;margin-top:3px">0 t</strong></div>
+      <span class="sub" style="margin-left:auto;color:#c9d7e8">Totais dos contratos exibidos</span>
     </div>
     <div class="toolbar" style="margin-top:12px;justify-content:flex-end"><button class="btn primary" onclick="exportContractsExcel()">⬇ Gerar Excel</button></div>
   </div>
@@ -600,6 +702,76 @@ input::placeholder,textarea::placeholder{color:#76869a}
   </div>
 </div>
 </section>
+<section id="trader" class="view">
+  <div class="pagehead"><div><h1>Compra e revenda</h1><div class="sub">Contratos de compra e Proformas de revenda na mesma operação.</div></div><button type="button" class="btn primary" onclick="aesTraderNew()">+ Nova operação</button></div>
+  <div id="aesTraderList" class="card">
+    <div class="toolbar" style="justify-content:space-between;align-items:center"><div><h3 style="margin:0">Operações comerciais</h3><div id="aesTraderStatus" class="sub">Carregando…</div></div><button type="button" class="btn" onclick="aesTraderRefresh()">↻ Atualizar</button></div>
+    <div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>Trade</th><th>Data</th><th>Fornecedor → Comprador</th><th>Produto / Quantidade</th><th>Compra</th><th>Venda</th><th>Margem bruta</th><th>Status</th><th>Ação</th></tr></thead><tbody id="aesTraderRows"><tr><td colspan="9">Carregando…</td></tr></tbody></table></div>
+  </div>
+  <div id="aesTraderEditor" class="card" hidden>
+    <div class="toolbar" style="justify-content:space-between"><h3 id="aesTraderFormTitle" style="margin:0">Nova operação comercial</h3><button type="button" class="btn" onclick="aesTraderBack()">← Voltar para lista</button></div>
+    <div class="aes-trade-tabs" role="tablist" aria-label="Compra e revenda"><button type="button" class="active" id="aesTradeOperationTab" onclick="aesTraderSetTab('operation')">Operação</button><button type="button" id="aesTradePaymentsTab" onclick="aesTraderSetTab('payments')">Pagamentos</button></div>
+    <div id="aesTradeOperationPane">
+    <p class="sub" style="margin:10px 0 18px">Registre os dados comerciais de cada lado nos quadros abaixo.</p>
+    <div class="grid4">
+      <div><label for="trTradeNumber">Número da operação *</label><input id="trTradeNumber" placeholder="TR-2026-001" required></div>
+      <div><label for="trDate">Data *</label><input id="trDate" type="date" required></div>
+      <div><label for="trStatus">Status</label><select id="trStatus"><option value="draft">Draft</option><option value="confirmed">Confirmado</option><option value="cancelled">Cancelado</option></select></div>
+      <div><label for="trCurrency">Moeda da compra e venda</label><select id="trCurrency"><option>USD</option><option>BRL</option><option>EUR</option></select></div>
+    </div>
+    <div class="aes-trader-totals" aria-live="polite"><div><small>Custo total</small><strong id="trBuyTotal">—</strong></div><div><small>Venda total</small><strong id="trSellTotal">—</strong></div><div><small>Margem bruta</small><strong id="trMargin">—</strong></div><div><small>Margem %</small><strong id="trMarginPct">—</strong></div></div>
+    <div hidden aria-hidden="true"><select id="trTrader"></select><select id="trSupplier"></select><select id="trBuyer"></select><input id="trDelivery"><textarea id="trNotes"></textarea>      <div><label for="trProduct">Produto *</label><input id="trProduct" required></div>
+      <div><label for="trQuantity">Quantidade *</label><input id="trQuantity" type="number" min="0.001" step="0.001" required></div>
+      <div><label for="trUnit">Unidade</label><select id="trUnit"><option>MT</option><option>KG</option><option>UN</option></select></div>
+      <div><label for="trBuyUnit">Preço unitário de compra *</label><input id="trBuyUnit" type="number" min="0" step="0.0001" required></div>
+      <div><label for="trSellUnit">Preço unitário de venda *</label><input id="trSellUnit" type="number" min="0" step="0.0001" required></div>
+</div>
+    <div class="aes-trader-sidebyside">
+      <div class="aes-trader-side-card">
+        <div class="aes-trader-side-head"><span>01 · COMPRA</span><h3>Contrato com o fornecedor</h3><p>Partes e condições comerciais da compra.</p></div>
+        <div class="aes-trader-parties" data-side="purchase"></div>
+        <div class="aes-trader-commercial"><div><label for="trPurchaseProduct">Produto *</label><input id="trPurchaseProduct"></div><div><label for="trPurchaseQuantity">Quantidade *</label><input id="trPurchaseQuantity" type="number" min="0.001" step="0.001"></div><div><label for="trPurchaseUnit">Unidade</label><select id="trPurchaseUnit"><option>MT</option><option>KG</option><option>UN</option></select></div><div><label for="trPurchaseUnitPrice">Preço unitário de compra *</label><input id="trPurchaseUnitPrice" type="number" min="0" step="0.0001"></div><div class="wide"><label for="trPurchasePayment">Term payment · Compra</label><textarea id="trPurchasePayment" rows="2" placeholder="Prazo e forma de pagamento ao fornecedor"></textarea></div></div>
+        <div class="aes-trader-side-terms"><div><label for="trContractNumber">Número do contrato de compra</label><input id="trContractNumber" placeholder="Número do contrato"></div><div><label for="trBuyTerms">Condições de compra</label><textarea id="trBuyTerms" rows="3"></textarea></div><div><label for="trPurchaseDelivery">Entrega da compra</label><input id="trPurchaseDelivery" placeholder="Condição e local de entrega"></div></div>
+      </div>
+      <div class="aes-trader-side-card">
+        <div class="aes-trader-side-head"><span>02 · REVENDA</span><h3>Proforma para o comprador</h3><p>Partes e condições comerciais da revenda.</p></div>
+        <div class="aes-trader-parties" data-side="sale"></div>
+        <div class="aes-trader-commercial"><div><label for="trSaleProduct">Produto *</label><input id="trSaleProduct"></div><div><label for="trSaleQuantity">Quantidade *</label><input id="trSaleQuantity" type="number" min="0.001" step="0.001"></div><div><label for="trSaleUnit">Unidade</label><select id="trSaleUnit"><option>MT</option><option>KG</option><option>UN</option></select></div><div><label for="trSaleUnitPrice">Preço unitário de revenda *</label><input id="trSaleUnitPrice" type="number" min="0" step="0.0001"></div><div class="wide"><label for="trSalePayment">Term payment · Revenda</label><textarea id="trSalePayment" rows="2" placeholder="Prazo e forma de recebimento do comprador"></textarea></div></div>
+        <div class="aes-trader-side-terms"><div><label for="trProformaNumber">Número da Proforma de venda</label><input id="trProformaNumber" placeholder="Número da Proforma"></div><div><label for="trSellTerms">Condições de venda</label><textarea id="trSellTerms" rows="3"></textarea></div><div><label for="trSaleDelivery">Entrega da revenda</label><input id="trSaleDelivery" placeholder="Condição e local de entrega"></div></div>
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:18px;flex-wrap:wrap"><button type="button" class="btn primary" id="trSave" onclick="aesTraderSave()">Salvar operação</button><button type="button" class="btn" onclick="aesTraderDocument('contract')">Visualizar contrato de compra</button><button type="button" class="btn" onclick="aesTraderDocument('proforma')">Visualizar Proforma de venda</button></div>
+    <div class="aes-trader-common-si">
+      <div class="aes-trader-block-head"><div><h3>Shipping Instruction única</h3><p class="sub">Os mesmos dados de embarque são usados na compra e na revenda.</p></div><button type="button" class="btn" onclick="aesTraderSI()">Visualizar Shipping Instruction</button></div>
+      <div class="grid4 aes-trader-si" data-side="shared"></div>
+    </div>
+    <div class="aes-trader-pane">
+      <div class="toolbar" style="justify-content:space-between"><div><h3 style="margin:0">Documentos do Exporter para o Importer</h3><p class="sub" style="margin:4px 0">Anexe o documento recebido; depois registre a data em que o encaminhou ao importador. O envio externo deve ser feito pela sua equipe.</p></div><button type="button" class="btn" onclick="aesTraderAddDoc()">+ Documento</button></div>
+      <div class="tablewrap"><table class="aes-trader-doc-table"><thead><tr><th>Documento</th><th>Status</th><th>Recebido</th><th>Encaminhado</th><th>Arquivo / Ação</th><th>Observação</th><th></th></tr></thead><tbody id="trDocRows"></tbody></table></div>
+    </div>
+    <div class="aes-trader-pane">
+      <div class="toolbar" style="justify-content:space-between"><div><h3 style="margin:0">Correções e demandas</h3><p class="sub" style="margin:4px 0">Registre o que precisa ser corrigido, o responsável, o prazo e a conclusão.</p></div><button type="button" class="btn" onclick="aesTraderAddTask()">+ Tarefa</button></div>
+      <div class="tablewrap"><table class="aes-trader-task-table"><thead><tr><th>Demanda / correção</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Observação</th><th></th></tr></thead><tbody id="trTaskRows"></tbody></table></div>
+    </div>
+    </div>
+    <div id="aesTradePaymentsPane" hidden>
+      <p class="sub" style="margin:12px 0 18px">Registre cada saída da compra e cada entrada da revenda. Os lançamentos ficam vinculados a esta operação.</p>
+      <div class="aes-trade-payments-grid">
+        <section class="aes-trade-payment-card"><div class="aes-trade-payment-head"><div><span>01 · COMPRA</span><h3>Pagamentos efetuados</h3><p>Registre a saída e informe quem recebeu o pagamento.</p></div><button type="button" class="btn" onclick="aesTraderAddPayment('purchase')">+ Pagamento</button></div>
+          <div class="aes-trade-payment-summary"><div><small>Valor da compra</small><strong id="trPurchaseDue">—</strong></div><div><small>Pago</small><strong id="trPurchasePaid">—</strong></div><div><small>Saldo a pagar</small><strong id="trPurchaseBalance">—</strong></div></div>
+          <div class="tablewrap"><table class="aes-trade-payment-table"><thead><tr><th>Data</th><th>Valor</th><th>Para / de</th><th>Banco / meio</th><th>Referência</th><th></th></tr></thead><tbody id="trPurchasePayments"></tbody></table></div>
+        </section>
+        <section class="aes-trade-payment-card"><div class="aes-trade-payment-head"><div><span>02 · REVENDA</span><h3>Pagamentos recebidos</h3><p>Registre a entrada e informe quem fez o pagamento.</p></div><button type="button" class="btn" onclick="aesTraderAddPayment('sale')">+ Recebimento</button></div>
+          <div class="aes-trade-payment-summary"><div><small>Valor da revenda</small><strong id="trSaleDue">—</strong></div><div><small>Recebido</small><strong id="trSaleReceived">—</strong></div><div><small>Saldo a receber</small><strong id="trSaleBalance">—</strong></div></div>
+          <div class="tablewrap"><table class="aes-trade-payment-table"><thead><tr><th>Data</th><th>Valor</th><th>Para / de</th><th>Banco / meio</th><th>Referência</th><th></th></tr></thead><tbody id="trSalePayments"></tbody></table></div>
+        </section>
+      </div>
+      <div class="toolbar" style="justify-content:flex-end;margin-top:18px"><button type="button" class="btn primary" onclick="aesTraderSave()">Salvar pagamentos e operação</button></div>
+    </div>
+    <div id="trMessage" class="sub" role="status" style="margin-top:10px"></div>
+  </div>
+</section>
+
 <section id="schedule" class="view">
         <div class="pagehead"><div><h1>Programação de Exportação</h1><div class="sub">Planeje e acompanhe todas as etapas da sua operação.</div></div></div>
         <div id="aesPlanOverview" class="aes-plan-overview" aria-live="polite">
@@ -993,12 +1165,21 @@ input::placeholder,textarea::placeholder{color:#76869a}
 })();
 </script>
 <section id="bookingrequest" class="view">
-        <div class="pagehead"><div><h1>Booking Request</h1><div class="sub">Ordens com contrato para solicitação de booking, cotação e negociação de frete marítimo.</div></div><button class="btn" type="button" onclick="refreshBookingRequestOrders()">↻ Atualizar contratos</button></div>
-        <div class="card" id="brAcceptedAllOrdersCard">
-          <div class="pagehead">
-            <div><h3 style="margin:0">Accepted / Valid Market Freight Quotations</h3><div class="sub">As cotações arquivadas ficam fora da lista ativa. Selecione Archived no filtro Status para consultá-las ou reativá-las.</div></div>
-            <div class="toolbar"><button class="btn primary" type="button" onclick="addCentralFreightQuote()">+ Adicionar Cotação</button><button class="btn" type="button" onclick="renderAcceptedQuotes()">↻ Atualizar</button></div>
+        <div class="br-hero"><div><span class="br-kicker">FRETE MARÍTIMO · BOOKING</span><h1>Solicitação de Booking</h1><p>Cote o frete, programe o navio, solicite a reserva e registre a confirmação recebida.</p></div><div class="br-hero-actions"><button class="btn primary" type="button" onclick="addCentralFreightQuote()">+ Nova cotação</button><button class="btn" type="button" onclick="refreshBookingRequestOrders();renderAcceptedQuotes()">↻ Atualizar</button></div></div>
+        <div class="br-flow" aria-label="Etapas da solicitação"><div><b>1</b><span>Cotar frete</span></div><div><b>2</b><span>Programar navio</span></div><div><b>3</b><span>Solicitar booking</span></div><div><b>4</b><span>Lançar booking</span></div></div>
+        <div class="card br-orders-card"><div class="br-section-head"><span class="br-step">01</span><div><h2>Orders e bookings</h2><p>Selecione uma proposta para a Order, atualize a situação e lance o booking confirmado diretamente desta lista.</p></div></div>
+          <div class="grid4 br-filters" style="margin-bottom:12px">
+            <div><label>Order / Contract</label><input id="brFilterOrder" placeholder="Ex.: EX-1026" oninput="filterBookingRequestOrders()"></div>
+            <div><label>Importer / Buyer</label><input id="brFilterImporter" placeholder="Importador" oninput="filterBookingRequestOrders()"></div>
+            <div><label>Destination</label><input id="brFilterDestiny" placeholder="Destino" oninput="filterBookingRequestOrders()"></div>
+            <div><label>Status</label><select id="brFilterStatus" onchange="filterBookingRequestOrders()"><option value="">Todos</option><option>Pending Quotation</option><option>Quoting</option><option>Freight Negotiation</option><option>Booking Requested</option><option>Booking Pending</option><option>Booking Confirmed</option></select></div>
           </div>
+          <div class="tablewrap"><table id="bookingRequestOrdersTable"><thead><tr><th>Order</th><th>Contract</th><th>Importer</th><th>Product</th><th>Qty MT</th><th>Containers</th><th>Port of Loading</th><th>Port of Discharge</th><th>Destination</th><th>Shipment</th><th>Propostas de frete</th><th>Situação / Responsável</th><th>Booking</th><th>Ações</th></tr></thead><tbody></tbody></table></div>
+        </div>
+
+        <div class="card br-catalogue" id="brAcceptedAllOrdersCard">
+          <div class="br-section-head"><span class="br-step">02</span><div><h2>Catálogo de propostas marítimas</h2><p>Uma proposta pode atender várias Orders e vários portos. Abra o catálogo para comparar, vincular ou editar.</p></div><div class="br-catalogue-actions"><button class="btn" type="button" id="brToggleCatalogue" onclick="aesToggleBookingCatalogue()" aria-expanded="false">Ver propostas ▾</button><button class="btn primary" type="button" onclick="addCentralFreightQuote()">+ Adicionar</button></div></div>
+          <div id="brQuoteCatalogueBody" hidden>
           <div class="grid4" style="margin:12px 0">
             <div><label>Proposal / Company</label><input id="brAcceptedFilterOrder" placeholder="Nº proposta ou empresa" oninput="renderAcceptedQuotes()"></div>
             <div><label>Shipping Line</label><input id="brAcceptedFilterCompany" placeholder="Armador" oninput="renderAcceptedQuotes()"></div>
@@ -1007,20 +1188,11 @@ input::placeholder,textarea::placeholder{color:#76869a}
           </div>
           <div class="tablewrap"><table id="brAcceptedQuotesTable" style="min-width:2450px"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="19" class="sub">Nenhuma cotação cadastrada. Clique em “+ Adicionar Cotação”.</td></tr></tbody></table></div>
           <div id="centralCheapestComparison" style="margin-top:14px"></div>
-        </div>
-        <div class="card">
-          <div class="grid4" style="margin-bottom:12px">
-            <div><label>Order / Contract</label><input id="brFilterOrder" placeholder="Ex.: EX-1026" oninput="filterBookingRequestOrders()"></div>
-            <div><label>Importer / Buyer</label><input id="brFilterImporter" placeholder="Importador" oninput="filterBookingRequestOrders()"></div>
-            <div><label>Destination</label><input id="brFilterDestiny" placeholder="Destino" oninput="filterBookingRequestOrders()"></div>
-            <div><label>Status</label><select id="brFilterStatus" onchange="filterBookingRequestOrders()"><option value="">Todos</option><option>Pending Quotation</option><option>Quoting</option><option>Freight Negotiation</option><option>Booking Requested</option><option>Booking Pending</option><option>Booking Confirmed</option></select></div>
           </div>
-          <div class="tablewrap"><table id="bookingRequestOrdersTable"><thead><tr><th>Order</th><th>Contract</th><th>Importer</th><th>Product</th><th>Qty MT</th><th>Containers</th><th>Port of Loading</th><th>Port of Discharge</th><th>Destination</th><th>Shipment</th><th>Quotes</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
         </div>
-
-        <div id="bookingRequestWorkspace" style="display:none">
+        <div id="bookingRequestWorkspace" class="br-workspace" style="display:none">
           <div class="card">
-            <div class="pagehead"><div><h2 style="margin:0">Freight Request — <span id="brOrderTitle">—</span></h2><div class="sub" id="brContractSummary">—</div></div><div class="toolbar"><button class="btn" onclick="closeBookingRequestWorkspace()">← Voltar</button><button class="btn primary" onclick="saveBookingRequest()">Salvar</button></div></div>
+            <div class="pagehead"><div><span class="br-kicker">ORDER SELECIONADA</span><h2 style="margin:0">Order <span id="brOrderTitle">—</span></h2><div class="sub" id="brContractSummary">—</div></div><div class="toolbar"><button class="btn" onclick="closeBookingRequestWorkspace()">← Voltar</button><button class="btn primary" onclick="saveBookingRequest()">Salvar</button></div></div>
             <div class="aes-freight-row" role="group" aria-label="Dados da Freight Request">
               <div><label for="brOrder">Order</label><input id="brOrder" readonly></div>
               <div><label for="brContract">Contract</label><input id="brContract" readonly></div>
@@ -1032,23 +1204,40 @@ input::placeholder,textarea::placeholder{color:#76869a}
             </div>
           </div>
 
-          <div class="card">
+          <div class="card br-route-quotes">
             <div id="brMarketTab">
-              <div class="pagehead"><div><h3 style="margin:0">Market Freight Quotations</h3><div class="sub">Somente cotações com status Accepted e com a mesma rota (Port of Loading / Port of Discharge) deste shipment.</div></div></div>
-              <div class="tablewrap"><table id="brQuotesTable" style="min-width:2250px"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Total Cntr Charges</th><th>Total BL Charges</th><th>Grand Total</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
-              <div id="brCheapestComparison" style="margin-top:14px"></div>
+              <div class="br-section-head"><span class="br-step">01</span><div><h3>Cotação de frete aceita</h3><p>Compare e aceite a proposta marítima antes de programar o navio.</p></div><button class="btn" type="button" onclick="aesToggleBookingRouteQuotes()" id="brRouteToggle" aria-expanded="false">Ver valores ▾</button></div>
+              <div id="brRouteQuotesDetail" hidden><div class="tablewrap"><table id="brQuotesTable" style="min-width:2250px"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Total Cntr Charges</th><th>Total BL Charges</th><th>Grand Total</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <div id="brCheapestComparison" style="margin-top:14px"></div></div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="pagehead"><div><h3 style="margin:0">Booking Data & Dates</h3><div class="sub">Preencher os dados recebidos na confirmação do booking e seus principais deadlines operacionais.</div></div></div>
-            <div class="grid4">
-              <div><label>Booking Number</label><input id="brBookingNo"></div><div><label>Shipping Line</label><input id="brLine"></div><div><label>Vessel</label><input id="brVessel"></div><div><label>Voyage</label><input id="brVoyage"></div>
-              <div><label>Booking Confirmation Date</label><input id="brConfirmDate" type="date"></div><div><label>Empty Release Date</label><input id="brEmptyRelease" type="date"></div><div><label>Earliest Receiving Date</label><input id="brReceiving" type="date"></div><div><label>CY / Port Cut-off</label><input id="brCyCutoff" type="datetime-local"></div>
-              <div><label>SI Cut-off</label><input id="brSiCutoff" type="datetime-local"></div><div><label>VGM Cut-off</label><input id="brVgmCutoff" type="datetime-local"></div><div><label>Draft BL Deadline</label><input id="brDraftDeadline" type="datetime-local"></div><div><label>Customs / Documentation Cut-off</label><input id="brDocsCutoff" type="datetime-local"></div>
-              <div><label>ETD</label><input id="brETD" type="date"></div><div><label>ETA</label><input id="brETA" type="date"></div><div><label>Transshipment</label><input id="brTransshipment" placeholder="Direct / port"></div><div><label>Confirmed Free Time</label><input id="brConfirmedFreeTime" placeholder="Ex.: 14 days detention"></div>
-            </div>
-            <div style="margin-top:12px"><label>Booking Notes / Conditions</label><textarea id="brNotes" rows="4" placeholder="Condições do frete, observações do armador, equipamentos, deadlines especiais, instruções..."></textarea></div>
+          <div class="card"><div class="br-section-head"><span class="br-step">02</span><div><h3>Programar navio / viagem</h3><p>Escolha o navio na Programação antes de solicitar o booking.</p></div></div><div id="brScheduledVessel" class="br-schedule-summary" role="status">Consulte a programação desta Order para selecionar o navio e a viagem.</div><div class="br-stage-actions"><button class="btn primary" type="button" onclick="aesBookingOpenScheduling()">Abrir Programação →</button></div></div>
+          <div hidden><input id="brRequestDate" type="date"><input id="brRequestedLine"><input id="brRequestedVessel"><input id="brRequestedVoyage"><textarea id="brRequestInstructions"></textarea></div>
+        </div>
+        <div id="brBookingModal" class="br-booking-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="brBookingModalTitle">
+          <div class="br-booking-dialog">
+            <div class="br-booking-dialog-head"><div><span class="br-kicker">BOOKING CONFIRMADO</span><h2 id="brBookingModalTitle">Order <span id="brBookingModalOrder"></span></h2></div><button class="btn" type="button" onclick="aesCloseConfirmedBooking()">✕ Fechar</button></div>
+            <div class="br-modal-section"><h3>Reserva e embarque</h3><div class="br-modal-grid">
+              <div><label for="brBookingNo">Número do booking *</label><input id="brBookingNo"></div>
+              <div><label for="brConfirmDate">Data da confirmação</label><input id="brConfirmDate" type="date"></div>
+              <div><label for="brLine">Armador</label><input id="brLine" list="aesCarrierList" autocomplete="off" onchange="aesBookingCarrierChanged()" placeholder="Nome completo do armador"></div>
+              <div><label for="brVessel">Navio</label><input id="brVessel"></div>
+              <div><label for="brVoyage">Viagem</label><input id="brVoyage"></div>
+              <div><label for="brETD">ETD</label><input id="brETD" type="date"></div>
+              <div><label for="brETA">ETA</label><input id="brETA" type="date"></div>
+              <div><label for="brConfirmedFreeTime">Prazo livre origem (dias)</label><input id="brConfirmedFreeTime" type="number" min="0"></div>
+              <div><label for="brDestinationFreeTime">Prazo livre destino (dias)</label><input id="brDestinationFreeTime" type="number" min="0"></div>
+              <div class="br-agent-field"><label for="brFreightAgent">Agente de carga</label><div class="br-agent-row"><input id="brFreightAgent" list="aesBookingAgentList" placeholder="Selecionar do USER"><button class="br-text-add" type="button" onclick="aesBookingRegisterAgent()">+ Cadastrar Não Usuário</button></div><div id="brManualAgentBox" class="br-manual-agent" hidden><input id="brManualAgentName" placeholder="Nome do agente externo"><button class="btn" type="button" onclick="aesBookingApplyManualAgent()">Usar</button></div></div>
+            </div></div>
+            <input type="hidden" id="brCarrierLegalName"><input type="hidden" id="brCarrierTaxId"><input type="hidden" id="brCarrierCountry"><input type="hidden" id="brCarrierEmail"><input type="hidden" id="brCarrierPhone"><input type="hidden" id="brCarrierAddress">
+            <div class="br-modal-section"><h3>Deadlines confirmados</h3><div class="br-modal-grid">
+              <div><label for="brVgmCutoff">Prazo limite do VGM</label><input id="brVgmCutoff" type="datetime-local"></div>
+              <div><label for="brDraftDeadline">Deadline Draft</label><input id="brDraftDeadline" type="datetime-local"></div>
+              <div><label for="brCyCutoff">Deadline Carga</label><input id="brCyCutoff" type="datetime-local"></div>
+            </div></div>
+            <div hidden aria-hidden="true"><input id="brEmptyRelease" type="date"><input id="brReceiving" type="date"><input id="brSiCutoff" type="datetime-local"><input id="brDocsCutoff" type="datetime-local"><input id="brTransshipment"><textarea id="brNotes"></textarea></div>
+            <div class="br-modal-footer"><button class="btn" type="button" onclick="aesCloseConfirmedBooking()">Cancelar</button><button class="btn primary" type="button" onclick="aesBookingSaveConfirmedFromList()">Salvar booking confirmado</button></div>
           </div>
         </div>
       </section>
@@ -1070,7 +1259,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <button class="btn primary" onclick="applyBookingFilters()">Aplicar Filtros</button>
             <button class="btn" onclick="clearBookingFilters()">Limpar</button>
           </div>
-<div class="tablewrap"><table id="bookingPendencyTable"><thead><tr><th>Number Contact</th><th>Importer</th><th>Exporter</th><th>Packing</th><th>Cntrs Type</th><th>Products</th><th>Origin</th><th>Destiny</th><th>Shipment</th><th>Pendências</th><th>Detalhes / Documentos</th><th>Note</th><th>Task</th></tr></thead><tbody></tbody></table></div>
+<div class="tablewrap booking-pendency-tall"><table id="bookingPendencyTable"><thead><tr><th>Number Contact</th><th>Importer</th><th>Exporter</th><th>Packing</th><th>Cntrs Type</th><th>Products</th><th>Origin</th><th>Destiny</th><th>Shipment</th><th>Pendências</th><th>Detalhes / Documentos</th><th>Note</th><th>Task</th></tr></thead><tbody></tbody></table></div>
           <div class="toolbar" style="justify-content:flex-end;margin-top:12px">
             <button class="btn primary" onclick="exportBookingExcel()">Gerar Excel</button>
           </div>
@@ -3390,7 +3579,8 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" style="padding:10px 14px"><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap" id="financeTabs"><button class="btn primary" onclick="switchFinanceTab('orders')" data-tab="orders">Orders e lançamentos</button><button class="btn" onclick="switchFinanceTab('ACC')" data-tab="ACC">ACC</button><button class="btn" onclick="switchFinanceTab('Trava de Câmbio')" data-tab="Trava de Câmbio">Trava de Câmbio</button><button class="btn" onclick="switchFinanceTab('NDF')" data-tab="NDF">NDF</button></div></div>
+  <div class="card" id="financeFilters">
     <div class="grid4">
       <div><label>Order</label><input id="finFilterOrder" placeholder="Buscar Order"></div>
       <div><label>Importer</label><input id="finFilterImporter" placeholder="Buscar Importer"></div>
@@ -3401,7 +3591,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <option value="Pending">Pending</option>
           <option value="Partial">Partial</option>
           <option value="Received">Received</option>
-        </select>
+        <option value="Financiamento RTS">Financiamento RTS</option></select>
       </div>
       <div>
         <label>Câmbio</label>
@@ -3419,131 +3609,25 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2>
     <div class="tablewrap">
-      <table id="financeTable">
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Importer</th>
-            <th>Invoice Amount</th>
-            <th>Received</th>
-            <th>Pending</th>
-            <th>Due Date</th>
-            <th>Receivable Status</th>
-            <th>FX Closed</th>
-            <th>FX Pending</th>
-            <th>FX Status</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr data-order="EX-1026" data-importer="Global Agro Foods" data-status="Partial" data-fx="Partial">
-            <td><b>EX-1026</b></td>
-            <td>Global Agro Foods</td>
-            <td>USD 648,000.00</td>
-            <td id="finReceived-EX-1026">USD 200,000.00</td>
-            <td id="finPending-EX-1026">USD 448,000.00</td>
-            <td>25/09/2026</td>
-            <td><span id="finStatus-EX-1026" class="badge warn">Partial</span></td>
-            <td id="finFxClosed-EX-1026">USD 150,000.00</td>
-            <td id="finFxPending-EX-1026">USD 498,000.00</td>
-            <td><span id="finFxStatus-EX-1026" class="badge warn">Partial</span></td>
-            <td><button class="btn primary" onclick="openFinanceOrder('EX-1026','Global Agro Foods',648000)">Abrir</button></td>
-          </tr>
-          <tr data-order="EX-1027" data-importer="Nile Trading" data-status="Pending" data-fx="Open">
-            <td><b>EX-1027</b></td>
-            <td>Nile Trading</td>
-            <td>USD 220,800.00</td>
-            <td id="finReceived-EX-1027">USD 0.00</td>
-            <td id="finPending-EX-1027">USD 220,800.00</td>
-            <td>30/09/2026</td>
-            <td><span id="finStatus-EX-1027" class="badge bad">Pending</span></td>
-            <td id="finFxClosed-EX-1027">USD 0.00</td>
-            <td id="finFxPending-EX-1027">USD 220,800.00</td>
-            <td><span id="finFxStatus-EX-1027" class="badge bad">Open</span></td>
-            <td><button class="btn primary" onclick="openFinanceOrder('EX-1027','Nile Trading',220800)">Abrir</button></td>
-          </tr>
-          <tr data-order="EX-1028" data-importer="Asia Foods Ltd." data-status="Received" data-fx="Closed">
-            <td><b>EX-1028</b></td>
-            <td>Asia Foods Ltd.</td>
-            <td>USD 285,000.00</td>
-            <td id="finReceived-EX-1028">USD 285,000.00</td>
-            <td id="finPending-EX-1028">USD 0.00</td>
-            <td>10/09/2026</td>
-            <td><span id="finStatus-EX-1028" class="badge good">Received</span></td>
-            <td id="finFxClosed-EX-1028">USD 285,000.00</td>
-            <td id="finFxPending-EX-1028">USD 0.00</td>
-            <td><span id="finFxStatus-EX-1028" class="badge good">Closed</span></td>
-            <td><button class="btn primary" onclick="openFinanceOrder('EX-1028','Asia Foods Ltd.',285000)">Abrir</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <table id="financeTable"><thead><tr><th>Order / PO</th><th>NF-e</th><th>Produto</th><th>Importer</th><th>Booking</th><th>Valor total</th><th>Recebido</th><th>Saldo atual</th><th>Disponível</th><th>Vencimento</th><th>ETA</th><th>Situação</th><th>Ação</th></tr></thead><tbody></tbody></table>
     </div>
   </div>
 
   
-  <div class="card" id="financeHedgeStandalone">
-    <h2 style="font-size:18px;margin-top:0">ACC / Trava de Câmbio / NDF</h2>
-    <div class="sub" style="margin-bottom:12px">Controle financeiro independente das Orders. Use este bloco para registrar operações de câmbio, antecipação e hedge.</div>
-
-    <div class="grid4">
-      <div>
-        <label>Tipo de Operação</label>
-        <select id="finHedgeType">
+<div id="financeHedgeStandalone"><div class="card fin-inline-card"><h2>Novo lançamento · ACC / Trava de Câmbio / NDF</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Order vinculada</th><th>Tipo de Operação</th><th>Data da Operação</th><th>Valor</th><th>Moeda</th><th>Taxa Contratada</th><th>Banco / Instituição</th><th>Contrato / Referência</th><th>Vencimento</th><th>Data Liquidação</th><th>Status</th><th>Taxa de Liquidação / PTAX</th><th>Resultado Financeiro</th><th>Comprovante / Contrato</th><th>Observação</th><th>Ação</th></tr></thead><tbody><tr><td><select id="finHedgeOrder"><option value="">Sem vínculo</option></select></td><td><select id="finHedgeType">
           <option value="ACC">ACC</option>
           <option value="Trava de Câmbio">Trava de Câmbio</option>
           <option value="NDF">NDF</option>
-        </select>
-      </div>
-      <div><label>Data da Operação</label><input id="finHedgeDate" type="date"></div>
-      <div><label>Valor</label><input id="finHedgeAmount" type="number" min="0" step="0.01"></div>
-      <div>
-        <label>Moeda</label>
-        <select id="finHedgeCurrency">
+        </select></td><td><input id="finHedgeDate" type="date"></td><td><input id="finHedgeAmount" type="number" min="0" step="0.01"></td><td><select id="finHedgeCurrency">
           <option>USD</option><option>EUR</option><option>BRL</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="grid4" style="margin-top:10px">
-      <div><label>Taxa Contratada</label><input id="finHedgeRate" type="number" min="0" step="0.0001"></div>
-      <div><label>Banco / Instituição</label><input id="finHedgeBank" placeholder="Banco / instituição financeira"></div>
-      <div><label>Contrato / Referência</label><input id="finHedgeRef" placeholder="Número contrato / referência"></div>
-      <div><label>Vencimento</label><input id="finHedgeMaturity" type="date"></div>
-    </div>
-
-    <div class="grid4" style="margin-top:10px">
-      <div><label>Data Liquidação</label><input id="finHedgeSettlement" type="date"></div>
-      <div>
-        <label>Status</label>
-        <select id="finHedgeStatus">
+        </select></td><td><input id="finHedgeRate" type="number" min="0" step="0.0001"></td><td><select id="finHedgeBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finHedgeRef" placeholder="Número contrato / referência"></td><td><input id="finHedgeMaturity" type="date"></td><td><input id="finHedgeSettlement" type="date"></td><td><select id="finHedgeStatus">
           <option>Open</option>
           <option>Partially Settled</option>
           <option>Settled</option>
           <option>Cancelled</option>
-        </select>
-      </div>
-      <div><label>Taxa de Liquidação / PTAX</label><input id="finHedgeSettlementRate" type="number" min="0" step="0.0001"></div>
-      <div><label>Resultado Financeiro</label><input id="finHedgeResult" readonly></div>
-    </div>
-
-    <div class="grid2" style="margin-top:10px">
-      <div>
-        <label>Comprovante / Contrato</label>
-        <input id="finHedgeFile" type="file" accept="application/pdf,image/*">
-      </div>
-      <div>
-        <label>Observação</label>
-        <input id="finHedgeNote" placeholder="Observações da operação">
-      </div>
-    </div>
-
-    <div class="toolbar" style="margin-top:12px">
-      <button class="btn primary" onclick="saveStandaloneHedgeOperation()">+ Lançar Operação</button>
-    </div>
-
-    <div class="tablewrap" style="margin-top:14px">
+        </select></td><td><input id="finHedgeSettlementRate" type="number" min="0" step="0.0001"></td><td><input id="finHedgeResult" readonly></td><td><input id="finHedgeFile" type="file" accept="application/pdf,image/*"></td><td><input id="finHedgeNote" placeholder="Observações da operação"></td><td><button class="btn primary" onclick="saveStandaloneHedgeOperation()">Lançar</button></td></tr></tbody></table></div></div>    <div class="tablewrap" style="margin-top:14px">
       <table id="finHedgeTable">
         <thead>
           <tr>
@@ -3579,52 +3663,18 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <div><label>Importer</label><input id="finImporter" readonly></div>
         <div><label>Invoice Amount</label><input id="finInvoiceAmount" readonly></div>
         <div><label>Saldo a Receber</label><input id="finOrderBalance" readonly></div>
-      </div>
+      </div><div class="grid4" style="margin-top:10px"><div><label>NF-e</label><input id="finNfe" readonly></div><div><label>DU-E</label><input id="finDue" readonly></div><div><label>Chave de acesso</label><input id="finAccessKey" readonly></div><div><label>Vencimento</label><input id="finExpiration" readonly></div></div>
     </div>
 
-    <div class="card">
-      <h2 style="font-size:18px;margin-top:0">Lançamento de Recebimento</h2>
-      <div class="grid4">
-        <div><label>Data Recebimento</label><input id="finReceiptDate" type="date"></div>
-        <div><label>Valor Recebido</label><input id="finReceiptAmount" type="number" min="0" step="0.01"></div>
-        <div><label>Moeda</label><select id="finReceiptCurrency"><option>USD</option><option>EUR</option><option>BRL</option></select></div>
-        <div><label>Banco</label><input id="finReceiptBank" placeholder="Banco recebedor"></div>
-      </div>
-      <div class="grid3" style="margin-top:10px">
-        <div><label>Referência / SWIFT</label><input id="finReceiptRef" placeholder="SWIFT / referência bancária"></div>
-        <div><label>Tipo</label><select id="finReceiptType"><option>Advance Payment</option><option>Balance Payment</option><option>Partial Payment</option><option>Other</option></select></div>
-        <div><label>Comprovante</label><input id="finReceiptFile" type="file" accept="application/pdf,image/*"></div>
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="btn primary" onclick="saveFinanceReceipt()">+ Lançar Recebimento</button>
-      </div>
-    </div>
+<div class="card fin-inline-card"><h2>Lançamento de Recebimento</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Data Recebimento</th><th>Valor Recebido</th><th>Moeda</th><th>Banco</th><th>Referência / SWIFT</th><th>Tipo</th><th>Comprovante</th><th>Ação</th></tr></thead><tbody><tr><td><input id="finReceiptDate" type="date"></td><td><input id="finReceiptAmount" type="number" min="0" step="0.01"></td><td><select id="finReceiptCurrency"><option>USD</option><option>EUR</option><option>BRL</option></select></td><td><select id="finReceiptBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finReceiptRef" placeholder="SWIFT / referência bancária"></td><td><select id="finReceiptType"><option>Advance Payment</option><option>Balance Payment</option><option>Partial Payment</option><option>Other</option></select></td><td><input id="finReceiptFile" type="file" accept="application/pdf,image/*"></td><td><button class="btn primary" onclick="saveFinanceReceipt()">Lançar</button></td></tr></tbody></table></div></div>
 
-    <div class="card">
-      <h2 style="font-size:18px;margin-top:0">Fechamento de Câmbio</h2>
-      <div class="grid4">
-        <div><label>Data Fechamento</label><input id="finFxDate" type="date"></div>
-        <div><label>Valor Fechado</label><input id="finFxAmount" type="number" min="0" step="0.01"></div>
-        <div><label>Taxa de Câmbio</label><input id="finFxRate" type="number" min="0" step="0.0001"></div>
-        <div><label>Banco</label><input id="finFxBank" placeholder="Banco do fechamento"></div>
-      </div>
-      <div class="grid4" style="margin-top:10px">
-        <div><label>Contrato de Câmbio</label><input id="finFxContract" placeholder="Número contrato câmbio"></div>
-        <div><label>Valor BRL</label><input id="finFxBRL" readonly></div>
-        <div><label>Vencimento / Liquidação</label><input id="finFxSettlement" type="date"></div>
-        <div><label>Comprovante</label><input id="finFxFile" type="file" accept="application/pdf,image/*"></div>
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="btn primary" onclick="saveFxClosing()">+ Lançar Fechamento de Câmbio</button>
-      </div>
-    </div>
-
+<div class="card fin-inline-card"><h2>Fechamento de Câmbio</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Data Fechamento</th><th>Valor Fechado</th><th>Taxa de Câmbio</th><th>Banco</th><th>Contrato de Câmbio</th><th>Valor BRL</th><th>Vencimento / Liquidação</th><th>Comprovante</th><th>Ação</th></tr></thead><tbody><tr><td><input id="finFxDate" type="date"></td><td><input id="finFxAmount" type="number" min="0" step="0.01"></td><td><input id="finFxRate" type="number" min="0" step="0.0001"></td><td><select id="finFxBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finFxContract" placeholder="Número contrato câmbio"></td><td><input id="finFxBRL" readonly></td><td><input id="finFxSettlement" type="date"></td><td><input id="finFxFile" type="file" accept="application/pdf,image/*"></td><td><button class="btn primary" onclick="saveFxClosing()">Lançar</button></td></tr></tbody></table></div></div>
 
     <div class="card">
       <h2 style="font-size:18px;margin-top:0">Histórico Financeiro</h2>
       <div class="tablewrap">
         <table id="finHistoryTable">
-          <thead><tr><th>Tipo</th><th>Data</th><th>Valor</th><th>Taxa</th><th>Banco</th><th>Referência</th></tr></thead>
+          <thead><tr><th>Data</th><th>Importer</th><th>Order</th><th>Banco</th><th>Tipo</th><th>Descrição</th><th>Valor NF-e</th><th>Valor USD</th><th>Taxa</th><th>Valor BRL</th><th>Contrato / Referência</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -4636,7 +4686,7 @@ function showContractForm(order){
   const badge=document.getElementById('editingContractBadge');
   const input=document.getElementById('contractOrderNumber');
   if(order){badge.textContent='Editando '+order; input.value=order;loadContractLogistics(order);}
-  else{badge.textContent='Novo Contrato'; input.value='';}
+  else{badge.textContent='Novo Contrato'; input.value=window.aesNextOrderNumber?.()||'';}
 }
 const CONTRACT_LOGISTICS_KEY='aes_contract_logistics_v1';
 function getContractLogistics(){
@@ -4689,6 +4739,7 @@ function filterContracts(){
     if(visible) count++;
   });
   document.getElementById('contractCount').textContent=count;
+  window.refreshContractListTotals?.();
 }
 function clearContractFilters(){
   document.getElementById('contractDateFrom').value='';
@@ -5885,7 +5936,7 @@ function refreshFinanceOrder(){
   const fxSt=document.getElementById('finFxStatus-'+o);
   if(recEl) recEl.textContent=usd(d.received);
   if(pendEl) pendEl.textContent=usd(bal);
-  if(st){
+  if(st && st.tagName!=='SELECT'){
     if(bal<=0){st.textContent='Received';st.className='badge good';}
     else if((d.received||0)>0){st.textContent='Partial';st.className='badge warn';}
     else {st.textContent='Pending';st.className='badge bad';}
@@ -5933,7 +5984,7 @@ function renderFinanceHistory(){
   const d=window.financeData[window.currentFinanceOrder]; if(!d) return;
   d.history.forEach(x=>{
     const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+escHtml(x.type||'')+'</td><td>'+formatDateBR(x.date)+'</td><td>'+usd(x.amount)+'</td><td>'+(x.rate==='—'?'—':Number(x.rate).toFixed(4))+'</td><td>'+escHtml(x.bank||'—')+'</td><td>'+escHtml(x.ref||'—')+'</td>';
+    tr.innerHTML='<td>'+formatDateBR(x.date)+'</td><td>'+escHtml(getVal('finImporter')||'—')+'</td><td>'+escHtml(window.currentFinanceOrder)+'</td><td>'+escHtml(x.bank||'—')+'</td><td>'+escHtml(x.type||'')+'</td><td>'+escHtml(x.ref||'—')+'</td><td>'+usd(d.invoice)+'</td><td>'+usd(x.amount)+'</td><td>'+(x.rate==='—'?'—':Number(x.rate||0).toFixed(4))+'</td><td>'+(Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—')+'</td><td>'+escHtml(x.ref||'—')+'</td>';
     tbody.appendChild(tr);
   });
 }
@@ -6706,11 +6757,19 @@ function buildUserPdfFooter(){
 
 function escContract(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function fieldVal(id){const e=document.getElementById(id);return e?e.value:'';}
+function formatBrazilTaxId(value,country){
+  const raw=String(value??'').trim();
+  if(!/^(br|brasil|brazil)$/i.test(String(country??'').trim()))return raw;
+  const digits=raw.replace(/\D/g,'');
+  if(digits.length===11)return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4');
+  if(digits.length===14)return digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
+  return raw;
+}
 function lookupUserDetails(company){
   const rows=[...document.querySelectorAll('#userRegistryTable tbody tr')];
   const r=rows.find(x=>(x.children[1]?.innerText||'').trim()===company);
   if(!r)return {company,address:'',country:'',tax:'',email:'',contact:'',phone:''};
-  return {company:(r.children[1]?.innerText||'').trim(),address:(r.children[2]?.innerText||'').trim(),country:(r.children[3]?.innerText||'').trim(),tax:(r.children[4]?.innerText||'').trim(),email:(r.children[5]?.innerText||'').trim(),contact:(r.children[6]?.innerText||'').trim(),phone:''};
+  return {company:(r.children[1]?.innerText||'').trim(),address:(r.children[2]?.innerText||'').trim(),country:(r.children[3]?.innerText||'').trim(),tax:formatBrazilTaxId((r.children[4]?.innerText||'').trim(),(r.children[3]?.innerText||'').trim()),email:(r.children[5]?.innerText||'').trim(),contact:(r.children[6]?.innerText||'').trim(),phone:''};
 }
 function generateContractDocument(printNow){
   calculateContractValues();
@@ -6776,24 +6835,26 @@ function generateModernProforma(printNow){
   const money=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const headLogo=logo?'<img src="'+logo+'" style="max-width:150px;max-height:60px;object-fit:contain">':'<div style="font-size:20px;font-weight:800;letter-spacing:1px">'+escContract(exporter.company||fieldVal('cExporter')||'EXPORTER')+'</div>';
   const payment=fieldVal('contractPaymentDescription');
+  const specLines=fieldVal('contractSpecifications').split(/;|\n/).map(x=>x.trim()).filter(Boolean);
+  const specBlock=specLines.length?'<div class="spec-list">'+specLines.map((line,i)=>'<div class="spec-row"><span>'+String(i+1).padStart(2,'0')+'</span><div>'+escContract(line)+'</div></div>').join('')+'</div>':'<div class="spec-empty">—</div>';
   const w=window.open('','_blank');
   if(!w){notify('Permita pop-ups para gerar a Proforma Invoice.');return;}
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Proforma Invoice ${escContract(fieldVal('contractOrderNumber'))}</title><style>
   @page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;margin:32px;color:#172033;font-size:11px;line-height:1.5;background:#fff}
-  header{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;padding-bottom:16px;border-bottom:3px solid #172033}
-  .exporter{text-align:right;color:#5b6472;font-size:10px}.exporter b{display:block;color:#172033;font-size:13px;margin-bottom:2px}
-  .dochead{display:flex;justify-content:space-between;align-items:flex-end;margin:24px 0 20px}.dochead h1{margin:0;font-size:24px;letter-spacing:1.8px}.docmeta{text-align:right;color:#697386}.docmeta b{color:#172033}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;padding-bottom:10px;border-bottom:2px solid #172033}
+  .exporter{text-align:right;color:#5b6472;font-size:9px;max-width:58%;line-height:1.35}.exporter b{display:block;color:#172033;font-size:11px;margin-bottom:2px}
+  .dochead{display:flex;justify-content:space-between;align-items:flex-end;margin:16px 0 15px}.dochead h1{margin:0;font-size:19px;letter-spacing:1.2px}.docmeta{text-align:right;color:#697386}.docmeta b{color:#172033}
   .parties{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d9dee5;border-radius:5px;padding:13px;min-height:105px}.label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#7a8492;margin-bottom:5px}
   h2{font-size:10px;text-transform:uppercase;letter-spacing:.8px;background:#eef1f5;border-left:4px solid #172033;padding:8px 10px;margin:20px 0 8px}
   table{width:100%;border-collapse:collapse}th,td{border:1px solid #d9dee5;padding:8px 7px;text-align:left;vertical-align:top}th{font-size:9px;text-transform:uppercase;letter-spacing:.3px;background:#f2f4f7;color:#4b5563}
   .amount{text-align:right;white-space:nowrap}.summary{width:46%;margin:10px 0 0 auto}.summary .row{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #e4e7eb}.summary .total{font-size:13px;font-weight:700;border-top:2px solid #172033;border-bottom:0;margin-top:3px}
   .info{display:grid;grid-template-columns:1fr 1fr;gap:12px}.kv{display:grid;grid-template-columns:120px 1fr;padding:5px 0;border-bottom:1px solid #eceef1}.kv b{color:#596273}
-  .bank{white-space:pre-line}.note{border:1px solid #e0e4e9;background:#fbfcfd;border-radius:4px;padding:11px;white-space:pre-wrap}
+  .spec-list{border:1px solid #d9dee5;border-radius:5px;overflow:hidden}.spec-row{display:grid;grid-template-columns:34px 1fr;gap:8px;padding:7px 10px;border-bottom:1px solid #e8ebef;break-inside:avoid}.spec-row:last-child{border:0}.spec-row:nth-child(even){background:#f8fafc}.spec-row span{color:#718096;font-weight:700}.spec-empty{color:#718096}.bank{white-space:pre-line}.note{border:1px solid #e0e4e9;background:#fbfcfd;border-radius:4px;padding:11px;white-space:pre-wrap}
   footer{margin-top:28px;padding-top:10px;border-top:1px solid #ccd2d9;display:flex;align-items:center;gap:12px;color:#6b7280;font-size:9.5px}
   .noprint{text-align:right;margin-top:18px}.noprint button{border:0;border-radius:5px;background:#172033;color:#fff;padding:10px 15px;cursor:pointer}
   @media print{body{margin:0}.noprint{display:none}.box,table,.info{break-inside:avoid}}
   </style></head><body>
-  <header><div>${headLogo}</div><div class="exporter"><b>${escContract(exporter.company||fieldVal('cExporter'))}</b>${escContract(exporter.address)}${exporter.country?'<br>'+escContract(exporter.country):''}${exporter.tax?'<br>Tax ID: '+escContract(exporter.tax):''}${exporter.email?'<br>'+escContract(exporter.email):''}${exporter.contact?'<br>Contact: '+escContract(exporter.contact):''}</div></header>
+  <header><div>${headLogo}</div><div class="exporter">${logo?'<b>'+escContract(exporter.company||fieldVal('cExporter'))+'</b>':''}${escContract(exporter.address)}${exporter.country?'<br>'+escContract(exporter.country):''}${exporter.tax?'<br>Tax ID: '+escContract(exporter.tax):''}</div></header>
   <div class="dochead"><div><div class="label">Commercial document</div><h1>PROFORMA INVOICE</h1></div><div class="docmeta"><b>${escContract(fieldVal('contractOrderNumber'))}</b><br>Shipping: ${escContract(fieldVal('shippingForecastStart'))} — ${escContract(fieldVal('shippingForecastEnd'))}</div></div>
   <div class="parties">
     <div class="box"><div class="label">Exporter / Seller</div><b>${escContract(exporter.company||fieldVal('cExporter'))}</b><br>${escContract(exporter.address)}${exporter.country?'<br>'+escContract(exporter.country):''}${exporter.tax?'<br>Tax ID: '+escContract(exporter.tax):''}</div>
@@ -6816,11 +6877,12 @@ function generateModernProforma(printNow){
       <div class="kv"><b>Port of Discharge</b><span>${escContract(fieldVal('contractPortDestiny'))}</span></div>
     </div>
     <div>
-      <div class="kv"><b>Specifications</b><span>${escContract(fieldVal('contractSpecifications'))}</span></div>
       <div class="kv"><b>Shipping From</b><span>${escContract(fieldVal('shippingForecastStart'))}</span></div>
       <div class="kv"><b>Shipping Until</b><span>${escContract(fieldVal('shippingForecastEnd'))}</span></div>
     </div>
   </div>
+  <h2>Specifications</h2>
+  ${specBlock}
   <h2>Payment Terms</h2>
   <div class="note"><b>Advance:</b> ${fieldVal('contractAdvanceRequired')==='yes'?escContract(fieldVal('contractAdvancePercent'))+'% — $ '+money(fieldVal('contractAdvancePayment')):'No Advance Payment'}${payment?'\n\n'+escContract(payment):''}</div>
   <h2>Bank Details</h2><div class="box bank"><b>${escContract(selected.bank||'Bank not selected')}</b>${selected.swift?'<br>SWIFT: '+escContract(selected.swift):''}${selected.iban?'<br>IBAN: '+escContract(selected.iban):''}${selected.address?'<br>Bank Address: '+escContract(selected.address):''}</div>
@@ -7276,9 +7338,61 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
  function cntrCount(order){const c=contractRows().find(x=>x.order===order);const n=parseFloat(String(c?.cntrAmount||'').replace(',','.').replace(/[^0-9.]/g,''));return n||1}
  function num(v){return parseFloat(v)||0}
  function calcQuote(q,order){const n=cntrCount(order);const ocean=num(q.ocean),thc=num(q.thc),seal=num(q.seal),otherCntr=num(q.otherCntr),bl=num(q.blFee),doc=num(q.docFee),otherBL=num(q.otherBL);const perCntr=ocean+thc+seal+otherCntr;const totalCntr=perCntr*n;const totalBL=bl+doc+otherBL;return {n,perCntr,totalCntr,totalBL,grand:totalCntr+totalBL}}
- window.refreshBookingRequestOrders=function(){const tb=document.querySelector('#bookingRequestOrdersTable tbody');if(!tb)return;const all=loadAll();tb.innerHTML=contractRows().map(c=>{const d=all[c.order]||{},q=(d.quotes||[]).length,st=d.status||'Pending Quotation';return `<tr data-order="${esc(c.order.toLowerCase())}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}</td><td><span class="badge ${q?'info':'warn'}">${q} cotação${q===1?'':'ões'}</span></td><td><span class="badge ${st==='Booking Confirmed'?'ok':st==='Pending Quotation'?'warn':'info'}">${esc(st)}</span></td><td><button class="btn primary" onclick="openBookingRequest('${esc(c.order)}')">Abrir / Cotar</button></td></tr>`}).join('')||'<tr><td colspan="13" class="sub">Nenhum contrato encontrado.</td></tr>';filterBookingRequestOrders();renderAcceptedQuotes()}
+ function centralProposals(){try{return JSON.parse(localStorage.getItem('aes_market_freight_central_v91')||'[]')}catch(e){return []}}
+ function quoteOptions(d,proposals){const selected=d.selectedFreightQuoteId||d.quotes?.find(q=>q.status==='Accepted')?.centralQuoteId||'';
+   return '<option value="">Selecionar proposta</option>'+proposals.map(q=>{
+     const title=[q.proposalNo||'Sem número',q.company||q.line||'Armador não informado',[q.pol,q.pod].filter(Boolean).join(' → '),q.status||''].filter(Boolean).join(' · ');
+     return `<option value="${esc(q.id)}" ${String(q.id)===String(selected)?'selected':''}>${esc(title)}</option>`;
+   }).join('');
+ }
+ window.refreshBookingRequestOrders=function(){
+   const tb=document.querySelector('#bookingRequestOrdersTable tbody');if(!tb)return;
+   const all=loadAll(),proposals=centralProposals(),statuses=['Pending Quotation','Quoting','Freight Negotiation','Booking Requested','Booking Pending','Booking Confirmed'];
+   tb.innerHTML=contractRows().map(c=>{
+     const d=all[c.order]||{},st=d.status||'Pending Quotation';
+     return `<tr data-order="${esc(c.order.toLowerCase())}" data-order-number="${esc(c.order)}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}</td><td><select class="br-inline-proposal" aria-label="Proposta de frete da Order ${esc(c.order)}">${quoteOptions(d,proposals)}</select><small class="br-quote-hint">${proposals.length} proposta${proposals.length===1?'':'s'} disponível${proposals.length===1?'':'eis'}</small></td><td><select class="br-inline-status" aria-label="Situação da Order ${esc(c.order)}">${statuses.map(x=>`<option value="${esc(x)}" ${x===st?'selected':''}>${esc(x)}</option>`).join('')}</select><input class="br-inline-responsible" list="aesBookingResponsibleList" placeholder="Responsável pela tarefa" aria-label="Responsável da Order ${esc(c.order)}" value="${esc(d.brResponsible||'')}"></td><td><b>${esc(d.brBookingNo||'—')}</b></td><td><div class="br-inline-actions"><button class="btn primary" type="button" onclick="aesOpenConfirmedBookingFromList(this)">Lançar booking confirmado</button><button class="btn" type="button" onclick="aesSaveBookingFromList(this)">Salvar seleção</button></div></td></tr>`;
+   }).join('')||'<tr><td colspan="14" class="sub">Nenhum contrato encontrado.</td></tr>';
+   filterBookingRequestOrders();renderAcceptedQuotes();
+ }
+ window.aesSaveBookingFromList=async function(button){
+   const tr=button.closest('tr'),order=tr?.dataset.orderNumber,status=tr?.querySelector('.br-inline-status')?.value,proposalId=tr?.querySelector('.br-inline-proposal')?.value,responsible=tr?.querySelector('.br-inline-responsible')?.value.trim()||'';
+   if(!order)return false;
+   const all=loadAll(),d=all[order]||{},q=centralProposals().find(x=>String(x.id)===proposalId);
+   if(status==='Booking Confirmed'&&!d.brBookingNo){notify('Lance o número do booking confirmado.');return false}
+   button.disabled=true;d.selectedFreightQuoteId=proposalId||'';d.brResponsible=responsible;d.brStatus=status;d.status=status;d.savedAt=new Date().toISOString();
+   if(q){d.quotes=d.quotes||[];d.quotes=d.quotes.filter(x=>x.centralQuoteId!==q.id).map(x=>x.status==='Accepted'?{...x,status:'Received'}:x);
+     d.quotes.push({...q,centralQuoteId:q.id,status:'Accepted'});d.brLine=q.line||d.brLine||'';
+     d.brConfirmedFreeTime=q.freeTime||d.brConfirmedFreeTime||'';
+     const proposals=centralProposals(),original=proposals.find(x=>String(x.id)===proposalId);
+     if(original){original.linkedOrders=original.linkedOrders||[];if(!original.linkedOrders.includes(order))original.linkedOrders.push(order);localStorage.setItem('aes_market_freight_central_v91',JSON.stringify(proposals))}
+   }
+   all[order]=d;saveAll(all);
+   const client=window.aesSharedClient;
+   if(client){try{
+     const payload=Object.fromEntries(Object.entries(d).filter(([key,value])=>key!=='quotes'&&key!=='proposalData'&&typeof value!=='object'));
+     const {data:contract}=await client.from('contracts').select('id').eq('order_number',order).maybeSingle();
+     const {error}=await client.from('aes_booking_requests').upsert({order_number:order,contract_id:contract?.id||null,booking_number:d.brBookingNo||null,shipping_line:d.brLine||null,status,payload,updated_at:d.savedAt},{onConflict:'order_number'});
+     if(error)throw error;
+   }catch(error){notify('Salvo neste navegador; banco: '+error.message);button.disabled=false;return false}}
+   refreshBookingRequestOrders();notify('Proposta e situação da Order '+order+' salvas.');return true;
+ }
+ window.aesOpenConfirmedBookingFromList=async function(button){
+   const row=button.closest('tr'),order=row?.dataset.orderNumber;if(!order)return;
+   const proposalId=row.querySelector('.br-inline-proposal')?.value;
+   if(!proposalId){notify('Selecione uma proposta para esta Order.');row.querySelector('.br-inline-proposal')?.focus();return}
+   if(!await aesSaveBookingFromList(button))return;
+   for(const id of ['brBookingNo','brFreightAgent','brDestinationFreeTime','brCarrierLegalName','brCarrierTaxId','brCarrierCountry','brCarrierEmail','brCarrierPhone','brCarrierAddress','brLine','brVessel','brVoyage','brConfirmDate','brEmptyRelease','brReceiving','brCyCutoff','brSiCutoff','brVgmCutoff','brDraftDeadline','brDocsCutoff','brETD','brETA','brTransshipment','brConfirmedFreeTime','brNotes']){const field=document.getElementById(id);if(field)field.value=''}
+   openBookingRequest(order);
+   const older=loadAll()[order]?.brConfirmedFreeTime||'';if(older&&!document.getElementById('brConfirmedFreeTime').value){const match=String(older).match(/\d+(?:[.,]\d+)?/);if(match)document.getElementById('brConfirmedFreeTime').value=match[0].replace(',','.')}
+   document.getElementById('bookingRequestWorkspace').style.display='none';
+   document.getElementById('bookingRequestOrdersTable').closest('.card').style.display='block';
+   document.getElementById('brStatus').value='Booking Confirmed';
+   document.getElementById('brBookingModal').hidden=false;
+   document.getElementById('brBookingNo').focus();
+ }
+
  window.filterBookingRequestOrders=function(){const o=(document.getElementById('brFilterOrder')?.value||'').toLowerCase(),i=(document.getElementById('brFilterImporter')?.value||'').toLowerCase(),d=(document.getElementById('brFilterDestiny')?.value||'').toLowerCase(),st=document.getElementById('brFilterStatus')?.value||'';document.querySelectorAll('#bookingRequestOrdersTable tbody tr').forEach(r=>r.style.display=(!o||r.dataset.order?.includes(o))&&(!i||r.dataset.importer?.includes(i))&&(!d||r.dataset.destiny?.includes(d))&&(!st||r.dataset.status===st)?'':'none')}
- const ids=['brCntrType','brCntrAmount','brPOL','brPOD','brStatus','brBookingNo','brLine','brVessel','brVoyage','brConfirmDate','brEmptyRelease','brReceiving','brCyCutoff','brSiCutoff','brVgmCutoff','brDraftDeadline','brDocsCutoff','brETD','brETA','brTransshipment','brConfirmedFreeTime','brNotes'];
+ const ids=['brCntrType','brCntrAmount','brPOL','brPOD','brStatus','brRequestDate','brRequestedLine','brRequestedVessel','brRequestedVoyage','brRequestInstructions','brBookingNo','brFreightAgent','brDestinationFreeTime','brCarrierLegalName','brCarrierTaxId','brCarrierCountry','brCarrierEmail','brCarrierPhone','brCarrierAddress','brLine','brVessel','brVoyage','brConfirmDate','brEmptyRelease','brReceiving','brCyCutoff','brSiCutoff','brVgmCutoff','brDraftDeadline','brDocsCutoff','brETD','brETA','brTransshipment','brConfirmedFreeTime','brNotes'];
  let current='';
  window.openBookingRequest=function(order){const c=contractRows().find(x=>x.order===order);if(!c)return;current=order;document.getElementById('bookingRequestWorkspace').style.display='block';document.getElementById('bookingRequestOrdersTable').closest('.card').style.display='none';document.getElementById('brOrderTitle').textContent=order;document.getElementById('brContractSummary').textContent=`${c.contract} · ${c.importer} · ${c.product} · ${c.qty} MT · ${c.cntrAmount} × ${c.cntrType}`;[['brOrder',c.order],['brContract',c.contract],['brCntrType',c.cntrType],['brCntrAmount',c.cntrAmount],['brPOL',c.pol],['brPOD',c.pod]].forEach(([id,v])=>document.getElementById(id).value=v||'');const d=loadAll()[order]||{};ids.forEach(id=>{const e=document.getElementById(id);if(e&&d[id]!==undefined&&d[id]!=='')e.value=d[id]});['brCntrType','brCntrAmount','brPOL','brPOD'].forEach(id=>{const e=document.getElementById(id);if(e)e.readOnly=true});document.querySelectorAll('#bookingRequestWorkspace button[onclick^="toggleBookingFieldEdit"]').forEach(b=>b.textContent='✎');if(!document.getElementById('brStatus').value)document.getElementById('brStatus').value='Pending Quotation';renderQuotes();document.getElementById('bookingRequestWorkspace').scrollIntoView({behavior:'smooth',block:'start'})}
  window.toggleBookingFieldEdit=function(id,button){const input=document.getElementById(id);if(!input)return;input.readOnly=!input.readOnly;button.textContent=input.readOnly?'✎':'✓';if(!input.readOnly){input.focus();input.select()}else saveBookingRequest(true)}
@@ -8608,7 +8722,18 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     }
     window.renderSIPartyLookup?.();
   }
+  function normalizeUserInput(input){
+    if(input.id==='uTaxId'){
+      input.value=formatBrazilTaxId(input.value,$('uCountry').value);
+      return;
+    }
+    if(input.type==='tel')return;
+    const start=input.selectionStart,end=input.selectionEnd;
+    input.value=input.value.toLocaleUpperCase('pt-BR');
+    try{input.setSelectionRange(start,end)}catch{}
+  }
   async function saveUser() {
+    $('userform').querySelectorAll('input:not([type=file]),textarea').forEach(normalizeUserInput);
     const name=field('uCompany'); if (!name) return window.notify('Informe Nome da Empresa / Pessoal.');
     const contacts=collectContacts();if(!validContacts(contacts))return;
     const primary=contacts[0]||{};
@@ -8617,7 +8742,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     try {
       const request=editId===null ? client.from('companies').insert(record) : client.from('companies').update(record).eq('id',editId);
       const {error}=await request.select('id').single(); if(error) throw error;
-      await loadUsers(); editId=null; window.clearUser();
+      await loadUsers(); editId=null; window.clearUser(); window.aesBookingAgentCreated?.(name);
       window.notify('USER salvo no Supabase.');
     } catch(error) { window.notify('Falha ao salvar: '+errorText(error)); }
     finally {button.disabled=false;}
@@ -8632,6 +8757,8 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.app').style.visibility='hidden';
+    $('userform').addEventListener('input',event=>{if(event.target.matches('input:not([type=file]):not([type=checkbox]),textarea'))normalizeUserInput(event.target)});
+    $('uCountry').addEventListener('change',()=>normalizeUserInput($('uTaxId')));
     $('aesSaveUser').addEventListener('click',saveUser);
     $('aesAddUserContact').addEventListener('click',()=>addContact());
     showContacts([]);
@@ -8734,6 +8861,12 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       if(result.data?.length)c.details=details;
     }
     contracts.clear();for(const c of contractResponse.data)contracts.set(c.order_number,c);
+    window.aesNextOrderNumber=()=>{
+      const numbers=[...contracts.keys()].map(order=>/^([0-9]+)P-2026$/i.exec(String(order).trim())).filter(Boolean).map(match=>Number(match[1]));
+      return `${Math.max(94,...numbers)+1}P-2026`;
+    };
+    const orderField=$('contractOrderNumber');
+    if($('contractFormView').style.display!=='none'&&!editingId&&!orderField.value.trim())orderField.value=window.aesNextOrderNumber();
     const body=$('contractsTable').tBodies[0];body.replaceChildren();
     const releasedBody=$('releasedContractsTable').tBodies[0];releasedBody.replaceChildren();
     selectedScheduleOrder=null;
@@ -8745,6 +8878,8 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       row.dataset.exporter=names.get(Number(c.exporter_id))||'';
       row.dataset.importer=names.get(Number(c.importer_id))||'';
       row.dataset.product=c.product||'';
+      row.dataset.totalContainers=String(Number(d.contractQtyContainer)||0);
+      row.dataset.totalTonnes=String(Number(c.quantity_mt)||0);
       const amount=Number(c.quantity_mt||0)*Number(c.unit_price||0);
       const advance=Number(d.contractAdvancePayment||0);
       const display=[c.order_number,c.contract_number||'—',row.dataset.importer||'—',row.dataset.exporter||'—',d.contractPacking||'—',d.contractContainerType||'—',d.contractQtyContainer||'—',d.contractDescription||'—',c.quantity_mt??'—',c.product||'—',c.unit_price==null?'—':`${c.currency||'USD'} ${c.unit_price}/MT`,d.contractBrokerCommission||'—',c.unit_price==null?'—':`${c.currency||'USD'} ${(amount-advance).toFixed(2)}`,dateBR(d.shippingForecastStart),dateBR(d.shippingForecastEnd)];
@@ -8830,7 +8965,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const original=window.showContractForm;
-    window.showContractForm=function(order){original(order);closeCompanyMenus();if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){$('consigneeSameAsImporter').checked=false;restore(c.details);$('contractOrderNumber').value=c.order_number;for(const [id,searchId,hiddenId] of companyFields){const companyId=id==='contractImporterId'?c.importer_id:c.exporter_id;$(id).value=String(companyId||'');$(searchId).value=names.get(Number(companyId))||'';$(hiddenId).value=$(searchId).value}$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;window.selectedBankData=null;window.selectedSIBankData=null;for(const el of fields()){if(el.type==='checkbox')el.checked=false;else if(el.id)el.value=''}$('contractOrderNumber').value='';}syncConsignee()};
+    window.showContractForm=function(order){original(order);closeCompanyMenus();if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){$('consigneeSameAsImporter').checked=false;restore(c.details);$('contractOrderNumber').value=c.order_number;for(const [id,searchId,hiddenId] of companyFields){const companyId=id==='contractImporterId'?c.importer_id:c.exporter_id;$(id).value=String(companyId||'');$(searchId).value=names.get(Number(companyId))||'';$(hiddenId).value=$(searchId).value}$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;window.selectedBankData=null;window.selectedSIBankData=null;for(const el of fields()){if(el.type==='checkbox')el.checked=false;else if(el.id)el.value=''}$('contractOrderNumber').value=window.aesNextOrderNumber?.()||'';}syncConsignee()};
     for(const [id,searchId,hiddenId] of companyFields){const input=$(searchId),menu=$(searchId+'Results');input.addEventListener('input',()=>{$(id).value='';$(hiddenId).value='';if(id==='contractImporterId')syncConsignee();showCompanySuggestions(id,searchId,hiddenId)});input.addEventListener('focus',()=>showCompanySuggestions(id,searchId,hiddenId));input.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')];const current=options.indexOf(document.activeElement);if(event.key==='Escape'){closeCompanyMenus();input.blur()}else if(event.key==='ArrowDown' && !menu.hidden){event.preventDefault();options[0]?.focus()}else if(event.key==='Enter' && !menu.hidden && options.length){event.preventDefault();options[0].click()}});menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(event.key==='ArrowDown'){event.preventDefault();options[(i+1)%options.length]?.focus()}else if(event.key==='ArrowUp'){event.preventDefault();if(i===0)input.focus();else options[i-1]?.focus()}else if(event.key==='Escape'){event.preventDefault();closeCompanyMenus();input.focus()}})}
     document.addEventListener('click',event=>{if(!event.target.closest('.company-combobox'))closeCompanyMenus()});
     $('consigneeSameAsImporter').addEventListener('change',syncConsignee);
@@ -8908,7 +9043,24 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   const columns='id,beneficiary_name,beneficiary_address,bank_name,swift,iban,bank_address,status,account_number,aba_number,routing_number';
   const display=b=>({id:b.id,beneficiary:b.beneficiary_name||'',beneficiaryAddress:b.beneficiary_address||'',bank:b.bank_name||'',swift:b.swift||'',iban:b.iban||'',address:b.bank_address||'',status:b.status||'Active',accountNumber:b.account_number||'',abaNumber:b.aba_number||'',routingNumber:b.routing_number||''});
   const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function renderFinanceBankOptions(){
+    for(const id of ['finReceiptBank','finFxBank','finHedgeBank']){
+      const select=$(id);if(!select)continue;
+      const previous=select.value;
+      select.replaceChildren(new Option(banks.length?'Selecione banco cadastrado':'Nenhum banco cadastrado',''));
+      const seen=new Set();
+      for(const b of banks){
+        const name=String(b.bank_name||'').trim();if(!name)continue;
+        const key=[name,b.swift,b.account_number,b.iban].join('|');if(seen.has(key))continue;seen.add(key);
+        const label=[name,b.beneficiary_name,b.swift,b.account_number||b.iban].filter(Boolean).join(' · ');
+        const option=new Option(label,name);option.dataset.bankId=String(b.id);option.dataset.swift=b.swift||'';option.dataset.account=b.account_number||b.iban||'';select.add(option);
+      }
+      if(previous&&!Array.from(select.options).some(o=>o.value===previous))select.add(new Option(previous+' (seleção anterior)',previous));
+      select.value=previous;
+    }
+  }
   function renderRows(){
+    renderFinanceBankOptions();
     const body=$('bankRegistryTable').tBodies[0];body.replaceChildren();
     if(!banks.length){const tr=body.insertRow(),cell=tr.insertCell();cell.colSpan=11;cell.textContent='Nenhum banco cadastrado. Use + Cadastrar Banco.';return}
     for(const bank of banks){const row=body.insertRow();for(const val of [bank.beneficiary_name,bank.beneficiary_address,bank.bank_name,bank.swift,bank.iban,bank.account_number,bank.aba_number,bank.routing_number,bank.bank_address,bank.status])row.insertCell().textContent=val||'—';const cell=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Editar';button.addEventListener('click',()=>edit(bank));cell.append(button);
@@ -8941,6 +9093,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     catch(failure){error(failure)}finally{button.disabled=false}
   }
   document.addEventListener('DOMContentLoaded',()=>{
+    renderFinanceBankOptions();
     window.saveBank=save;
     window.clearBankForm=()=>{editId=null;for(const id of ['regBeneficiaryName','regBeneficiaryAddress','regBankName','regBankSwift','regBankIban','regBankAddress','regBankAccountNumber','regBankAba','regBankRouting'])$(id).value='';$('regBankStatus').value='Active'};
     window.openBankLookup=()=>{renderModal('contract');$('bankLookupModal').classList.add('open');$('bankLookupSearch').focus()};
@@ -9588,14 +9741,27 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
      else window.financeData[order].invoice=invoice;
      const received=amount(d.received),fx=amount(d.fxClosed),pending=Math.max(0,invoice-received),fxPending=Math.max(0,invoice-fx);
      Object.assign(fr.dataset,{order,importer,status:pending===0&&invoice>0?'Received':received>0?'Partial':'Pending',fx:fxPending===0&&invoice>0?'Closed':fx>0?'Partial':'Open'});
-     td(fr,order);td(fr,importer);td(fr,window.usd(invoice));
+     const details=c.details||{},nfe=details.nfe_number||details.nf_number||details.invoice_number||'—',due=details.due_number||details.due||'—',access=details.nfe_access_key||details.access_key||'—',maturity=details.payment_due_date||'—',eta=details.eta||saved.brEta||booking.eta||'—';
+     Object.assign(fr.dataset,{nfe,due,access,maturity});
+     td(fr,order);td(fr,nfe);td(fr,product);td(fr,importer);td(fr,number);td(fr,window.usd(invoice));
      for(const [id,value] of [[`finReceived-${order}`,window.usd(received)],[`finPending-${order}`,window.usd(pending)]])td(fr,value).id=id;
-     td(fr,c.details?.payment_due_date||'—');td(fr,fr.dataset.status).id=`finStatus-${order}`;
-     td(fr,window.usd(fx)).id=`finFxClosed-${order}`;td(fr,window.usd(fxPending)).id=`finFxPending-${order}`;
-     td(fr,fr.dataset.fx).id=`finFxStatus-${order}`;
+     td(fr,window.usd(Math.max(0,pending-(d.hedges||[]).filter(x=>x.status!=='Settled'&&x.status!=='Cancelled').reduce((sum,x)=>sum+amount(x.amount),0))));td(fr,maturity);td(fr,eta);
+     const statusCell=td(fr,''),statusSelect=document.createElement('select');statusSelect.id=`finStatus-${order}`;statusSelect.setAttribute('aria-label','Situação financeira '+order);statusSelect.style.minWidth='155px';
+     for(const [value,label] of [['Pending','Pendente'],['Partial','Parcial'],['Received','Recebido'],['Financiamento RTS','Financiamento RTS']])statusSelect.add(new Option(label,value));
+     statusSelect.value=details.finance_status||fr.dataset.status;fr.dataset.status=statusSelect.value;statusCell.append(statusSelect);
+     statusSelect.onchange=async()=>{
+       const previous=details.finance_status|| (pending===0&&invoice>0?'Received':received>0?'Partial':'Pending');const chosen=statusSelect.value;statusSelect.disabled=true;
+       try{
+         const client=window.aesSharedClient;if(!client)throw Error('Entre no sistema para salvar a situação.');
+         const {data:latest,error:readError}=await client.from('contracts').select('id,details').eq('id',c.id).single();if(readError)throw readError;
+         const updatedDetails={...(latest.details||{}),finance_status:chosen};
+         const {data:updated,error:writeError}=await client.from('contracts').update({details:updatedDetails}).eq('id',c.id).select('id');if(writeError)throw writeError;if(!updated?.length)throw Error('Sem permissão para salvar a situação financeira.');
+         c.details=updatedDetails;details.finance_status=chosen;fr.dataset.status=chosen;window.filterFinance?.();window.notify?.('Situação financeira salva para '+order+'.');
+       }catch(error){statusSelect.value=previous;window.notify?.('Situação não salva: '+(error.message||String(error)))}finally{statusSelect.disabled=false}
+     };
      action(fr,'Abrir',()=>window.openFinanceOrder(order,importer,invoice));
    }
-   if(!current.length){for(const [body,count] of [[docs,17],[broker,8],[finance,11]]){const row=body.insertRow();const cell=row.insertCell();cell.colSpan=count;cell.textContent='Nenhum contrato cadastrado em Contracts.'}}
+   if(!current.length){for(const [body,count] of [[docs,17],[broker,8],[finance,13]]){const row=body.insertRow();const cell=row.insertCell();cell.colSpan=count;cell.textContent='Nenhum contrato cadastrado em Contracts.'}}
    window.refreshFinanceTotals?.();window.filterDocumentContracts?.();window.filterBrokerOrders?.();window.filterFinance?.();
  }
  window.addEventListener('aes-contracts-updated',event=>{if(event.detail?.contracts)render(event.detail.contracts,event.detail.names)});
@@ -10048,6 +10214,228 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   const batches=mode==='single'?[{containers:selected,allocations:groups.get('total')||[]}]:selected.map(c=>({containers:[c],allocations:groups.get(c)}));if(batches.some(b=>!b.allocations.length))return notice('Informe ao menos uma remessa e um peso para cada nota/contêiner.');button.disabled=true;let created=0;try{if(editingDraft){if(batches.length!==1)throw Error('Edite um draft por vez.');const batch=batches[0],{error}=await db().rpc('aes_update_export_invoice_draft',{p_invoice:editingDraft.id,p_containers:batch.containers,p_allocations:batch.allocations,p_ptax_date:ptaxDate,p_ptax:ptax});if(error)throw Error(error.message);editingDraft=null;$('aesExportEditBanner').hidden=true;$('aesExportOrder').disabled=false;$('aesExportMode').disabled=false;button.textContent='Criar draft de exportação';notice('Draft atualizado e saldo recalculado.');await load();return}for(const batch of batches){const {error}=await db().rpc('aes_create_export_invoice',{p_order:order(),p_mode:mode,p_containers:batch.containers,p_allocations:batch.allocations,p_ptax_date:ptaxDate,p_ptax:ptax});if(error)throw Error(error.message);created++}notice(created+' draft(s) de exportação salvo(s).');await load()}catch(e){notice((created?created+' draft(s) salvo(s). ':'')+'Não foi possível concluir: '+e.message);await load()}finally{button.disabled=false}};
  function printInvoice(invoice){const win=window.open('','_blank');if(!win)return notice('Permita a janela do draft.');const c=contractByOrder.get(invoice.order_number)||{},items=allocations.filter(a=>a.invoice_id===invoice.id),containerLines=(invoice.container_numbers||[]).map(number=>{const r=containers.find(x=>x.order_number===invoice.order_number&&x.number===number);return '<li>'+safe(number)+(r?.payload?.seal?' · Lacre '+safe(r.payload.seal):'')+'</li>'}).join(''),lines=items.map(a=>{const t=trucks.find(x=>x.id===a.truck_id),r=t?.payload?.remessa||{},unit=(Number(invoice.unit_price_contract_mt??c.unit_price)||0)/1000,brl=Number(invoice.unit_price_brl_kg)||unit*(Number(invoice.ptax)||0);return '<tr><td>'+safe(r.xml?.number||'—')+'</td><td>'+safe(t?.payload?.plate||'—')+'</td><td>'+safe(fmt(a.quantity_kg))+'</td><td>'+safe(r.cfop||'—')+'</td><td>'+safe(invoice.unit_price_brl_kg?new Intl.NumberFormat('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}).format(brl):'PTAX pendente')+'</td><td>'+safe(invoice.currency||c.currency||'USD')+' '+safe(unit.toFixed(4))+'</td></tr>'}).join('');const total=items.reduce((s,a)=>s+Number(a.quantity_kg),0);win.document.open();win.document.write('<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Draft de nota de exportação · '+safe(invoice.order_number)+'</title><style>@page{size:A4;margin:15mm}body{font:12px Arial;color:#16334d;padding:16px}header{border-bottom:3px solid #183e60;padding-bottom:14px}h1{font-size:22px}h2{font-size:14px;margin-top:24px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{padding:12px;border:1px solid #d9e3eb}table{width:100%;border-collapse:collapse}th{background:#193e5f;color:white;text-align:left;padding:8px}td{padding:8px;border-bottom:1px solid #dfe7ee}li{margin:6px 0}.hint{color:#a44921;font-weight:700}.noprint{margin:20px 0}@media print{.noprint{display:none}}</style><header><h1>'+safe(invoice.invoice_number?'Resumo da NF-e de exportação nº '+invoice.invoice_number:'Draft para nota fiscal de exportação')+'</h1><div class="hint">'+safe(invoice.status==='issued'?'XML autorizado vinculado · consulte o XML oficial':'Preparação para emissão · este documento não substitui a NF-e autorizada')+'</div>'+ (invoice.invoice_key?'<p>Chave de acesso: '+safe(invoice.invoice_key)+'</p>':'') +'</header><h2>Operação</h2><div class="grid"><div class="box"><b>Order</b><p>'+safe(invoice.order_number)+'</p><b>Produto</b><p>'+safe(c.product||'—')+'</p><b>Modalidade</b><p>'+safe(invoice.mode==='single'?'Nota única':'Nota por contêiner')+'</p></div><div class="box"><b>Porto de embarque</b><p>'+safe(c.port_of_loading||'—')+'</p><b>Porto de destino</b><p>'+safe(c.port_of_discharge||'—')+'</p><b>Peso total</b><p>'+safe(fmt(total))+' kg</p><b>Data da PTAX</b><p>'+safe(invoice.ptax_date||'—')+'</p><b>PTAX utilizada</b><p>'+safe(invoice.ptax||'—')+'</p><b>Preço unitário em R$/kg</b><p>'+safe(invoice.unit_price_brl_kg?'R$ '+Number(invoice.unit_price_brl_kg).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}):'PTAX pendente')+'</p><b>Valor total em R$</b><p>'+safe(invoice.unit_price_brl_kg?'R$ '+(total*Number(invoice.unit_price_brl_kg)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'PTAX pendente')+'</p></div></div><h2>Contêineres cadastrados vinculados</h2><ul>'+containerLines+'</ul><h2>Notas de remessa utilizadas</h2><table><thead><tr><th>NF-e remessa</th><th>Caminhão</th><th>Peso alocado (kg)</th><th>CFOP remessa</th><th>Unitário R$/kg</th><th>Unitário contrato/kg</th></tr></thead><tbody>'+lines+'</tbody></table><div class="noprint"><button onclick="window.print()">Imprimir / Salvar PDF</button></div></html>');win.document.close()}
  document.addEventListener('click',e=>{if(e.target.closest?.('[data-view="loading"]')&&$('aesExportTab')?.classList.contains('active'))setTimeout(load,30)});
+})();
+</script>
+<script>
+(()=>{
+ const $=id=>document.getElementById(id),client=()=>window.aesSharedClient;
+ const ids=['trTradeNumber','trDate','trStatus','trCurrency','trTrader','trSupplier','trBuyer','trProduct','trQuantity','trUnit','trBuyUnit','trSellUnit','trContractNumber','trProformaNumber','trBuyTerms','trSellTerms','trDelivery','trNotes'];
+ const keys=['trade_number','trade_date','status','currency','trader_company_id','supplier_id','buyer_id','product','quantity','unit','purchase_unit_price','sale_unit_price','purchase_contract_number','sale_proforma_number','purchase_terms','sale_terms','delivery_terms','notes'];
+ let companies=[],deals=[],editing=null,loading=false;
+ const partyKeys=[['exporter','Exporter'],['on_behalf','On behalf of'],['importer','Importer'],['consignee','Consignee'],['notify','Notify']];
+ const siKeys=[['booking','Booking'],['vessel','Navio'],['voyage','Viagem'],['bl','BL'],['pol','Port of Loading'],['pod','Port of Discharge'],['etd','ETD'],['eta','ETA'],['instructions','Instruções adicionais']];
+ const defaultDocs=['Commercial Invoice','Packing List','Bill of Lading','Certificate of Origin','Phytosanitary Certificate','Fumigation Certificate','Weight Certificate','Quality Certificate','Insurance Certificate'];
+ function sideNode(side,kind,key){return document.querySelector(`[data-side="${side}"].aes-trader-${kind} [data-key="${key}"]`)}
+ function initFlows(){
+  for(const side of ['purchase','sale']){
+   const parties=document.querySelector(`.aes-trader-parties[data-side="${side}"]`);parties.replaceChildren();
+   for(const [key,label] of partyKeys){const wrap=document.createElement('div'),title=document.createElement('label'),select=document.createElement('select');title.textContent=label;select.dataset.key=key;select.add(new Option('Selecione em USER',''));for(const c of companies)select.add(new Option(c.name,c.id));wrap.append(title,select);parties.append(wrap)}
+  }
+  const si=document.querySelector('.aes-trader-si[data-side="shared"]');si.replaceChildren();
+  for(const [key,label] of siKeys){const wrap=document.createElement('div'),title=document.createElement('label'),field=key==='instructions'?document.createElement('textarea'):document.createElement('input');title.textContent=label;field.dataset.key=key;if(['etd','eta'].includes(key))field.type='date';if(key==='instructions'){field.rows=3;wrap.className='wide'}wrap.append(title,field);si.append(wrap)}
+ }
+ function sharedSI(){return Object.fromEntries(siKeys.map(([k])=>[k,sideNode('shared','si',k).value.trim()]))}
+ function sideData(side){const pre=side==='purchase'?'trPurchase':'trSale';return {parties:Object.fromEntries(partyKeys.map(([k])=>[k,sideNode(side,'parties',k).value||null])),si:sharedSI(),delivery:$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value.trim(),payments:paymentData(side),commercial:{product:$(pre+'Product').value.trim(),quantity:Number($(pre+'Quantity').value),unit:$(pre+'Unit').value,unit_price:Number($(pre+'UnitPrice').value),payment_terms:$(pre+'Payment').value.trim()}}}
+ function fillSide(side,data={}){for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';const pre=side==='purchase'?'trPurchase':'trSale',c=data.commercial||{};for(const [suffix,key] of [['Product','product'],['Quantity','quantity'],['Unit','unit'],['UnitPrice','unit_price'],['Payment','payment_terms']])$(pre+suffix).value=c[key]??(suffix==='Unit'?'MT':'');$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value=data.delivery??''}
+ function fillSI(data={}){for(const [key] of siKeys)sideNode('shared','si',key).value=data[key]??''}
+ function syncTraderParties(){
+   const supplier=sideNode('purchase','parties','exporter').value,traderBuy=sideNode('purchase','parties','importer').value,traderSale=sideNode('sale','parties','exporter').value,buyer=sideNode('sale','parties','importer').value;
+   if(traderBuy&&traderSale&&traderBuy!==traderSale)return false;
+   $('trSupplier').value=supplier;$('trTrader').value=traderBuy||traderSale;$('trBuyer').value=buyer;
+   $('trDelivery').value=$('trSaleDelivery').value.trim()||$('trPurchaseDelivery').value.trim();
+   return true;
+ }
+ function syncTradeLegacy(){
+   $('trProduct').value=$('trPurchaseProduct').value.trim();$('trQuantity').value=$('trPurchaseQuantity').value;$('trUnit').value=$('trPurchaseUnit').value;
+   $('trBuyUnit').value=$('trPurchaseUnitPrice').value;$('trSellUnit').value=$('trSaleUnitPrice').value;
+ }
+ function validateCommercial(){for(const pre of ['trPurchase','trSale'])for(const suffix of ['Product','Quantity','UnitPrice']){const input=$(pre+suffix);if(!input.value.trim()){message('Preencha produto, quantidade e preço da compra e da revenda.');input.focus();return false}}if(Number($('trPurchaseQuantity').value)<=0||Number($('trSaleQuantity').value)<=0||Number($('trPurchaseUnitPrice').value)<0||Number($('trSaleUnitPrice').value)<0){message('Confira quantidade e preços da compra e revenda.');return false}return true}
+ function defaultParties(){syncTraderParties()}
+ window.aesTraderSetTab=function(tab){$('aesTradeOperationPane').hidden=tab!=='operation';$('aesTradePaymentsPane').hidden=tab!=='payments';$('aesTradeOperationTab').classList.toggle('active',tab==='operation');$('aesTradePaymentsTab').classList.toggle('active',tab==='payments');if(tab==='payments')paymentTotals()};
+ function paymentTable(side){return $(side==='purchase'?'trPurchasePayments':'trSalePayments')}
+ function addPayment(side,p={}){const row=paymentTable(side).insertRow();row.innerHTML=`<td><input type="date" aria-label="Data" value="${escape(p.date||'')}"></td><td><input type="number" min="0.01" step="0.01" aria-label="Valor" value="${escape(p.amount??'')}"></td><td><input aria-label="Contraparte" placeholder="Nome da contraparte" value="${escape(p.counterparty||'')}"></td><td><input aria-label="Banco ou meio" placeholder="Banco / meio" value="${escape(p.bank||'')}"></td><td><input aria-label="Referência" placeholder="Comprovante / referência" value="${escape(p.reference||'')}"></td><td><button type="button" class="btn" aria-label="Remover lançamento">×</button></td>`;row.querySelector('button').onclick=()=>{row.remove();paymentTotals()};row.addEventListener('input',paymentTotals)}
+ window.aesTraderAddPayment=side=>addPayment(side);
+ function paymentData(side){return [...paymentTable(side).rows].map(row=>{const a=row.querySelectorAll('input');return {date:a[0].value,amount:Number(a[1].value),counterparty:a[2].value.trim(),bank:a[3].value.trim(),reference:a[4].value.trim()}}).filter(p=>p.date||p.amount||p.counterparty||p.bank||p.reference)}
+ function fillPayments(side,items){paymentTable(side).replaceChildren();(Array.isArray(items)?items:[]).forEach(p=>addPayment(side,p));paymentTotals()}
+ function paymentTotals(){const currency=$('trCurrency').value;for(const side of ['purchase','sale']){const due=(Number($(side==='purchase'?'trPurchaseQuantity':'trSaleQuantity').value)||0)*(Number($(side==='purchase'?'trPurchaseUnitPrice':'trSaleUnitPrice').value)||0),paid=paymentData(side).reduce((sum,p)=>sum+(Number(p.amount)||0),0),pre=side==='purchase'?'trPurchase':'trSale';$(pre+'Due').textContent=money(due,currency);$(side==='purchase'?'trPurchasePaid':'trSaleReceived').textContent=money(paid,currency);$(pre+'Balance').textContent=money(due-paid,currency)}}
+ function validPayments(){for(const side of ['purchase','sale'])for(const row of paymentTable(side).rows){const fields=row.querySelectorAll('input');if(!fields[0].value||!Number.isFinite(Number(fields[1].value))||Number(fields[1].value)<=0){message('Informe data e valor positivo em cada pagamento.');aesTraderSetTab('payments');fields[!fields[0].value?0:1].focus();return false}}return true}
+
+
+ function addDoc(d={}){const row=$('trDocRows').insertRow(),input=(type,value='',extra='')=>`<input type="${type}" value="${escape(value)}" ${extra}>`;row.dataset.path=d.path||'';row.dataset.filename=d.filename||'';row.innerHTML=`<td>${input('text',d.name||'','placeholder="Nome do documento"')}</td><td><select><option value="pending">Pendente</option><option value="correction">Correção solicitada</option><option value="received">Recebido do Exporter</option><option value="forwarded">Encaminhado ao Importer</option></select></td><td>${input('date',d.received_at||'')}</td><td>${input('date',d.forwarded_at||'')}</td><td><input type="file" accept=".pdf,.xml,.png,.jpg,.jpeg" aria-label="Anexar documento"><button type="button" class="btn" data-open ${d.path?'':'hidden'}>Abrir arquivo</button></td><td>${input('text',d.notes||'')}</td><td><button type="button" class="btn" data-remove>×</button></td>`;row.cells[1].querySelector('select').value=d.status||'pending';row.querySelector('[data-remove]').onclick=()=>row.remove();row.querySelector('[data-open]').onclick=async()=>{if(!row.dataset.path)return;const {data,error}=await client().storage.from('aes-trader-docs').createSignedUrl(row.dataset.path,120);if(error)return message('Arquivo indisponível: '+error.message);window.open(data.signedUrl,'_blank','noopener')};row.querySelector('input[type=file]').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;if(!editing){message('Salve a operação antes de anexar documentos.');e.target.value='';return}if(file.size>10485760){message('Arquivo limitado a 10 MB.');e.target.value='';return}const {data:{user},error:authError}=await client().auth.getUser();if(authError||!user)return message('Entre no sistema antes de anexar.');const path=`${user.id}/${editing}/${crypto.randomUUID()}-${file.name.replace(/[^\w.\-]/g,'_')}`;const {error}=await client().storage.from('aes-trader-docs').upload(path,file,{upsert:false});if(error)return message('Anexo não salvo: '+error.message);row.dataset.path=path;row.dataset.filename=file.name;row.querySelector('[data-open]').hidden=false;row.cells[1].querySelector('select').value='received';row.cells[2].querySelector('input').value=new Date().toLocaleDateString('en-CA');message('Anexo enviado. Clique em Salvar operação para registrar o documento.')}}
+ window.aesTraderAddDoc=()=>addDoc();
+ function docData(){return [...$('trDocRows').rows].map(r=>{const t=r.querySelectorAll('input'),s=r.querySelector('select');return {name:t[0].value.trim(),status:s.value,received_at:t[1].value,forwarded_at:t[2].value,path:r.dataset.path||'',filename:r.dataset.filename||'',notes:t[4].value.trim()}}).filter(d=>d.name)}
+ function fillDocs(items){$('trDocRows').replaceChildren();(Array.isArray(items)&&items.length?items:defaultDocs.map(name=>({name}))).forEach(addDoc)}
+ function addTask(t={}){const row=$('trTaskRows').insertRow();row.innerHTML=`<td><input value="${escape(t.title||'')}" placeholder="Descreva a demanda"></td><td><input value="${escape(t.owner||'')}" placeholder="Responsável"></td><td><input type="date" value="${escape(t.due_date||'')}"></td><td><select><option value="pending">Pendente</option><option value="in_progress">Em andamento</option><option value="done">Concluída</option></select></td><td><input value="${escape(t.notes||'')}"></td><td><button type="button" class="btn">×</button></td>`;row.querySelector('select').value=t.status||'pending';row.querySelector('button').onclick=()=>row.remove()}
+ window.aesTraderAddTask=()=>addTask();
+ function taskData(){return [...$('trTaskRows').rows].map(r=>{const i=r.querySelectorAll('input');return {title:i[0].value.trim(),owner:i[1].value.trim(),due_date:i[2].value,status:r.querySelector('select').value,notes:i[3].value.trim()}}).filter(t=>t.title)}
+ function fillTasks(items){$('trTaskRows').replaceChildren();(Array.isArray(items)?items:[]).forEach(addTask)}
+ window.aesTraderSI=()=>{const purchase=sideData('purchase'),sale=sideData('sale'),details=sharedSI();const w=window.open('','_blank');if(!w)return message('Permita pop-ups para visualizar a Shipping Instruction.');const partyRows=side=>partyKeys.map(([k,label])=>'<tr><td>'+escape(label)+'</td><td>'+escape(name(side.parties[k]))+'</td></tr>').join('');const rows=[['Operação',$('trTradeNumber').value],['Compra — produto',purchase.commercial.product],['Compra — quantidade',purchase.commercial.quantity+' '+purchase.commercial.unit],['Revenda — produto',sale.commercial.product],['Revenda — quantidade',sale.commercial.quantity+' '+sale.commercial.unit],...siKeys.map(([k,label])=>[label,details[k]||'—'])];w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Shipping Instruction Compra e Revenda</title><style>@page{size:A4;margin:16mm}body{font:12px/1.5 Arial,sans-serif;color:#172033;margin:32px}h1{font-size:21px;border-bottom:2px solid #172033;padding-bottom:12px}.parties{display:grid;grid-template-columns:1fr 1fr;gap:16px}h2{font-size:13px;color:#173b63}table{width:100%;border-collapse:collapse}td{padding:8px;border-bottom:1px solid #dde4ee;vertical-align:top}td:first-child{width:35%;font-weight:bold;color:#526579}button{margin-top:24px}@media print{button{display:none}body{margin:0}.parties{break-inside:avoid}}</style></head><body><h1>SHIPPING INSTRUCTION · COMPRA E REVENDA</h1><div class="parties"><div><h2>COMPRA</h2><table>'+partyRows(purchase)+'</table></div><div><h2>REVENDA</h2><table>'+partyRows(sale)+'</table></div></div><h2>DADOS DE EMBARQUE COMPARTILHADOS</h2><table>'+rows.map(([label,value])=>'<tr><td>'+escape(label)+'</td><td>'+escape(value)+'</td></tr>').join('')+'</table><button onclick="window.print()">Imprimir / Salvar PDF</button></body></html>');w.document.close()};
+ const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const money=(v,c)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:c||'USD'}).format(Number(v)||0);
+ const localDate=s=>s?String(s).slice(0,10).split('-').reverse().join('/'):'—';
+ const name=id=>companies.find(c=>String(c.id)===String(id))?.name||'—';
+ const message=s=>{$('trMessage').textContent=s;window.notify?.(s)};
+ function totals(){const cost=(Number($('trPurchaseQuantity').value)||0)*(Number($('trPurchaseUnitPrice').value)||0),revenue=(Number($('trSaleQuantity').value)||0)*(Number($('trSaleUnitPrice').value)||0),c=$('trCurrency').value,margin=revenue-cost;$('trBuyTotal').textContent=money(cost,c);$('trSellTotal').textContent=money(revenue,c);$('trMargin').textContent=money(margin,c);$('trMargin').classList.toggle('negative',margin<0);$('trMarginPct').textContent=cost?(margin/cost*100).toFixed(2)+'%':'—';$('trMarginPct').classList.toggle('negative',margin<0);paymentTotals()}
+ function options(select){const selected=select.value;select.replaceChildren(new Option('Selecione em USER',''));for(const c of companies)select.add(new Option(c.name,c.id));select.value=selected}
+ async function refresh(){if(loading||!client())return;loading=true;$('aesTraderStatus').textContent='Carregando operações…';try{const [people,records]=await Promise.all([client().from('companies').select('id,name,address,country,tax_id,email').order('name'),client().from('aes_trader_deals').select('*').order('trade_date',{ascending:false}).limit(500)]);if(people.error)throw people.error;if(records.error)throw records.error;companies=people.data||[];deals=records.data||[];['trTrader','trSupplier','trBuyer'].forEach(id=>options($(id)));render()}catch(e){$('aesTraderStatus').textContent='Não foi possível carregar: '+e.message;$('aesTraderRows').innerHTML='<tr><td colspan="9">'+escape(e.message)+'</td></tr>'}finally{loading=false}}
+ function render(){const body=$('aesTraderRows');body.replaceChildren();$('aesTraderStatus').textContent=deals.length+' operação(ões) cadastrada(s)';if(!deals.length){body.innerHTML='<tr><td colspan="9">Nenhuma operação Trader cadastrada.</td></tr>';return}for(const d of deals){const pc=d.purchase_flow?.commercial||{},sc=d.sale_flow?.commercial||{},buy=Number(pc.quantity??d.quantity)*Number(pc.unit_price??d.purchase_unit_price),sale=Number(sc.quantity??d.quantity)*Number(sc.unit_price??d.sale_unit_price),margin=sale-buy;const row=body.insertRow();[d.trade_number,localDate(d.trade_date),name(d.supplier_id)+' → '+name(d.buyer_id),(pc.product||d.product)+' · '+(pc.quantity??d.quantity)+' '+(pc.unit||d.unit)+' → '+(sc.product||d.product)+' · '+(sc.quantity??d.quantity)+' '+(sc.unit||d.unit),money(buy,d.currency),money(sale,d.currency),money(margin,d.currency),{draft:'Draft',confirmed:'Confirmado',cancelled:'Cancelado'}[d.status]||d.status].forEach((value,i)=>{const cell=row.insertCell();cell.textContent=value;if(i===6&&margin<0)cell.style.color='#ad2535'});const actions=row.insertCell(),edit=document.createElement('button');edit.type='button';edit.className='btn';edit.textContent='Abrir';edit.onclick=()=>open(d);actions.append(edit)}}
+ function nextNumber(){const nums=deals.map(d=>/^TR-2026-(\d+)$/i.exec(d.trade_number)).filter(Boolean).map(m=>Number(m[1]));return 'TR-2026-'+String(Math.max(0,...nums)+1).padStart(3,'0')}
+ function open(d){editing=d?.id||null;$('aesTraderList').hidden=true;$('aesTraderEditor').hidden=false;$('aesTraderFormTitle').textContent=d?'Operação '+d.trade_number:'Nova operação comercial';ids.forEach((id,i)=>{$(id).value=d?.[keys[i]]??''});if(!d){$('trTradeNumber').value=nextNumber();$('trDate').value=new Date().toLocaleDateString('en-CA');$('trStatus').value='draft';$('trCurrency').value='USD';$('trUnit').value='MT'}initFlows();fillSide('purchase',{...d?.purchase_flow,parties:d?.purchase_flow?.parties||{exporter:d?.supplier_id,importer:d?.trader_company_id},delivery:d?.purchase_flow?.delivery??d?.delivery_terms,commercial:d?.purchase_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.purchase_unit_price,payment_terms:''}});fillSide('sale',{...d?.sale_flow,parties:d?.sale_flow?.parties||{exporter:d?.trader_company_id,importer:d?.buyer_id},delivery:d?.sale_flow?.delivery??d?.delivery_terms,commercial:d?.sale_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.sale_unit_price,payment_terms:''}});fillSI(d?.purchase_flow?.si||d?.sale_flow?.si||{});if(!d)defaultParties();fillDocs(d?.document_flow);fillTasks(d?.tasks);fillPayments('purchase',d?.purchase_flow?.payments);fillPayments('sale',d?.sale_flow?.payments);aesTraderSetTab('operation');$('trMessage').textContent='';totals();$('trTradeNumber').focus()}
+ window.aesTraderNew=async()=>{if(!companies.length)await refresh();open(null)};
+ window.aesTraderBack=()=>{$('aesTraderEditor').hidden=true;$('aesTraderList').hidden=false;editing=null};
+ window.aesTraderRefresh=refresh;
+ window.aesTraderSave=async()=>{if(!validPayments())return;if(!validateCommercial())return;syncTradeLegacy();if(!syncTraderParties())return message('A mesma empresa deve figurar como compradora na compra e vendedora na revenda.');const required=['trTradeNumber','trDate','trTrader','trSupplier','trBuyer','trProduct','trQuantity','trBuyUnit','trSellUnit'];for(const id of required){if(!$(id).value.trim()){message('Preencha os campos obrigatórios de compra e revenda.');(id==='trSupplier'?sideNode('purchase','parties','exporter'):id==='trTrader'?sideNode('purchase','parties','importer'):id==='trBuyer'?sideNode('sale','parties','importer'):$(id)).focus();return}}if(Number($('trQuantity').value)<=0||Number($('trBuyUnit').value)<0||Number($('trSellUnit').value)<0)return message('Confira quantidade e preços.');const record=Object.fromEntries(ids.map((id,i)=>[keys[i],$(id).value.trim()]));['quantity','purchase_unit_price','sale_unit_price'].forEach(k=>record[k]=Number(record[k]));record.purchase_flow=sideData('purchase');record.sale_flow=sideData('sale');record.document_flow=docData();record.tasks=taskData();['trader_company_id','supplier_id','buyer_id'].forEach(k=>record[k]=Number(record[k]));if(record.supplier_id===record.buyer_id)return message('Fornecedor e comprador devem ser diferentes.');const button=$('trSave');button.disabled=true;try{if(!client())throw Error('Entre no sistema para salvar.');const q=editing?client().from('aes_trader_deals').update(record).eq('id',editing):client().from('aes_trader_deals').insert(record);const {data,error}=await q.select('id').single();if(error)throw error;editing=data.id;message('Operação comercial salva.');await refresh()}catch(e){message('Não foi possível salvar: '+e.message)}finally{button.disabled=false}};
+ window.aesTraderDocument=kind=>{if(!validateCommercial())return;syncTradeLegacy();if(!syncTraderParties())return message('A mesma empresa deve figurar como compradora na compra e vendedora na revenda.');const trader=companies.find(c=>String(c.id)===$('trTrader').value),supplier=companies.find(c=>String(c.id)===$('trSupplier').value),buyer=companies.find(c=>String(c.id)===$('trBuyer').value);if(!trader||!supplier||!buyer)return message('Preencha as empresas, produto e quantidade para visualizar o documento.');const purchase=kind==='contract',seller=purchase?supplier:trader,customer=purchase?trader:buyer,pre=purchase?'trPurchase':'trSale',price=$(pre+'UnitPrice').value,number=purchase?$('trContractNumber').value:$('trProformaNumber').value,title=purchase?'CONTRATO DE COMPRA':'PROFORMA INVOICE',terms=$(pre+'Payment').value+'\n'+(purchase?$('trBuyTerms').value:$('trSellTerms').value),currency=$('trCurrency').value;const party=c=>'<b>'+escape(c.name)+'</b><br>'+escape(c.address||'')+'<br>'+escape(c.country||'')+(c.tax_id?'<br>Tax ID: '+escape(c.tax_id):'')+(c.email?'<br>'+escape(c.email):'');const flow=sideData(purchase?'purchase':'sale');const partyBoxes=partyKeys.map(([key,label])=>{const c=companies.find(x=>String(x.id)===String(flow.parties[key]));return '<div class="box"><small>'+escape(label)+'</small>'+(c?party(c):'—')+'</div>'}).join('');const w=window.open('','_blank');if(!w)return message('Permita pop-ups para visualizar o documento.');w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+' '+escape(number||$('trTradeNumber').value)+'</title><style>@page{size:A4;margin:17mm}body{font:12px/1.5 Arial,sans-serif;color:#172033;margin:28px}header{border-bottom:2px solid #172033;padding-bottom:12px;display:flex;justify-content:space-between}h1{font-size:21px;margin:16px 0 5px}.muted{color:#64748b}.parties{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}.box{border:1px solid #d5dde7;border-radius:6px;padding:15px;min-height:90px}small{display:block;color:#64748b;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}table{border-collapse:collapse;width:100%;margin-top:18px}td,th{border:1px solid #d5dde7;padding:10px;text-align:left}th{background:#eff3f8}h2{font-size:13px;margin:23px 0 7px}.note{white-space:pre-wrap}.sign{display:grid;grid-template-columns:1fr 1fr;gap:50px;margin-top:75px}.line{border-top:1px solid #172033;text-align:center;padding-top:7px}@media print{button{display:none}body{margin:0}}</style></head><body><header><b>OPERAÇÃO COMERCIAL · '+escape($('trTradeNumber').value)+'</b><span>'+escape(localDate($('trDate').value))+'</span></header><h1>'+title+'</h1><div class="muted">Documento nº '+escape(number||$('trTradeNumber').value)+'</div><div class="parties">'+partyBoxes+'</div><table><tr><th>Produto</th><th>Quantidade</th><th>Preço unitário</th><th>Valor total</th></tr><tr><td>'+escape($(pre+'Product').value)+'</td><td>'+escape($(pre+'Quantity').value)+' '+escape($(pre+'Unit').value)+'</td><td>'+escape(money(price,currency))+'</td><td><b>'+escape(money(Number(price)*Number($(pre+'Quantity').value),currency))+'</b></td></tr></table><h2>Condições comerciais</h2><div class="note">'+escape(terms||'—')+'</div><h2>Entrega</h2><div class="note">'+escape($(purchase?'trPurchaseDelivery':'trSaleDelivery').value||'—')+'</div><div class="sign"><div class="line">'+escape(seller.name)+'</div><div class="line">'+escape(customer.name)+'</div></div><p style="text-align:right;margin-top:30px"><button onclick="window.print()">Imprimir / Salvar PDF</button></p></body></html>');w.document.close()};
+ document.addEventListener('DOMContentLoaded',()=>{['trPurchaseQuantity','trPurchaseUnitPrice','trSaleQuantity','trSaleUnitPrice','trCurrency'].forEach(id=>$(id).addEventListener('input',totals));$('aesTraderEditor').addEventListener('change',event=>{const node=event.target,side=node.closest('.aes-trader-parties')?.dataset.side;if(!side)return;if((side==='purchase'&&node.dataset.key==='importer')||(side==='sale'&&node.dataset.key==='exporter')){const other=sideNode(side==='purchase'?'sale':'purchase','parties',side==='purchase'?'exporter':'importer');other.value=node.value}syncTraderParties()});document.querySelector('[data-view="trader"]').addEventListener('click',refresh);const gate=$('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none'&&$('trader').classList.contains('active'))refresh()}).observe(gate,{attributes:true,attributeFilter:['style']})});
+})();
+
+</script>
+<script>
+(()=>{
+ const $=id=>document.getElementById(id);
+ window.aesToggleBookingCatalogue=()=>{const body=$('brQuoteCatalogueBody'),open=body.hidden;body.hidden=!open;$('brToggleCatalogue').setAttribute('aria-expanded',String(open));$('brToggleCatalogue').textContent=open?'Ocultar propostas ▴':'Ver propostas ▾';if(open)window.renderAcceptedQuotes?.()};
+ window.aesToggleBookingRouteQuotes=()=>{const body=$('brRouteQuotesDetail'),open=body.hidden;body.hidden=!open;$('brRouteToggle').setAttribute('aria-expanded',String(open));$('brRouteToggle').textContent=open?'Ocultar valores ▴':'Ver valores ▾'};
+ document.addEventListener('DOMContentLoaded',()=>{const work=$('bookingRequestWorkspace'),section=$('bookingrequest');const sync=()=>{section.classList.toggle('br-workspace-active',work.style.display==='block');if(work.style.display==='block'){$('brRouteQuotesDetail').hidden=true;$('brRouteToggle').setAttribute('aria-expanded','false');$('brRouteToggle').textContent='Ver valores ▾'}};new MutationObserver(sync).observe(work,{attributes:true,attributeFilter:['style']});sync()});
+})();
+</script>
+<script>
+(function(){
+ const $=id=>document.getElementById(id);
+ const originalOpen=window.openBookingRequest;
+ window.openBookingRequest=function(order){
+   originalOpen?.apply(this,arguments);
+   if($('brOrder')?.value!==order)return;
+   const saved=JSON.parse(localStorage.getItem('aes_booking_request_v86')||'{}')[order]||{};
+   for(const id of ['brRequestDate','brRequestedLine','brRequestedVessel','brRequestedVoyage','brRequestInstructions'])if(!saved[id]&&$(id))$(id).value='';
+   const box=$('brScheduledVessel');box.textContent='Consultando navio selecionado na Programação…';
+   const client=window.aesSharedClient;
+   if(!client){box.textContent='Abra a Programação e selecione o navio desta Order.';return}
+   client.from('contracts').select('details').eq('order_number',order).maybeSingle().then(({data,error})=>{
+     if($('brOrder')?.value!==order)return;
+     const v=data?.details?.schedule_selected_vessel;
+     if(error||!v?.vessel){box.textContent='Nenhum navio selecionado na Programação desta Order. Abra a Programação para escolher navio / viagem.';return}
+     box.textContent=[v.line,v.vessel,v.voyage,v.etd&&'ETD '+v.etd,v.eta&&'ETA '+v.eta].filter(Boolean).join(' · ');
+     for(const [id,value] of [['brRequestedLine',v.line],['brRequestedVessel',v.vessel],['brRequestedVoyage',v.voyage]])if($(id)&&!$(id).value)$(id).value=value||'';
+   });
+ };
+ window.aesBookingOpenScheduling=function(){
+   const order=$('brOrder')?.value;
+   if(order)window.saveBookingRequest?.(true);
+   go('schedule');
+   const row=[...document.querySelectorAll('#releasedContractsTable tbody tr')].find(r=>r.dataset.order===order);
+   row?.querySelector('.contractPick')?.click();
+   if(!row)window.notify?.('Selecione a Order '+order+' na Programação.');
+ };
+ window.aesBookingMarkRequested=function(){
+   if(!$('brRequestDate').value)$('brRequestDate').value=new Date().toLocaleDateString('en-CA');
+   if(!$('brRequestedVessel').value){window.notify?.('Selecione primeiro o navio na Programação.');return}
+   $('brStatus').value='Booking Requested';window.saveBookingRequest?.();
+ };
+ window.aesBookingMarkConfirmed=function(){
+   if(!$('brBookingNo').value.trim()){window.notify?.('Informe o Booking Number recebido do armador.');$('brBookingNo').focus();return}
+   $('brStatus').value='Booking Confirmed';window.saveBookingRequest?.();
+ };
+})();
+</script>
+<script>
+(function(){
+ const modal=()=>document.getElementById('brBookingModal');
+ const original=window.aesOpenConfirmedBookingFromList;
+ window.aesOpenConfirmedBookingFromList=async function(button){const order=button.closest('tr')?.dataset.orderNumber||'';await original(button);if(!modal().hidden){document.getElementById('brBookingModalOrder').textContent=order;window.aesBookingCarrierChanged?.(true)}};
+ window.aesCloseConfirmedBooking=function(){modal().hidden=true;window.closeBookingRequestWorkspace?.()};
+ window.aesBookingSaveConfirmedFromList=function(){
+   if(!document.getElementById('brBookingNo').value.trim()){window.notify?.('Informe o Booking Number recebido do armador.');document.getElementById('brBookingNo').focus();return}
+   document.getElementById('brStatus').value='Booking Confirmed';window.saveBookingRequest?.();
+   modal().hidden=true;window.closeBookingRequestWorkspace?.();
+ };
+})();
+</script>
+<script>
+(function(){
+ const open=window.openBookingRequest;
+ window.openBookingRequest=function(order){
+   open?.apply(this,arguments);
+   const work=document.getElementById('bookingRequestWorkspace');if(work)work.style.display='none';
+   const list=document.getElementById('bookingRequestOrdersTable')?.closest('.card');if(list)list.style.display='block';
+ };
+})();
+</script>
+<script>
+(function(){
+ const $=id=>document.getElementById(id);
+ const carrierNames={MSC:'Mediterranean Shipping Company (MSC)',Maersk:'A.P. Moller - Maersk', 'CMA CGM':'CMA CGM Group',COSCO:'COSCO Shipping Lines','Hapag-Lloyd':'Hapag-Lloyd AG',ONE:'Ocean Network Express (ONE)',Evergreen:'Evergreen Marine Corporation',HMM:'HMM Co., Ltd.','Yang Ming':'Yang Ming Marine Transport Corporation',ZIM:'ZIM Integrated Shipping Services',PIL:'Pacific International Lines (PIL)','Wan Hai':'Wan Hai Lines',OOCL:'Orient Overseas Container Line (OOCL)',RCL:'Regional Container Lines (RCL)',SITC:'SITC International Holdings'};
+ const carriers=[...Object.values(carrierNames),'X-Press Feeders','Unifeeder','Sinokor Merchant Marine','SeaLead Shipping','Matson Navigation Company','Grimaldi Lines','Swire Shipping','FESCO Transportation Group','Samskip','Emirates Shipping Line','NCL','Turkon Line','Arkas Line','Global Feeder Shipping','Mercosul Line'];
+ let people=[],returnToBooking=false;
+ const clean=x=>String(x||'').trim();
+ function fillList(id,values){const list=$(id);if(!list)return;list.replaceChildren();for(const value of [...new Set(values.map(clean).filter(Boolean))])list.append(new Option(value,value))}
+ function applyCarrierLists(){
+   document.querySelectorAll('input:not([type="hidden"]):not([type="date"]):not([type="number"])').forEach(input=>{
+     if(input.readOnly)return;
+     const label=input.closest('div')?.querySelector('label')?.textContent?.trim()||'';
+     const change=input.getAttribute('onchange')||'';
+     if(['aesManualLine','scheduleShippingLine','fqLineV99','brLine'].includes(input.id)||/^(Armador|Shipping Line)$/i.test(label)||/updateCentralFreightQuote\([^,]+,'line'/.test(change))input.setAttribute('list','aesCarrierList');
+   });
+ }
+ async function loadPeople(){
+   const client=window.aesSharedClient;if(!client)return;
+   const {data,error}=await client.from('companies').select('id,name,profile_type,contacts,address,country,tax_id,email,phone,contact_name').order('name').limit(2000);
+   if(error){window.notify?.('USER indisponível para agente de carga: '+error.message);return}
+   people=data||[];
+   fillList('aesBookingAgentList',people.map(x=>x.name));
+   fillList('aesBookingResponsibleList',people.flatMap(x=>[x.name,...(Array.isArray(x.contacts)?x.contacts.map(c=>c.name):[])]));
+   fillList('aesCarrierList',[...carriers,...people.filter(x=>/armador|shipping line/i.test(x.profile_type||'')).map(x=>x.name)]);
+   applyCarrierLists();if(!$('brBookingModal')?.hidden&&$('brLine')?.value)window.aesBookingCarrierChanged?.(true);
+ }
+ window.aesBookingRegisterAgent=function(){const panel=$('brManualAgentBox');panel.hidden=!panel.hidden;if(!panel.hidden)$('brManualAgentName').focus()};
+ window.aesBookingApplyManualAgent=function(){const value=$('brManualAgentName').value.trim();if(!value)return window.notify?.('Informe o nome do agente de carga.');$('brFreightAgent').value=value;$('brManualAgentBox').hidden=true};
+ window.aesBookingCarrierChanged=function(preserve=false){
+   const raw=$('brLine').value.trim(),alias=Object.keys(carrierNames).find(x=>x.toLowerCase()===raw.toLowerCase());
+   const full=alias?carrierNames[alias]:raw; if(alias)$('brLine').value=full;
+   const registered=people.find(x=>x.name?.toLowerCase()===full.toLowerCase()||x.name?.toLowerCase()===raw.toLowerCase());
+   const fields={brCarrierLegalName:registered?.name||full,brCarrierTaxId:registered?.tax_id||'',brCarrierCountry:registered?.country||'',brCarrierEmail:registered?.email||'',brCarrierPhone:registered?.phone||'',brCarrierAddress:registered?.address||''};
+   for(const [id,value] of Object.entries(fields))if(!preserve||!$(id).value)$(id).value=value;
+
+ };
+ window.aesBookingAgentCreated=async function(name){
+   if(!returnToBooking)return;returnToBooking=false;await loadPeople();go('bookingrequest');
+   $('brFreightAgent').value=name;$('brBookingModal').hidden=false;
+   window.notify?.('Agente de carga cadastrado em USER e selecionado no booking.');
+ };
+ document.addEventListener('DOMContentLoaded',()=>{
+   fillList('aesCarrierList',carriers);applyCarrierLists();
+   new MutationObserver(applyCarrierLists).observe(document.body,{childList:true,subtree:true});
+   document.querySelector('[data-view="bookingrequest"]')?.addEventListener('click',()=>loadPeople());
+   const gate=$('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none')loadPeople()}).observe(gate,{attributes:true,attributeFilter:['style']});
+   if(gate?.style.display==='none')loadPeople();
+ });
+})();
+</script>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+window.switchFinanceTab=function(tab){window.financeActiveTab=tab;const orders=tab==='orders';$('financeFilters').style.display=orders?'':'none';$('financeOrderList').style.display=orders?'':'none';$('financeOrderWorkspace').style.display=orders&&window.currentFinanceOrder?'block':'none';$('financeHedgeStandalone').style.display=orders?'none':'block';$('finHedgeType').value=orders?'ACC':tab;$('finHedgeType').parentElement.style.display=orders?'':'none';const index=$('finHedgeType').parentElement.cellIndex;const header=$('finHedgeType').closest('table').tHead.rows[0].cells[index];if(header)header.style.display=orders?'':'none';document.querySelectorAll('#financeTabs button').forEach(x=>x.classList.toggle('primary',x.dataset.tab===tab));document.querySelectorAll('#finHedgeTable tbody tr').forEach(r=>r.style.display=orders||r.cells[0]?.textContent?.trim()===tab?'':'none');};
+const open=window.openFinanceOrder;window.openFinanceOrder=function(order,importer,invoice){window.switchFinanceTab('orders');open(order,importer,invoice);const row=[...document.querySelectorAll('#financeTable tbody tr')].find(r=>r.dataset.order===order);[['finNfe','nfe'],['finDue','due'],['finAccessKey','access'],['finExpiration','maturity']].forEach(([id,key])=>$(id).value=row?.dataset[key]||'—');$('financeOrderWorkspace').scrollIntoView({behavior:'smooth',block:'start'});};
+const render=window.renderStandaloneHedgeOperations;window.renderStandaloneHedgeOperations=function(){render();const tab=window.financeActiveTab;document.querySelectorAll('#finHedgeTable tbody tr').forEach(r=>r.style.display=tab&&tab!=='orders'&&r.cells[0]?.textContent?.trim()!==tab?'none':'');};
+const save=window.saveStandaloneHedgeOperation;window.saveStandaloneHedgeOperation=function(){const before=window.standaloneHedgeOperations.length;save();if(window.standaloneHedgeOperations.length>before){window.standaloneHedgeOperations.at(-1).order=$('finHedgeOrder').value;window.renderStandaloneHedgeOperations()}};
+window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrder'),previous=select.value;select.replaceChildren(new Option('Sem vínculo',''));(e.detail?.contracts||[]).filter(c=>c.order_number).forEach(c=>select.add(new Option(c.order_number,c.order_number)));select.value=previous;});window.switchFinanceTab('orders');
+})();
+</script><script>
+(function(){
+  const numeric=value=>{const text=String(value||'').trim().replace(/\s/g,'');const number=Number(text.includes(',')?text.replace(/\./g,'').replace(',','.'):text);return Number.isFinite(number)?number:0};
+  window.refreshContractListTotals=function(){
+    let containers=0,tonnes=0;
+    document.querySelectorAll('#contractsTable tbody tr').forEach(row=>{
+      if(row.style.display==='none'||row.hidden||row.cells.length<9)return;
+      containers+=numeric(row.dataset.totalContainers??row.cells[6].textContent);
+      tonnes+=numeric(row.dataset.totalTonnes??row.cells[8].textContent);
+    });
+    document.getElementById('contractTotalContainers').textContent=containers.toLocaleString('pt-BR',{maximumFractionDigits:0});
+    document.getElementById('contractTotalTonnes').textContent=tonnes.toLocaleString('pt-BR',{maximumFractionDigits:3})+' t';
+  };
+  const body=document.querySelector('#contractsTable tbody');
+  if(body)new MutationObserver(()=>window.refreshContractListTotals()).observe(body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['style','hidden','data-total-containers','data-total-tonnes']});
+  window.addEventListener('aes-contracts-updated',window.refreshContractListTotals);
+  window.refreshContractListTotals();
 })();
 </script>
 </body>
