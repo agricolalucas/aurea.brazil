@@ -8654,12 +8654,15 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     $('aesAuthGate').style.display = value ? 'flex' : 'none';
     document.querySelector('.app').style.visibility = value ? 'hidden' : 'visible';
   }
-  async function authorized() {
-    const {data: {user}, error} = await client.auth.getUser();
-    if (error || !user) return false;
-    const member = await client.from('app_members').select('role,active').eq('user_id',user.id).single();
-    if (member.error || !member.data?.active) return false;
-    $('aesSignedIn').textContent = `${user.email} · ${member.data.role}`;
+  let authAttempt=0;
+  async function authorized(signedInUser){
+    let user=signedInUser;
+    if(!user){const response=await client.auth.getUser();if(response.error){if(response.error.status===401||response.error.status===403||response.error.name==='AuthSessionMissingError')return false;throw response.error}user=response.data?.user;}
+    if(!user)return false;
+    const member=await client.from('app_members').select('role,active').eq('user_id',user.id).maybeSingle();
+    if(member.error)throw new Error('Não foi possível consultar a autorização: '+errorText(member.error));
+    if(!member.data?.active)throw new Error('Esta conta não possui acesso ativo.');
+    $('aesSignedIn').textContent=`${user.email} · ${member.data.role}`;
     return true;
   }
   function addContact(value={}) {
@@ -8747,13 +8750,13 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     } catch(error) { window.notify('Falha ao salvar: '+errorText(error)); }
     finally {button.disabled=false;}
   }
-  async function begin() {
-    lock(true);
-    if(!client) return message('Biblioteca do Supabase indisponível. Verifique a conexão.');
-    try {
-      if (!(await authorized())) return message('Entre com uma conta autorizada do Supabase.');
-      await loadUsers(); lock(false);
-    } catch(error) { message('Não foi possível carregar USER: '+errorText(error)); }
+  async function begin(){
+    const attempt=++authAttempt;lock(true);
+    if(!client)return message('Biblioteca do Supabase indisponível. Verifique a conexão.');
+    try{const allowed=await authorized();if(attempt!==authAttempt)return;
+      if(!allowed)return message('Digite seu e-mail e senha para entrar.');
+      await loadUsers();if(attempt===authAttempt){message('');lock(false)}
+    }catch(error){if(attempt===authAttempt)message('Não foi possível abrir a sessão: '+errorText(error));}
   }
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.app').style.visibility='hidden';
@@ -8763,13 +8766,17 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     $('aesAddUserContact').addEventListener('click',()=>addContact());
     showContacts([]);
     $('aesLoginForm').addEventListener('submit',async event=>{
-      event.preventDefault(); message('Entrando…');
-      if(!client) return message('Biblioteca do Supabase indisponível.');
-      const {error}=await client.auth.signInWithPassword({email:field('aesLoginEmail'),password:$('aesLoginPassword').value});
-      $('aesLoginPassword').value='';
-      if(error) return message('Falha no login: '+errorText(error));
-      if (!(await authorized())) {await client.auth.signOut();return message('Conta sem acesso ativo em app_members.');}
-      try {await loadUsers();lock(false);} catch(e) {message(errorText(e));}
+      event.preventDefault();const attempt=++authAttempt;
+      const button=event.currentTarget.querySelector('button[type="submit"]');button.disabled=true;message('Entrando…');
+      try{
+        if(!client)throw new Error('Biblioteca do Supabase indisponível.');
+        const {data,error}=await client.auth.signInWithPassword({email:field('aesLoginEmail').toLowerCase(),password:$('aesLoginPassword').value});
+        if(error)throw error;
+        if(!data?.user||!data?.session)throw new Error('O login não retornou uma sessão válida.');
+        if(!(await authorized(data.user)))throw new Error('Não foi possível confirmar a autorização.');
+        await loadUsers();if(attempt===authAttempt){$('aesLoginPassword').value='';message('');lock(false)}
+      }catch(error){if(attempt===authAttempt)message('Falha ao entrar: '+errorText(error));}
+      finally{button.disabled=false}
     });
     $('aesForgot').addEventListener('click',async()=>{
       const email=field('aesLoginEmail');
