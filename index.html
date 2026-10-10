@@ -10512,21 +10512,33 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    deal.document_flow=docs;return docs[index];
  }
 
+
  function appendDocumentTasks(container,deal,documentName){
   const panel=document.createElement('div'),button=document.createElement('button'),list=document.createElement('div'),form=document.createElement('form');
   button.type='button';button.className='btn';button.textContent='Adicionar tarefa';button.style.marginTop='8px';form.hidden=true;
-  form.innerHTML='<label>Tarefa<input name="title" required placeholder="Descreva a tarefa"></label><label>Responsável<input name="owner" placeholder="Nome do responsável"></label><label>Prazo<input name="due_date" type="date"></label><button type="submit" class="btn primary">Salvar tarefa</button><button type="button" class="btn" data-cancel>Cancelar</button><p role="status" data-message></p>';
-  const paint=()=>{list.replaceChildren();for(const task of (deal.tasks||[]).filter(t=>t.document_name===documentName)){const item=document.createElement('div');item.style.cssText='padding:8px;margin-top:6px;background:#f1f5f9;border-radius:5px;white-space:normal';item.textContent=task.title+(task.owner?' · '+task.owner:'')+(task.due_date?' · '+localDate(task.due_date):'')+' · '+({pending:'Pendente',in_progress:'Em andamento',done:'Concluída'}[task.status]||'Pendente');list.append(item)}};
+  form.innerHTML='<label>Descrição<input name="title" required placeholder="Descreva a tarefa"></label><label>Data<input name="due_date" type="date" required></label><label style="display:flex;align-items:center;gap:6px"><input name="finished" type="checkbox" style="width:auto"> Finalizado</label><button type="submit" class="btn primary">Salvar tarefa</button><button type="button" class="btn" data-cancel>Cancelar</button><p role="status" data-message></p>';
+  const paint=()=>{list.replaceChildren();for(const task of (deal.tasks||[]).filter(t=>t.document_name===documentName)){
+   const item=document.createElement('div'),description=document.createElement('div'),date=document.createElement('small'),label=document.createElement('label'),check=document.createElement('input');
+   item.style.cssText='padding:8px;margin-top:6px;background:'+(task.status==='done'?'#dcfce7':'#f1f5f9')+';border-radius:5px;white-space:normal';description.textContent=task.title;date.textContent='Data: '+(task.due_date?localDate(task.due_date):'—');date.style.display='block';check.type='checkbox';check.checked=task.status==='done';check.style.width='auto';check.setAttribute('aria-label','Finalizado: '+task.title);label.style.cssText='display:flex;align-items:center;gap:6px;margin-top:6px';label.append(check,document.createTextNode('Finalizado'));item.append(description,date,label);list.append(item);
+   check.onchange=async()=>{const done=check.checked;check.disabled=true;
+    try{const {data:latest,error:readError}=await client().from('aes_trader_deals').select('tasks').eq('id',deal.id).single();if(readError)throw readError;
+     const tasks=Array.isArray(latest.tasks)?latest.tasks:[],index=tasks.findIndex(t=>task.id?t.id===task.id:t.document_name===documentName&&t.title===task.title&&t.due_date===task.due_date);
+     if(index<0)throw Error('Tarefa não encontrada. Atualize a listagem.');
+     tasks[index]={...tasks[index],status:done?'done':'pending'};
+     const {data,error}=await client().from('aes_trader_deals').update({tasks}).eq('id',deal.id).select('id').single();if(error)throw error;if(!data)throw Error('Gravação não confirmada.');
+     deal.tasks=tasks;paint();
+    }catch(e){check.checked=task.status==='done';window.notify?.('Não foi possível atualizar a tarefa: '+e.message)}finally{check.disabled=false}
+   };
+  }};
   paint();button.onclick=()=>{form.hidden=false;form.elements.title.focus()};form.querySelector('[data-cancel]').onclick=()=>{form.hidden=true;form.reset();form.querySelector('[data-message]').textContent=''};
   form.onsubmit=async event=>{event.preventDefault();const title=form.elements.title.value.trim();if(!title)return;const submit=form.querySelector('[type=submit]'),message=form.querySelector('[data-message]');submit.disabled=true;message.textContent='Salvando…';
    try{const {data:latest,error:readError}=await client().from('aes_trader_deals').select('tasks').eq('id',deal.id).single();if(readError)throw readError;
-    const tasks=[...(Array.isArray(latest.tasks)?latest.tasks:[]),{id:crypto.randomUUID(),document_name:documentName,title,owner:form.elements.owner.value.trim(),due_date:form.elements.due_date.value,status:'pending',notes:''}];
+    const tasks=[...(Array.isArray(latest.tasks)?latest.tasks:[]),{id:crypto.randomUUID(),document_name:documentName,title,due_date:form.elements.due_date.value,status:form.elements.finished.checked?'done':'pending',notes:''}];
     const {data,error}=await client().from('aes_trader_deals').update({tasks}).eq('id',deal.id).select('id').single();if(error)throw error;if(!data)throw Error('Gravação não confirmada.');
     deal.tasks=tasks;paint();form.reset();form.hidden=true;message.textContent='';window.notify?.('Tarefa salva para '+documentName+'.');
    }catch(e){message.textContent='Não foi possível salvar: '+e.message}finally{submit.disabled=false}
   };panel.append(button,list,form);container.append(panel);
  }
-
  function tradeArrivalInfo(eta,today=new Date()){
   const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(eta||''));
   if(!m)return {text:'Informe a ETA na Shipping Instruction.',alert:false};
