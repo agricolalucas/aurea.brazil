@@ -3612,8 +3612,8 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card" style="padding:10px 14px"><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap" id="financeTabs"><button class="btn primary" onclick="switchFinanceTab('orders')" data-tab="orders">Orders e lançamentos</button><button class="btn" onclick="switchFinanceTab('ACC')" data-tab="ACC">ACC</button><button class="btn" onclick="switchFinanceTab('Trava de Câmbio')" data-tab="Trava de Câmbio">Trava de Câmbio</button><button class="btn" onclick="switchFinanceTab('NDF')" data-tab="NDF">NDF</button></div></div>
-  <div class="card" id="financeFilters">
+  <div class="card" style="padding:10px 14px"><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap" id="financeTabs"><button class="btn primary" onclick="switchFinanceTab('orders')" data-tab="orders">Orders e lançamentos</button><button class="btn" onclick="switchFinanceTab('ACC')" data-tab="ACC">ACC</button><button class="btn" onclick="switchFinanceTab('Trava de Câmbio')" data-tab="Trava de Câmbio">Trava de Câmbio</button><button class="btn" onclick="switchFinanceTab('NDF')" data-tab="NDF">NDF</button><button class="btn" onclick="switchFinanceTab('cash')" data-tab="cash">Expenses / Financial Cash Control</button></div></div>
+  <div id="financeCashPanel" hidden><iframe id="financeCashFrame" title="Expenses / Financial Cash Control" style="width:100%;height:calc(100vh - 180px);min-height:700px;border:0;border-radius:10px"></iframe></div><div class="card" id="financeFilters">
     <div class="grid4">
       <div><label>Order</label><input id="finFilterOrder" placeholder="Buscar Order"></div>
       <div><label>Importer</label><input id="finFilterImporter" placeholder="Buscar Importer"></div>
@@ -5265,7 +5265,9 @@ function generateLoadingOrderPDF(){
   </div>
   <div class="sign"><div class="line">Responsável pelo Carregamento</div><div class="line">Motorista</div></div>
   <div style="margin-top:35px;text-align:right"><button onclick="window.print()" style="padding:10px 16px">Imprimir / Salvar como PDF</button></div>
-  </body></html>`);
+  <script>
+(()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');if(!frame.getAttribute('src'))frame.src='expenses_cash.html';else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
+</script></body></html>`);
   w.document.close();
 }
 
