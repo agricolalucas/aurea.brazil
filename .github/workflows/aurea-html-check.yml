@@ -1,0 +1,32 @@
+name: AUREA BRAZIL - Verify published HTML
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - '.github/workflows/aurea-html-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Verify main ERP file is present and complete
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+          p = Path('index.html')
+          if not p.is_file():
+              sys.exit('ERROR: index.html missing')
+          data = p.read_text(encoding='utf-8')
+          if len(data) < 100000:
+              sys.exit('ERROR: index.html unusually small; check for accidental replacement')
+          if '<html' not in data.lower() or '</html>' not in data.lower():
+              sys.exit('ERROR: index.html is missing its HTML document boundaries')
+          print(f'ERP HTML present: {len(data):,} characters')
+          PY
