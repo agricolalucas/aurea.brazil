@@ -269,7 +269,20 @@ input::placeholder,textarea::placeholder{color:#76869a}
 .tr-document-column input,.tr-document-column select{font-size:11px;min-height:32px;padding:6px 8px;width:100%}
 .tr-document-column input[type=file]{font-size:10px}
 .tr-document-column .btn{font-size:11px;max-width:230px;white-space:normal;overflow-wrap:anywhere}
-</style></head>
+</style><style id="aes-finance-compact-20261013">
+/* Ajuste restrito à lista financeira; não afeta outras tabelas. */
+#financeOrderList .tablewrap{overflow-x:auto}
+#financeTable{width:100%;min-width:1050px;border-collapse:collapse;font-size:10.5px}
+#financeTable th,#financeTable td{padding:6px 5px!important;vertical-align:middle;line-height:1.25}
+#financeTable th{font-size:9px;letter-spacing:0;white-space:normal}
+#financeTable td{white-space:nowrap}
+#financeTable td:nth-child(3),#financeTable td:nth-child(4){white-space:normal;min-width:85px;max-width:155px;overflow-wrap:anywhere}
+#financeTable td:nth-child(1){min-width:96px}
+#financeTable .aes-fin-mini-kind{display:block;width:max-content;max-width:105px;padding:2px 4px;margin:3px 0 0;font-size:8px!important;line-height:1.1;font-weight:700;letter-spacing:0;white-space:nowrap}
+#financeTable td select{width:110px!important;min-width:0!important;max-width:110px;min-height:29px;padding:3px 4px;font-size:10px}
+#financeTable td .btn{min-height:27px;padding:4px 7px;font-size:10px;margin:0}
+</style>
+</head>
 <body><datalist id="aesCarrierList"></datalist><datalist id="aesBookingAgentList"></datalist><datalist id="aesBookingResponsibleList"></datalist>
 <div class="app">
   <aside class="sidebar">
@@ -3615,6 +3628,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
   <div class="card" style="padding:10px 14px"><div class="toolbar" style="margin:0;gap:8px;flex-wrap:wrap" id="financeTabs"><button class="btn primary" onclick="switchFinanceTab('orders')" data-tab="orders">Orders e lançamentos</button><button class="btn" onclick="switchFinanceTab('ACC')" data-tab="ACC">ACC</button><button class="btn" onclick="switchFinanceTab('Trava de Câmbio')" data-tab="Trava de Câmbio">Trava de Câmbio</button><button class="btn" onclick="switchFinanceTab('NDF')" data-tab="NDF">NDF</button><button class="btn" onclick="switchFinanceTab('cash')" data-tab="cash">Expenses / Financial Cash Control</button></div></div>
   <div id="financeCashPanel" hidden><iframe id="financeCashFrame" title="Expenses / Financial Cash Control" style="width:100%;height:calc(100vh - 180px);min-height:700px;border:0;border-radius:10px"></iframe></div><div class="card" id="financeFilters">
     <div class="grid4">
+      <div><label>Tipo de operação</label><select id="finFilterKind" onchange="filterFinance()"><option value="">Todos · Exportação, Compra e Revenda</option><option value="export">Exportação</option><option value="purchase">Compra · a pagar</option><option value="sale">Revenda · a receber</option><option value="receivable">Todos a receber</option></select></div>
       <div><label>Order</label><input id="finFilterOrder" placeholder="Buscar Order"></div>
       <div><label>Importer</label><input id="finFilterImporter" placeholder="Buscar Importer"></div>
       <div>
@@ -3699,7 +3713,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       </div><div class="grid4" style="margin-top:10px"><div><label>NF-e</label><input id="finNfe" readonly></div><div><label>DU-E</label><input id="finDue" readonly></div><div><label>Chave de acesso</label><input id="finAccessKey" readonly></div><div><label>Vencimento</label><input id="finExpiration" readonly></div></div>
     </div>
 
-<div class="card fin-inline-card"><h2>Lançamento de Recebimento</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Data Recebimento</th><th>Valor Recebido</th><th>Moeda</th><th>Banco</th><th>Referência / SWIFT</th><th>Tipo</th><th>Comprovante</th><th>Ação</th></tr></thead><tbody><tr><td><input id="finReceiptDate" type="date"></td><td><input id="finReceiptAmount" type="number" min="0" step="0.01"></td><td><select id="finReceiptCurrency"><option>USD</option><option>EUR</option><option>BRL</option></select></td><td><select id="finReceiptBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finReceiptRef" placeholder="SWIFT / referência bancária"></td><td><select id="finReceiptType"><option>Advance Payment</option><option>Balance Payment</option><option>Partial Payment</option><option>Other</option></select></td><td><input id="finReceiptFile" type="file" accept="application/pdf,image/*"></td><td><button class="btn primary" onclick="saveFinanceReceipt()">Lançar</button></td></tr></tbody></table></div></div>
+<div class="card fin-inline-card"><h2>Lançamento de Recebimento</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Data Recebimento</th><th>Valor Recebido</th><th>Moeda</th><th>Banco</th><th>Referência / SWIFT</th><th>Tipo</th><th>Comprovante</th><th>Ação</th></tr></thead><tbody><tr><td><input id="finReceiptDate" type="date"></td><td><input id="finReceiptAmount" type="number" min="0" step="0.01"></td><td><select id="finReceiptCurrency"><option>USD</option><option>EUR</option><option>BRL</option></select></td><td><select id="finReceiptBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finReceiptRef" placeholder="SWIFT / referência bancária"></td><td><select id="finReceiptType"><option>Advance Payment</option><option>Balance Payment</option><option>Partial Payment</option><option value="Financiado">Financiado</option><option value="Juros">Juros</option><option>Other</option></select></td><td><input id="finReceiptFile" type="file" accept="application/pdf,image/*"></td><td><button class="btn primary" onclick="saveFinanceReceipt()">Lançar</button></td></tr></tbody></table></div></div>
 
 <div class="card fin-inline-card"><h2>Fechamento de Câmbio</h2><div class="tablewrap"><table class="fin-entry-line"><thead><tr><th>Data Fechamento</th><th>Valor Fechado</th><th>Taxa de Câmbio</th><th>Banco</th><th>Contrato de Câmbio</th><th>Valor BRL</th><th>Vencimento / Liquidação</th><th>Comprovante</th><th>Ação</th></tr></thead><tbody><tr><td><input id="finFxDate" type="date"></td><td><input id="finFxAmount" type="number" min="0" step="0.01"></td><td><input id="finFxRate" type="number" min="0" step="0.0001"></td><td><select id="finFxBank" aria-label="Banco cadastrado"><option value="">Selecione banco cadastrado</option></select></td><td><input id="finFxContract" placeholder="Número contrato câmbio"></td><td><input id="finFxBRL" readonly></td><td><input id="finFxSettlement" type="date"></td><td><input id="finFxFile" type="file" accept="application/pdf,image/*"></td><td><button class="btn primary" onclick="saveFxClosing()">Lançar</button></td></tr></tbody></table></div></div>
 
@@ -6002,7 +6016,7 @@ function saveFinanceReceipt(){
   const amount=Number(getVal('finReceiptAmount')||0);
   if(amount<=0){notify('Informe o valor recebido.');return;}
   d.received=(d.received||0)+amount;
-  d.history.push({type:'Recebimento',date:getVal('finReceiptDate'),amount:amount,rate:'—',bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef')});
+  d.history.push({type:'Recebimento',paymentType:getVal('finReceiptType'),date:getVal('finReceiptDate'),amount:amount,rate:'—',bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef')});
   refreshFinanceOrder();
   notify('Recebimento lançado para '+o+'.');
 }
@@ -6038,8 +6052,11 @@ function filterFinance(){
   const importer=(getVal('finFilterImporter')||'').toLowerCase();
   const status=getVal('finFilterStatus');
   const fx=getVal('finFilterFx');
+  const kind=getVal('finFilterKind');
   document.querySelectorAll('#financeTable tbody tr').forEach(row=>{
-    const ok=(!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
+    const rowKind=row.dataset.kind||'export';
+    const kindOK=!kind||kind===rowKind||(kind==='receivable'&&rowKind!=='purchase');
+    const ok=kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
       (!status||(row.dataset.status||'')===status) &&
       (!fx||(row.dataset.fx||'')===fx);
@@ -6047,7 +6064,7 @@ function filterFinance(){
   });
 }
 function clearFinanceFilters(){
-  ['finFilterOrder','finFilterImporter','finFilterStatus','finFilterFx'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['finFilterOrder','finFilterImporter','finFilterStatus','finFilterFx','finFilterKind'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.querySelectorAll('#financeTable tbody tr').forEach(row=>row.style.display='');
 }
 refreshFinanceTotals();
@@ -10763,5 +10780,89 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #brokerFinance{color:#20364c}#brokerFinance>.card{padding:24px;border:1px solid #dce5ed;border-radius:12px;background:#fff}#brokerFinance .pagehead{margin-bottom:20px}#brokerFinance h3{margin:0;font-size:17px}.bc-orders-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px}#brokerFinance .bc-orders{max-height:460px;min-height:220px;border:1px solid #dce5ed;border-radius:8px;overflow:auto}#brokerFinance .bc-orders table{width:100%;min-width:950px;border-collapse:collapse}#brokerFinance .bc-orders th{background:#203e58;color:#fff;font-size:11px;padding:13px 10px;position:sticky;top:0;text-align:left}#brokerFinance .bc-orders td{padding:13px 10px;font-size:12px;border-bottom:1px solid #e8edf2;vertical-align:middle}#brokerFinance .bc-orders tbody tr:nth-child(even){background:#f7f9fc}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5),#brokerFinance .bc-orders td:nth-child(6){white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance #bcOperation{max-width:520px;width:100%;margin:6px 0 8px}#brokerFinance #bcFinanceMessage{padding:12px 16px;background:#edf4f8;border-left:3px solid #294f6b;border-radius:4px;line-height:1.5}#brokerFinance .aes-trader-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}#brokerFinance .aes-trader-totals>div{padding:16px;background:#f4f7fa;border:1px solid #e1e8ef;border-radius:8px}#brokerFinance .aes-trader-totals small{font-size:11px;color:#64748b;display:block;margin-bottom:7px}#brokerFinance .aes-trader-totals strong{font-size:21px;display:block}#brokerFinance #bcBalance{color:#b42318}#brokerFinance .bc-entries{overflow:visible;border:0;min-height:0}#brokerFinance .bc-entries table,#brokerFinance .bc-entries tbody{display:block;width:100%}#brokerFinance .bc-entries thead{display:none}#brokerFinance #bcRows tr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px 14px;padding:20px;margin:0 0 16px;border:1px solid #dce5ed;border-top:3px solid #294f6b;border-radius:8px;background:#fbfcfe}#brokerFinance #bcRows td{display:block;padding:0;border:0;min-width:0;font-size:12px}#brokerFinance #bcRows td:before{content:attr(data-label);display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#294f6b;letter-spacing:.3px;margin-bottom:8px}#brokerFinance #bcRows label{display:block;font-size:10px;color:#66788b;margin:5px 0 3px;font-weight:400}#brokerFinance #bcRows input,#brokerFinance #bcRows select{width:100%!important;min-width:0!important;max-width:100%;box-sizing:border-box;height:35px;padding:7px 9px;font-size:12px;border:1px solid #cad7e2;border-radius:5px;background:white}#brokerFinance #bcRows input[readonly]{background:#edf2f6;color:#516577}#brokerFinance #bcRows [data-amount],#brokerFinance #bcRows [data-balance]{font-weight:700;line-height:1.7}#brokerFinance #bcRows .btn{margin:0 4px 7px 0;font-size:12px;padding:8px 10px}#brokerFinance .toolbar{gap:14px}#brokerFinance .btn.primary{background:#203e58;color:white}#brokerFinance [hidden]{display:none!important}@media(max-width:1200px){#brokerFinance #bcRows tr{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){#brokerFinance>.card{padding:14px}#brokerFinance #bcRows tr{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}#brokerFinance .aes-trader-totals{grid-template-columns:1fr}.bc-orders-heading{display:block}}
 </style><style>#brokerFinance .bc-orders table{min-width:1450px;table-layout:fixed}#brokerFinance .bc-orders th,#brokerFinance .bc-orders td{padding:12px 10px;vertical-align:middle;overflow-wrap:anywhere;text-align:left}#brokerFinance .bc-orders th:nth-child(1){width:105px}#brokerFinance .bc-orders th:nth-child(2){width:225px}#brokerFinance .bc-orders th:nth-child(3){width:135px}#brokerFinance .bc-orders th:nth-child(4),#brokerFinance .bc-orders th:nth-child(5){width:90px}#brokerFinance .bc-orders th:nth-child(6){width:170px}#brokerFinance .bc-orders th:nth-child(7),#brokerFinance .bc-orders th:nth-child(8),#brokerFinance .bc-orders th:nth-child(9){width:115px;text-align:right}#brokerFinance .bc-orders td:nth-child(7),#brokerFinance .bc-orders td:nth-child(8),#brokerFinance .bc-orders td:nth-child(9){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance .bc-orders td:nth-child(6){white-space:normal}#brokerFinance .bc-orders th:nth-child(10){width:175px}#brokerFinance .bc-orders th:nth-child(11){width:155px}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5){white-space:nowrap}</style><script>
 (()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');if(!frame.getAttribute('src'))frame.src='expenses_cash.html';else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
-</script></body>
+</script>
+<script>
+/* Financeiro: append trader purchase and resale to the existing export orders. */
+(()=>{
+ const $=id=>document.getElementById(id);
+ let busy=false;
+ const num=x=>Number(x)||0;
+ const money=(v,c)=>String(c||'USD')+' '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const add=(tr,v)=>{const td=tr.insertCell();td.textContent=String(v??'—');return td};
+ async function refresh(){
+  const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
+  if(!client||!body||busy)return;
+  busy=true;
+  try{
+   const [result,companiesResult]=await Promise.all([
+    client.from('aes_trader_deals').select('*').range(0,1999),
+    client.from('companies').select('id,name').range(0,1999)
+   ]);
+   if(result.error)throw result.error;
+   const names=new Map((companiesResult.data||[]).map(x=>[String(x.id),x.name]));
+   const fragment=document.createDocumentFragment();
+   for(const deal of result.data||[]){
+    if(deal.sale_flow?.operation_kind==='broker'||deal.status==='cancelled')continue;
+    for(const [kind,flow,label] of [['purchase',deal.purchase_flow,'COMPRA'],['sale',deal.sale_flow,'REVENDA']]){
+     const commercial=flow?.commercial||{},parties=flow?.parties||{};
+     const qty=num(commercial.quantity??deal.quantity),price=num(commercial.unit_price??(kind==='purchase'?deal.purchase_unit_price:deal.sale_unit_price));
+     const total=qty*price,paid=(Array.isArray(flow?.payments)?flow.payments:[]).reduce((a,p)=>a+num(p.amount),0),balance=Math.max(0,total-paid);
+     const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
+     const party=names.get(String(id))||'—';
+     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
+     const first=add(tr,deal.trade_number||'—');const tag=document.createElement('div');tag.className='badge '+(kind==='purchase'?'warn':'info');tag.textContent=kind==='purchase'?'COMPRA · A PAGAR':'REVENDA · A RECEBER';tag.classList.add('aes-fin-mini-kind');first.append(tag);
+     add(tr,'—');add(tr,commercial.product||deal.product||'—');add(tr,party);add(tr,'—');
+     [total,paid,balance,balance].forEach(v=>add(tr,money(v,deal.currency)));
+     add(tr,'—');add(tr,'—');
+     // Situação editável, independente para COMPRA e REVENDA.
+     const statusTd=tr.insertCell();
+     const statusControl=document.createElement('select');
+     statusControl.setAttribute('aria-label','Situação financeira '+(deal.trade_number||'')+' '+label);
+     statusControl.style.minWidth='135px';
+     for(const [v,txt] of [['Pending','Pendente'],['Partial','Parcial'],['Received','Recebido'],['Financiamento RTS','Financiamento RTS']]) statusControl.add(new Option(txt,v));
+     const statusStorageKey='aes-trader-finance-status:'+deal.id+':'+kind;
+     let savedStatus='';try{savedStatus=localStorage.getItem(statusStorageKey)||'';}catch(_e){}
+     statusControl.value=['Pending','Partial','Received','Financiamento RTS'].includes(savedStatus)?savedStatus:tr.dataset.status;
+     tr.dataset.status=statusControl.value;
+     statusControl.addEventListener('change',()=>{
+       tr.dataset.status=statusControl.value;
+       try{localStorage.setItem(statusStorageKey,statusControl.value);}catch(_e){}
+       window.filterFinance?.();
+     });
+     statusTd.append(statusControl);
+     const action=tr.insertCell(),button=document.createElement('button');button.type='button';button.className='btn primary';button.textContent='Abrir';button.onclick=()=>{
+       // Abrir o mesmo formulário financeiro dos contratos de exportação.
+       // Chave exclusiva por operação para não misturar COMPRA e REVENDA.
+       const financeKey='TRADER:'+deal.id+':'+kind;
+       const existing=window.financeData?.[financeKey];
+       const previousPayments=Array.isArray(flow?.payments)?flow.payments:[];
+       if(!window.financeData)window.financeData={};
+       if(!existing){
+         window.financeData[financeKey]={invoice:total,received:paid,fxClosed:0,history:previousPayments.map(p=>({type:kind==='purchase'?'Pagamento Compra':'Recebimento Revenda',date:p.date||p.payment_date||'',amount:num(p.amount),rate:'—',bank:p.bank||'',ref:p.reference||''})),hedges:[]};
+       }else{existing.invoice=total;}
+       window.openFinanceOrder(financeKey,party,total);
+       const title=$('finOrderTitle'),orderInput=$('finOrder');
+       if(title)title.textContent=(deal.trade_number||'—')+' · '+label;
+       if(orderInput)orderInput.value=(deal.trade_number||'—')+' · '+label;
+       const subtitle=$('finImporterTitle');if(subtitle)subtitle.textContent=party+' · '+(kind==='purchase'?'A PAGAR':'A RECEBER');
+       const balanceLabel=document.querySelector('label[for="finOrderBalance"]');
+       if(balanceLabel)balanceLabel.textContent=kind==='purchase'?'Saldo a Pagar':'Saldo a Receber';
+       $('financeOrderWorkspace')?.scrollIntoView({behavior:'smooth',block:'start'});
+     };action.append(button);fragment.append(tr);
+    }
+   }
+   body.querySelectorAll('[data-finance-trader="1"]').forEach(x=>x.remove());
+   body.append(fragment);
+   window.filterFinance?.();
+  }catch(error){console.error('Falha ao carregar Compra e Revenda:',error);window.notify?.('Não foi possível carregar Compra e Revenda: '+error.message)}finally{busy=false}
+ }
+ document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-view="finance"]').forEach(b=>b.addEventListener('click',()=>setTimeout(refresh,200)));
+  const gate=$('aesAuthGate');if(gate){new MutationObserver(()=>{if(gate.style.display==='none')refresh()}).observe(gate,{attributes:true,attributeFilter:['style']});if(gate.style.display==='none')refresh()}
+  window.addEventListener('aes-contracts-updated',()=>setTimeout(refresh,150));
+ });
+ window.aesFinanceRefreshTrades=refresh;
+})();
+</script>
+</body>
 </html>
