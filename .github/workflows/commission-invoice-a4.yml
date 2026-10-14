@@ -1,0 +1,67 @@
+name: Fix commission invoice A4 layout
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/commission-invoice-a4.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update-invoice:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Compact commission invoice print layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.find('function printCommission(c)')
+          end=s.find('function renderCommissionBank(',start)
+          if start<0 or end<0:
+              raise SystemExit('Commission invoice function not found: no change applied')
+          segment=s[start:end]
+          old='@page{size:A4;margin:18mm}body{font:13px/1.5 Arial;color:#16334d;margin:30px}'
+          new='@page{size:A4 portrait;margin:9mm}html,body{width:auto;max-width:100%;}body{font:10px/1.18 Arial;color:#16334d;margin:0;overflow-wrap:anywhere}'
+          if old not in segment:
+              if new in segment:
+                  print('Already patched')
+                  raise SystemExit(0)
+              raise SystemExit('Expected invoice styles changed: no change applied')
+          segment=segment.replace(old,new,1)
+          replacements={
+            'gap:20px':'gap:8px',
+            'max-width:180px;max-height:85px':'max-width:125px;max-height:48px',
+            'font-size:12px':'font-size:9px',
+            'padding-bottom:18px':'padding-bottom:6px',
+            'font-size:26px':'font-size:17px',
+            'gap:30px;margin:28px 0':'gap:12px;margin:9px 0',
+            'font-size:14px;background:#eef2f6;padding:10px':'font-size:10px;background:#eef2f6;padding:4px',
+            'margin:4px 0':'margin:2px 0',
+            'margin-top:20px':'margin-top:7px',
+            'padding:12px':'padding:5px',
+            'font-size:18px;margin:24px 0':'font-size:13px;margin:8px 0'
+          }
+          for a,b in replacements.items():
+              if a not in segment:
+                  raise SystemExit('Missing expected CSS: '+a)
+              segment=segment.replace(a,b,1)
+          segment=segment.replace('@media print{button{display:none}}','@media print{button{display:none}header,.parties,section,table,tr,.total{break-inside:avoid;page-break-inside:avoid}body{zoom:0.90}}',1)
+          s=s[:start]+segment+s[end:]
+          assert s.count('function printCommission(c)')==1
+          assert len(s)>100000
+          p.write_text(s,encoding='utf-8')
+          print('Commission print CSS updated; other functions preserved')
+          PY
+      - name: Commit corrected HTML
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fit commission invoice to one A4 page"
+          git push
