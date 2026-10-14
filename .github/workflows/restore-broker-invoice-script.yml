@@ -1,0 +1,47 @@
+name: Emergency restore broker invoice script
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/restore-broker-invoice-script.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore only broken commission invoice function
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          p=Path('index.html')
+          current=p.read_text(encoding='utf-8')
+          previous=subprocess.check_output(['git','show','9f365cac9da2de15e22de511fabceaef4fc19eb5:index.html']).decode('utf-8')
+          begin='function printCommission(c)'
+          end='function renderCommissionBank('
+          a=current.find(begin); b=current.find(end,a)
+          c=previous.find(begin); d=previous.find(end,c)
+          if min(a,b,c,d)<0 or b<=a or d<=c:
+              raise SystemExit('Invoice function markers missing; abort safely')
+          replacement=previous[c:d]
+          if current[a:b]==replacement:
+              print('Already restored')
+          else:
+              restored=current[:a]+replacement+current[b:]
+              if len(restored)<100000 or restored.count(begin)!=1:
+                  raise SystemExit('Unexpected output; abort')
+              p.write_text(restored,encoding='utf-8')
+              print('Restored original single-line invoice function without changing order data')
+          PY
+      - name: Commit safe restoration
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore invoice JavaScript and order list rendering"
+          git push
