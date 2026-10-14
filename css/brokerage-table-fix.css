@@ -13,3 +13,31 @@
 #brokerFinance .bc-orders td:first-child,#brokerFinance .bc-orders th:first-child{min-width:95px!important}
 #brokerFinance .bc-orders td:last-child,#brokerFinance .bc-orders th:last-child{min-width:125px!important}
 @media(max-width:800px){#brokerFinance #bcBrokerClientFilter,#brokerFinance #bcBrokerExporterFilter,#brokerFinance #bcBrokerInvoiceFilter{flex:1 1 160px!important;width:auto!important}}
+
+/* Brokerage filters: single compact toolbar, not full-width stacked fields */
+#brokerFinance .card > div:has(> #bcBrokerClientFilter):has(> #bcBrokerExporterFilter){
+ display:grid!important;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(170px,0.85fr) auto!important;
+ align-items:center!important;gap:9px!important;margin:12px 0 14px!important;width:100%!important;
+}
+#brokerFinance #bcBrokerClientFilter,
+#brokerFinance #bcBrokerExporterFilter,
+#brokerFinance #bcBrokerInvoiceFilter{
+ box-sizing:border-box!important;display:block!important;width:100%!important;max-width:none!important;
+ min-width:0!important;height:36px!important;min-height:36px!important;margin:0!important;
+ padding:7px 10px!important;font-size:12px!important;line-height:20px!important;
+ border:1px solid #cbd9e9!important;border-radius:6px!important;background:#fff!important;
+}
+#brokerFinance .card > div:has(> #bcBrokerClientFilter) > button{
+ width:auto!important;min-width:90px!important;height:36px!important;margin:0!important;
+ padding:7px 12px!important;white-space:nowrap!important;align-self:center!important;
+}
+@media(max-width:1050px){
+ #brokerFinance .card > div:has(> #bcBrokerClientFilter):has(> #bcBrokerExporterFilter){
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:560px){
+ #brokerFinance .card > div:has(> #bcBrokerClientFilter):has(> #bcBrokerExporterFilter){
+ grid-template-columns:minmax(0,1fr)!important;
+ }
+}
