@@ -1,0 +1,57 @@
+name: Distribute commission invoice across A4
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/commission-invoice-distribution.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  improve-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adjust only commission invoice layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          start=s.find('function printCommission(c)')
+          end=s.find('function renderCommissionBank(',start)
+          if start<0 or end<0 or end<=start: raise SystemExit('Invoice boundaries not found; no change')
+          block=s[start:end]
+          marker='/* AUREA_COMMISSION_A4_DISTRIBUTION */'
+          if marker in block: raise SystemExit('Already applied')
+          if '@page{size:A4' not in block: raise SystemExit('A4 layout not found; no change')
+          # Expand invoice contents vertically without changing the data or other screens.
+          # Apply print-only rules to the generated invoice document.
+          css=marker+'''@media print{
+          @page{size:A4 portrait;margin:12mm}
+          html,body{height:auto;min-height:0}
+          body{zoom:1!important;font-size:11px!important;line-height:1.35!important;margin:0!important}
+          header{padding:12px 0 16px!important;margin-bottom:12px!important}
+          .parties{gap:24px!important;margin:22px 0!important}
+          section{margin-top:18px!important;margin-bottom:18px!important}
+          table{margin:14px 0!important}
+          th,td{padding:9px 8px!important}
+          .total{margin-top:22px!important;padding:12px!important}
+          header,.parties,section,table,tr,.total{break-inside:avoid;page-break-inside:avoid}
+          }'''
+          # Inject CSS into the printCommission generated HTML stylesheet.
+          idx=block.find('</style>')
+          if idx<0: raise SystemExit('Invoice style closing tag not found')
+          block=block[:idx]+css+block[idx:]
+          s=s[:start]+block+s[end:]
+          if len(s)<100000: raise SystemExit('Unexpected HTML size')
+          p.write_text(s,encoding='utf-8')
+          print('A4 invoice print layout adjusted')
+          PY
+      - name: Commit invoice distribution
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Distribute commission invoice content across A4"
+          git push
