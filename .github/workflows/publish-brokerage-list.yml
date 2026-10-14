@@ -1,0 +1,58 @@
+name: Publish brokerage list columns and filters
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-brokerage-list.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch brokerage list only
+        run: |
+          cat > /tmp/patch_broker.py <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='id="bcOperationRows"'
+          if 'id="bcBrokerClientFilter"' in s:
+              print('Already applied');raise SystemExit(0)
+          if s.count(marker)!=1: raise SystemExit('Table not uniquely found')
+          head='<th>Cobrança da comissão</th><th>Ação</th>'
+          newhead='<th>Cobrança da comissão</th><th>Comissão (%)</th><th>Valor a receber</th><th>Situação da fatura</th><th>Ação</th>'
+          if s.count(head)!=1: raise SystemExit('Table headers changed')
+          s=s.replace(head,newhead,1)
+          filter_html='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><input id="bcBrokerClientFilter" placeholder="Cliente / Importador" oninput="window.aesBrokerFilterRows?.()" style="min-width:180px"><input id="bcBrokerExporterFilter" placeholder="Exportador" oninput="window.aesBrokerFilterRows?.()" style="min-width:180px"><select id="bcBrokerInvoiceFilter" onchange="window.aesBrokerFilterRows?.()"><option value="">Todos os status</option><option value="pending">Pendente</option><option value="issued">Fatura emitida</option><option value="sent_exporter">Fatura enviada ao exportador</option></select><button type="button" class="btn" onclick="document.getElementById(\'bcBrokerClientFilter\').value=\'\';document.getElementById(\'bcBrokerExporterFilter\').value=\'\';document.getElementById(\'bcBrokerInvoiceFilter\').value=\'\';window.aesBrokerFilterRows?.()">Limpar filtros</button></div>'
+          needle='<div class="tablewrap bc-orders"'
+          if s.count(needle)!=1: raise SystemExit('Broker table wrapper changed')
+          s=s.replace(needle,filter_html+needle,1)
+          begin=s.find('function renderBrokerFinance(){')
+          end=s.find('window.aesBrokerFinanceLoad=',begin)
+          if begin<0 or end<0: raise SystemExit('Broker renderer missing')
+          block=s[begin:end]
+          needle="row.insertCell().append(btn)}"
+          if block.count(needle)!=1: raise SystemExit('Broker row action changed')
+          addon="""const rates=commissions.filter(x=>x.method==='percent').map(x=>Number(x.rate||0));const rateCell=row.insertCell();rateCell.textContent=rates.length?rates.map(x=>x.toLocaleString('pt-BR')+'%').join(', '):'—';row.insertCell().textContent=money(pending,d.currency);const statusCell=row.insertCell(),statusSelect=document.createElement('select');statusSelect.style.cssText='max-width:155px;font-size:11px';const statusValues=['pending','issued','sent_exporter'];const labels=['Pendente','Fatura emitida','Fatura enviada ao exportador'];const unique=[...new Set(commissions.map(x=>x.invoice_status||'pending'))];for(let i=0;i<statusValues.length;i++)statusSelect.add(new Option(labels[i],statusValues[i]));statusSelect.value=unique.length===1?unique[0]:'pending';statusSelect.disabled=!commissions.length;statusSelect.title=commissions.length?'Atualiza a situação das faturas desta operação':'Cadastre uma fatura de comissão primeiro';statusSelect.onchange=async()=>{const old=statusSelect.value;statusSelect.disabled=true;try{const {data:latest,error:readError}=await client().from('aes_trader_deals').select('sale_flow').eq('id',d.id).single();if(readError)throw readError;const flow=latest.sale_flow||{};const invoices=Array.isArray(flow.commissions)?flow.commissions:[];if(!invoices.length)throw Error('Nenhuma fatura cadastrada');const next={...flow,commissions:invoices.map(x=>({...x,invoice_status:old}))};const {error}=await client().from('aes_trader_deals').update({sale_flow:next}).eq('id',d.id);if(error)throw error;d.sale_flow=next;renderBrokerFinance();}catch(err){alert('Não foi possível salvar a situação: '+err.message);renderBrokerFinance()}};statusCell.append(statusSelect);row.dataset.client=name(d.sale_flow?.parties?.importer||d.buyer_id).toLowerCase();row.dataset.exporter=name(d.sale_flow?.parties?.exporter||d.trader_company_id).toLowerCase();row.dataset.invoiceStatus=statusSelect.value;"""
+          block=block.replace(needle,addon+needle,1)
+          block=block.replace("colspan=\"11\"","colspan=\"14\"")
+          block=block.replace("Nenhuma operação de Corretor cadastrada.</td></tr>'}","Nenhuma operação de Corretor cadastrada.</td></tr>';window.aesBrokerFilterRows?.()}")
+          s=s[:begin]+block+s[end:]
+          inject="""window.aesBrokerFilterRows=function(){const clientFilter=(document.getElementById('bcBrokerClientFilter')?.value||'').toLowerCase().trim(),exporterFilter=(document.getElementById('bcBrokerExporterFilter')?.value||'').toLowerCase().trim(),statusFilter=document.getElementById('bcBrokerInvoiceFilter')?.value||'';for(const row of document.querySelectorAll('#bcOperationRows tr')){if(!row.dataset.client)continue;row.hidden=!(row.dataset.client.includes(clientFilter)&&row.dataset.exporter.includes(exporterFilter)&&(!statusFilter||row.dataset.invoiceStatus===statusFilter))}};\n  """
+          idx=s.find('function renderBrokerFinance(){')
+          s=s[:idx]+inject+s[idx:]
+          if len(s)<100000 or s.count('function renderBrokerFinance(){')!=1: raise SystemExit('Safety check failed')
+          p.write_text(s,encoding='utf-8')
+          print('Brokerage columns, filters and invoice status selector added')
+          PY
+          python3 /tmp/patch_broker.py
+      - name: Commit
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Add brokerage commission columns, filters and invoice status editing"
+          git push
