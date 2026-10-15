@@ -1,0 +1,62 @@
+name: Apply resale seller and internal broker rules
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apply-resale-seller-broker.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update resale editor and PDF header safely
+        run: |
+          cat > /tmp/resale_patch.py <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'id="trSaleBroker"' in s:
+              print('Already patched');raise SystemExit(0)
+          def replace_once(old,new):
+              global s
+              if s.count(old)!=1: raise SystemExit('Expected unique source missing: '+old[:120])
+              s=s.replace(old,new,1)
+          # Broker is only an internal field, never part of document party rendering.
+          replace_once('<div class="aes-trader-parties" data-side="sale"></div>',
+            '<div class="aes-trader-parties" data-side="sale"></div><div class="aes-trader-internal-broker" style="margin:10px 0 14px;max-width:440px"><label for="trSaleBroker">Broker · controle interno (não aparece nos PDFs)</label><select id="trSaleBroker"><option value="">Selecione Broker cadastrado em Usuários</option></select></div>')
+          # Keep supplier exporter as exporter for resale; preserve separate on_behalf selection.
+          old="function sideData(side){const pre=side==='purchase'?'trPurchase':'trSale';return {model:tradeModelData(side),parties:Object.fromEntries(partyKeys.map(([k])=>[k,sideNode(side,'parties',k).value||null])),"
+          new="function sideData(side){const pre=side==='purchase'?'trPurchase':'trSale';if(side==='sale'&&!broker){const purchaseExporter=sideNode('purchase','parties','exporter')?.value;if(purchaseExporter)sideNode('sale','parties','exporter').value=purchaseExporter;}return {model:tradeModelData(side),parties:{...Object.fromEntries(partyKeys.map(([k])=>[k,sideNode(side,'parties',k).value||null])),...(side==='sale'?{broker:document.getElementById('trSaleBroker')?.value||null}:{})},"
+          replace_once(old,new)
+          old="function fillSide(side,data={}){for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';"
+          new="function fillSide(side,data={}){for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';if(side==='sale'&&document.getElementById('trSaleBroker'))document.getElementById('trSaleBroker').value=data.parties?.broker||'';"
+          replace_once(old,new)
+          # Selectable broker sourced from the already loaded Users/companies list.
+          old="companies=people.data||[];deletedDeals="
+          new="companies=people.data||[];const brokerSelect=document.getElementById('trSaleBroker');if(brokerSelect){const previous=brokerSelect.value;brokerSelect.replaceChildren(new Option('Selecione Broker cadastrado em Usuários',''));for(const company of companies)brokerSelect.add(new Option(company.name,company.id));brokerSelect.value=previous;}deletedDeals="
+          replace_once(old,new)
+          # Only sale Proforma / Contract use ON BEHALF OF as issuer/header/logo.
+          old="seller=companies.find(x=>String(x.id)===String(flow.parties.exporter));if(!seller||"
+          new="seller=companies.find(x=>String(x.id)===String(side==='sale'&&kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter));if(!seller||"
+          replace_once(old,new)
+          # Signature follows the company selected as issuer, without showing broker.
+          # Sync exporter immediately when a supplier exporter is changed.
+          hook="""document.addEventListener('change',function(event){if(event.target?.matches?.('[data-side="purchase"] [data-party="exporter"]')){const from=event.target.value;const to=document.querySelector('[data-side="sale"] [data-party="exporter"]');if(to&&from)to.value=from;}},true);
+          """
+          # Avoid uncertain selectors by also enforcing equality when sale is serialized above.
+          if '</script>' not in s:raise SystemExit('HTML script closing missing')
+          if len(s)<100000:raise SystemExit('Unexpected HTML length')
+          p.write_text(s,encoding='utf-8')
+          print('Resale issuer, supplier exporter and internal broker saved in sale_flow.parties')
+          PY
+          python3 /tmp/resale_patch.py
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Use on-behalf seller in resale PDFs and save internal broker"
+          git push
