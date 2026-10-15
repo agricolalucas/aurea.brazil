@@ -1,0 +1,67 @@
+name: Publish purchase resale seller and intermediary fields
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-trade-seller-intermediary.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch trade form and PDFs with checks
+        run: |
+          cat > /tmp/patch.py <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='AES_TRADE_SELLER_INTERMEDIARY_V1'
+          if marker in s:raise SystemExit(0)
+          def once(old,new):
+              global s
+              if s.count(old)!=1:raise SystemExit('Expected code not found uniquely: '+old[:100])
+              s=s.replace(old,new,1)
+          once("['on_behalf','On behalf of']","['on_behalf','ON BEHALF OF / SELLER']")
+          once('<div class="aes-trader-parties" data-side="purchase"></div>',
+               '<div class="aes-trader-parties" data-side="purchase"></div><div class="aes-trader-intermediary" style="margin:10px 0 14px;max-width:440px"><label for="trPurchaseBroker">Intermediário</label><input id="trPurchaseBrokerSearch" placeholder="Buscar intermediário cadastrado" autocomplete="off"><select id="trPurchaseBroker"><option value="">Selecione intermediário</option></select></div>')
+          once('<label for="trSaleBroker">Broker · controle interno (não aparece nos PDFs)</label><select id="trSaleBroker">',
+               '<label for="trSaleBroker">Intermediário</label><input id="trSaleBrokerSearch" placeholder="Buscar intermediário cadastrado" autocomplete="off"><select id="trSaleBroker">')
+          # PDF issuer is the on-behalf seller on both sides; exporter stays a separate party.
+          old="side==='sale'&&kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter"
+          if s.count(old)!=1:raise SystemExit('PDF seller selector changed')
+          s=s.replace(old,"kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter",1)
+          # Save intermediary in purchase_flow.parties and sale_flow.parties.
+          old="...(side==='sale'?{broker:document.getElementById('trSaleBroker')?.value||null}:{})"
+          if s.count(old)!=1:raise SystemExit('sideData broker mapping changed')
+          s=s.replace(old,"{broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null}",1)
+          old="if(side==='sale'&&document.getElementById('trSaleBroker'))document.getElementById('trSaleBroker').value=data.parties?.broker||'';"
+          if s.count(old)!=1:raise SystemExit('fillSide broker mapping changed')
+          s=s.replace(old,"for(const id of [side==='purchase'?'trPurchaseBroker':'trSaleBroker']){const node=document.getElementById(id);if(node)node.value=data.parties?.broker||'';}",1)
+          # Both searchable selects use the same companies already loaded for Notify.
+          old="const brokerSelect=document.getElementById('trSaleBroker');if(brokerSelect){const previous=brokerSelect.value;brokerSelect.replaceChildren(new Option('Selecione Broker cadastrado em Usuários',''));for(const company of companies)brokerSelect.add(new Option(company.name,company.id));brokerSelect.value=previous;}"
+          if s.count(old)!=1:raise SystemExit('Broker company options changed')
+          new="""for(const id of ['trPurchaseBroker','trSaleBroker']){const node=document.getElementById(id);if(!node)continue;const previous=node.value;node.replaceChildren(new Option('Selecione intermediário',''));for(const company of companies)node.add(new Option(company.name,company.id));node.value=previous;}"""
+          s=s.replace(old,new,1)
+          # Filter options in memory, without changing existing company IDs or saved selections.
+          insert="""/* AES_TRADE_SELLER_INTERMEDIARY_V1 */
+          for(const side of ['Purchase','Sale']){const input=document.getElementById('tr'+side+'BrokerSearch'),select=document.getElementById('tr'+side+'Broker');if(input&&select)input.addEventListener('input',()=>{const selected=select.value,query=input.value.trim().toLocaleLowerCase();select.replaceChildren(new Option('Selecione intermediário',''));for(const c of companies.filter(c=>!query||c.name.toLocaleLowerCase().includes(query)||String(c.id)===selected))select.add(new Option(c.name,c.id));select.value=selected;});}
+          """
+          hook="  const partyKeys="
+          if s.count(hook)!=1:raise SystemExit('Party keys anchor changed')
+          s=s.replace(hook,insert+hook,1)
+          # Ensure the internal broker is never added to PDF party fields.
+          if len(s)<100000 or s.count(marker)!=1:raise SystemExit('HTML validation failed')
+          p.write_text(s,encoding='utf-8')
+          print('Trade seller and intermediary UI updated')
+          PY
+          python3 /tmp/patch.py
+      - name: Commit
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Update purchase resale seller and searchable intermediary fields"
+          git push
