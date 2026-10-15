@@ -1,0 +1,8 @@
+on_behalf_label: 1
+purchase_parties: 1
+sale_broker_label: 1
+seller_pdf: 1
+side_broker: 1
+fill_broker: 1
+broker_select: 1
+party_keys: 0
