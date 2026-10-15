@@ -1,0 +1,38 @@
+name: Diagnose seller intermediary patch
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/diagnose-seller-patch.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check exact anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          patterns={
+          'on_behalf_label':"['on_behalf','On behalf of']",
+          'purchase_parties':'<div class="aes-trader-parties" data-side="purchase"></div>',
+          'sale_broker_label':'<label for="trSaleBroker">Broker · controle interno (não aparece nos PDFs)</label><select id="trSaleBroker">',
+          'seller_pdf':"side==='sale'&&kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter",
+          'side_broker':"...(side==='sale'?{broker:document.getElementById('trSaleBroker')?.value||null}:{})",
+          'fill_broker':"if(side==='sale'&&document.getElementById('trSaleBroker'))document.getElementById('trSaleBroker').value=data.parties?.broker||'';",
+          'broker_select':"const brokerSelect=document.getElementById('trSaleBroker');if(brokerSelect){const previous=brokerSelect.value;brokerSelect.replaceChildren(new Option('Selecione Broker cadastrado em Usuários',''));for(const company of companies)brokerSelect.add(new Option(company.name,company.id));brokerSelect.value=previous;}",
+          'party_keys':"  const partyKeys=",
+          }
+          Path('.github/seller-patch-diagnostics.txt').write_text('\n'.join(k+': '+str(s.count(v)) for k,v in patterns.items())+'\n',encoding='utf-8')
+          PY
+      - name: Commit diagnostics
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/seller-patch-diagnostics.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record seller patch anchor diagnostics"
+          git push
