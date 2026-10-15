@@ -1,0 +1,49 @@
+name: Apply seller intermediary UI fix v2
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apply-seller-intermediary-v2.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply guarded HTML patch
+        shell: bash
+        run: |
+          cat > /tmp/fix.py <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          if len(s)<100000:raise SystemExit('Unexpected ERP HTML length')
+          if 'AES_SELLER_INTERMEDIARY_V2' in s:raise SystemExit(0)
+          def once(a,b):
+              global s
+              n=s.count(a)
+              if n!=1:raise SystemExit('Expected one anchor, found '+str(n)+': '+a[:90])
+              s=s.replace(a,b,1)
+          once("['on_behalf','On behalf of']","['on_behalf','ON BEHALF OF / SELLER']")
+          once('<div class="aes-trader-parties" data-side="purchase"></div>','<div class="aes-trader-parties" data-side="purchase"></div><div class="aes-trader-intermediary" style="margin:10px 0 14px;max-width:440px"><label for="trPurchaseBroker">Intermediário</label><input id="trPurchaseBrokerSearch" placeholder="Buscar intermediário" autocomplete="off"><select id="trPurchaseBroker"><option value="">Selecione intermediário</option></select></div>')
+          once('<label for="trSaleBroker">Broker · controle interno (não aparece nos PDFs)</label><select id="trSaleBroker">','<label for="trSaleBroker">Intermediário</label><input id="trSaleBrokerSearch" placeholder="Buscar intermediário" autocomplete="off"><select id="trSaleBroker">')
+          once("side==='sale'&&kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter","kind!=='si'?(flow.parties.on_behalf||flow.parties.exporter):flow.parties.exporter")
+          once("...(side==='sale'?{broker:document.getElementById('trSaleBroker')?.value||null}:{})","broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null")
+          once("if(side==='sale'&&document.getElementById('trSaleBroker'))document.getElementById('trSaleBroker').value=data.parties?.broker||'';","{const intermediary=document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker');if(intermediary)intermediary.value=data.parties?.broker||'';}")
+          once("const brokerSelect=document.getElementById('trSaleBroker');if(brokerSelect){const previous=brokerSelect.value;brokerSelect.replaceChildren(new Option('Selecione Broker cadastrado em Usuários',''));for(const company of companies)brokerSelect.add(new Option(company.name,company.id));brokerSelect.value=previous;}","for(const id of ['trPurchaseBroker','trSaleBroker']){const sel=document.getElementById(id);if(!sel)continue;const previous=sel.value;sel.replaceChildren(new Option('Selecione intermediário',''));for(const company of companies)sel.add(new Option(company.name,company.id));sel.value=previous;}")
+          once("  const partyKeys=",'''  /* AES_SELLER_INTERMEDIARY_V2 */
+          for(const side of ['Purchase','Sale']){const input=document.getElementById('tr'+side+'BrokerSearch'),select=document.getElementById('tr'+side+'Broker');if(input&&select)input.addEventListener('input',()=>{const previous=select.value,q=input.value.toLocaleLowerCase().trim();select.replaceChildren(new Option('Selecione intermediário',''));for(const c of companies.filter(c=>!q||c.name.toLocaleLowerCase().includes(q)||String(c.id)===previous))select.add(new Option(c.name,c.id));select.value=previous;});}
+            const partyKeys=''' )
+          p.write_text(s,encoding='utf-8')
+          print('Seller/intermediary applied to ERP index.html')
+          PY
+          python3 /tmp/fix.py
+      - name: Commit updated ERP
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Apply seller labels and searchable intermediary in purchase resale"
+          git push
