@@ -1,0 +1,39 @@
+name: Resale PDF seller label and party order
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/resale-pdf-seller-party-order.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change resale PDF labels and party order
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='AES_RESALE_PDF_PARTY_ORDER_V1'
+          if marker in s:raise SystemExit(0)
+          anchor="parties='<h2>Parties</h2><div class=\"grid\">'+[['exporter','EXPORTADOR'],['on_behalf','ON BEHALF OF'],['importer','IMPORTADOR'],['consignee','CONSIGNATÁRIO'],['notify','NOTIFY']].map(([k,l])=>tradePartyHtml(flow.parties[k],l)).join('')+'</div>'"
+          if s.count(anchor)!=1:raise SystemExit('PDF parties expression changed; abort')
+          new="parties='<h2>Parties</h2><div class=\"grid\">'+(side==='sale'&&kind!=='si'?[['on_behalf','ON BEHALF OF / SELLER'],['exporter','EXPORTADOR'],['importer','IMPORTADOR'],['consignee','CONSIGNATÁRIO'],['notify','NOTIFY']]:[['exporter','EXPORTADOR'],['on_behalf','ON BEHALF OF / SELLER'],['importer','IMPORTADOR'],['consignee','CONSIGNATÁRIO'],['notify','NOTIFY']]).map(([k,l])=>tradePartyHtml(flow.parties[k],l)).join('')+'</div>'"
+          s=s.replace(anchor,new,1)
+          # Marker is deliberately inserted into the PDF code only.
+          s=s.replace(new,new+'/* '+marker+' */',1)
+          if len(s)<100000:raise SystemExit('HTML integrity check failed')
+          p.write_text(s,encoding='utf-8')
+          print('Resale PDF: seller first, exporter second; seller label visible')
+          PY
+      - name: Commit
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Show seller label and invert exporter seller blocks in resale PDFs"
+          git push
