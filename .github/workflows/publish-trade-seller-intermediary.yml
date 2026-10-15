@@ -1,4 +1,4 @@
-name: Publish purchase resale seller and intermediary fields
+name: Publish purchase resale seller and intermediary fields (verified)
 on:
   push:
     branches: [main]
@@ -57,6 +57,7 @@ jobs:
           print('Trade seller and intermediary UI updated')
           PY
           python3 /tmp/patch.py
+          python3 -m py_compile /tmp/patch.py
       - name: Commit
         run: |
           if git diff --quiet -- index.html; then exit 0; fi
