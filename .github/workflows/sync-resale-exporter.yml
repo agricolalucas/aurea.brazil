@@ -1,0 +1,60 @@
+name: Synchronize purchase and resale exporter
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/sync-resale-exporter.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync exporter in editor and saved resale
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='/* AES_PURCHASE_RESALE_EXPORTER_SYNC_V1 */'
+          if marker in s: raise SystemExit(0)
+          old="function sideData(side){const pre=side==='purchase'?'trPurchase':'trSale';"
+          if s.count(old)!=1:raise SystemExit('sideData marker changed; no modification')
+          helper="""/* AES_PURCHASE_RESALE_EXPORTER_SYNC_V1 */
+  function syncResaleExporter(){
+    if(broker)return;
+    const purchase=sideNode('purchase','parties','exporter');
+    const resale=sideNode('sale','parties','exporter');
+    if(!purchase||!resale)return;
+    if(resale.value!==purchase.value){resale.value=purchase.value;resale.dispatchEvent(new Event('change',{bubbles:false}));}
+    resale.disabled=true;
+    resale.title='Preenchido automaticamente pelo Exportador de 01 · COMPRA';
+  }
+  document.addEventListener('change',event=>{
+    if(broker)return;
+    const purchase=sideNode('purchase','parties','exporter');
+    if(purchase&&event.target===purchase)syncResaleExporter();
+  },true);
+  """
+          s=s.replace(old,helper+old,1)
+          oldfill="function fillSide(side,data={}){for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';"
+          if s.count(oldfill)!=1:raise SystemExit('fillSide marker changed; no modification')
+          s=s.replace(oldfill,oldfill+"if(side==='sale'&&!broker)syncResaleExporter();",1)
+          # In purchase/resale mode, keep exporter in sync whenever editor is displayed,
+          # including initial load and switching between existing orders.
+          oldrender="function brokerUI(){const root=$('aesTraderEditor');"
+          if s.count(oldrender)!=1:raise SystemExit('brokerUI marker changed; no modification')
+          s=s.replace(oldrender,"function brokerUI(){if(!broker)queueMicrotask(syncResaleExporter);const root=$('aesTraderEditor');",1)
+          if s.count(marker)!=1 or len(s)<100000:raise SystemExit('Integrity check failed')
+          p.write_text(s,encoding='utf-8')
+          print('Exporter synchronized between purchase and resale, ON BEHALF OF preserved')
+          PY
+      - name: Commit updated HTML
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Synchronize resale exporter with purchase contract exporter"
+          git push
