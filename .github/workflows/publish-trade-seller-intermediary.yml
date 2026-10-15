@@ -35,7 +35,7 @@ jobs:
           # Save intermediary in purchase_flow.parties and sale_flow.parties.
           old="...(side==='sale'?{broker:document.getElementById('trSaleBroker')?.value||null}:{})"
           if s.count(old)!=1:raise SystemExit('sideData broker mapping changed')
-          s=s.replace(old,"{broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null}",1)
+          s=s.replace(old,"...{broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null}",1)
           old="if(side==='sale'&&document.getElementById('trSaleBroker'))document.getElementById('trSaleBroker').value=data.parties?.broker||'';"
           if s.count(old)!=1:raise SystemExit('fillSide broker mapping changed')
           s=s.replace(old,"for(const id of [side==='purchase'?'trPurchaseBroker':'trSaleBroker']){const node=document.getElementById(id);if(node)node.value=data.parties?.broker||'';}",1)
