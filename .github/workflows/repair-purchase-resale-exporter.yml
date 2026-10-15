@@ -21,7 +21,7 @@ jobs:
           if mark in s:
               print('Already patched')
               raise SystemExit(0)
-          anchor="  function sideData(side){"
+          anchor="function sideData(side){"
           if s.count(anchor)!=1:raise SystemExit('sideData anchor mismatch')
           helper="""  /* AES_EXPORTER_SYNC_REPAIR_V2 */
           function aesSyncTradeExporter(){
