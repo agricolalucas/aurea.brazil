@@ -1,0 +1,65 @@
+aesSharedClient @ 1043:    const client=window.aesSharedClient;if(!client){placeholder.textContent='Conexão indisponível';return}
+aesSharedClient @ 1083:    const client=window.aesSharedClient;
+aesSharedClient @ 1096:    const order=selected()?.dataset.order,client=window.aesSharedClient,button=$('aesPlanSaveVessel');
+aesSharedClient @ 1119:    const order=selected()?.dataset.order,client=window.aesSharedClient;if(!order||!option)return;
+aesSharedClient @ 1163:    const client=window.aesSharedClient;if(!client)return;
+aesSharedClient @ 1183:  async function save(event){event.preventDefault();const client=window.aesSharedClient;if(!client)return notice('Supabase indisponível.');
+aesSharedClient @ 5717:   const client=window.aesSharedClient;if(!client){notify('Conexão Supabase indisponível.');return;}
+aesSharedClient @ 5981:   const db=window.aesSharedClient;
+aesSharedClient @ 5995:   const db=window.aesSharedClient,order=window.currentFinanceOrder;
+aesSharedClient @ 6903:  try{const {data,error}=await window.aesSharedClient.from('companies').select('signature_templates').eq('id',id).single();if(error)throw error;
+aesSharedClient @ 6915:  const {data,error}=await window.aesSharedClient.from('companies').select('signature_templates').eq('id',id).single();if(error)throw error;
+aesSharedClient @ 6917:  const saved=await window.aesSharedClient.from('companies').update({signature_templates:entries}).eq('id',id).select('id').single();if(saved.error)throw saved.error;
+aesSharedClient @ 7540:    const client=window.aesSharedClient;
+aesSharedClient @ 7728:     const client=window.aesSharedClient;
+aesSharedClient @ 7764:     const client=window.aesSharedClient;
+aesSharedClient @ 8817:   window.aesSharedClient = client;
+aesSharedClient @ 8980:   const client=window.aesSharedClient;
+aesSharedClient @ 9223:   const client=()=>window.aesSharedClient;
+aesSharedClient @ 9340:  async function load(){const client=window.aesSharedClient;if(!client)return;const [templates,users]=await Promise.all([client.from('label_templates').select('id,name,layout,product,net_weight,country_origin,packing_date,expiry_date,packer').order('id',{ascending:false}),client.from('companies').select('id,name,address,country,iec,gst,fssai_number')]);if(templates.error){msg('Modelos de label: '+templates.error.message);return}if(users.error){msg
+aesSharedClient @ 9344:  async function save(){const name=val('newLabelModelName');if(!name)return msg('Informe o nome do modelo.');const client=window.aesSharedClient;if(!client)return msg('Supabase indisponível.');const button=$('saveLabelModelButton');button.disabled=true;try{draft.veg=$('labelDesignerVeg').checked;draft.imageX=Number($('labelImageX').value)||82;draft.imageY=Number($('labelImageY').value)||5;const record={name,product:val('siLabelProduct')||null,net_
+aesSharedClient @ 9500:     const client=window.aesSharedClient;if(!client)return;
+aesSharedClient @ 9803:    const client=window.aesSharedClient;if(!contract||!client){if(element)element.value=old;window.notify?.('Contrato indisponível. Data não salva.');return false}
+aesSharedClient @ 9816:    const client=window.aesSharedClient;if(!client)return;
+aesSharedClient @ 9826:    const client=window.aesSharedClient,request=++busy;if(!client||$('aesAuthGate')?.style.display!=='none')return;
+aesSharedClient @ 9836:    const client=window.aesSharedClient;if(!client||!cloudSupported)return;
+aesSharedClient @ 9856:      if(cloudSupported&&window.aesSharedClient){
+aesSharedClient @ 9859:        window.aesSharedClient.from('aes_booking_requests').upsert({
+aesSharedClient @ 9938:          const client=window.aesSharedClient;if(!client)throw Error('Entre no sistema para salvar a situação.');
+aesSharedClient @ 9963:  const $=id=>document.getElementById(id),notify=s=>window.notify?.(s),client=()=>window.aesSharedClient;
+aesSharedClient @ 10039:  const $=id=>document.getElementById(id),client=()=>window.aesSharedClient;
+aesSharedClient @ 10062:  const $=id=>document.getElementById(id),client=()=>window.aesSharedClient;
+aesSharedClient @ 10315:   const client=window.aesSharedClient;
+aesSharedClient @ 10370:  const $=id=>document.getElementById(id),db=()=>window.aesSharedClient,notice=t=>window.notify?.(t),safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+aesSharedClient @ 10404:  const $=id=>document.getElementById(id),client=()=>window.aesSharedClient;
+aesSharedClient @ 10714:    const client=window.aesSharedClient;
+aesSharedClient @ 10783:    const client=window.aesSharedClient;if(!client)return;
+aesSharedClient @ 10858:   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
+createClient( @ 8816:   const client = window.supabase?.createClient(URL, KEY);
+const client= @ 1043:    const client=window.aesSharedClient;if(!client){placeholder.textContent='Conexão indisponível';return}
+const client= @ 1083:    const client=window.aesSharedClient;
+const client= @ 1163:    const client=window.aesSharedClient;if(!client)return;
+const client= @ 1183:  async function save(event){event.preventDefault();const client=window.aesSharedClient;if(!client)return notice('Supabase indisponível.');
+const client= @ 5717:   const client=window.aesSharedClient;if(!client){notify('Conexão Supabase indisponível.');return;}
+const client= @ 6632:  const client=document.getElementById('clientLabelFile').files.length>0;
+const client= @ 7540:    const client=window.aesSharedClient;
+const client= @ 7728:     const client=window.aesSharedClient;
+const client= @ 7764:     const client=window.aesSharedClient;
+const client= @ 8980:   const client=window.aesSharedClient;
+const client= @ 9223:   const client=()=>window.aesSharedClient;
+const client= @ 9340:  async function load(){const client=window.aesSharedClient;if(!client)return;const [templates,users]=await Promise.all([client.from('label_templates').select('id,name,layout,product,net_weight,country_origin,packing_date,expiry_date,packer').order('id',{ascending:false}),client.from('companies').select('id,name,address,country,iec,gst,fssai_number')]);if(templates.error){msg('Modelos de label: '+templates.error.message);return}if(users.error){msg
+const client= @ 9344:  async function save(){const name=val('newLabelModelName');if(!name)return msg('Informe o nome do modelo.');const client=window.aesSharedClient;if(!client)return msg('Supabase indisponível.');const button=$('saveLabelModelButton');button.disabled=true;try{draft.veg=$('labelDesignerVeg').checked;draft.imageX=Number($('labelImageX').value)||82;draft.imageY=Number($('labelImageY').value)||5;const record={name,product:val('siLabelProduct')||null,net_
+const client= @ 9500:     const client=window.aesSharedClient;if(!client)return;
+const client= @ 9803:    const client=window.aesSharedClient;if(!contract||!client){if(element)element.value=old;window.notify?.('Contrato indisponível. Data não salva.');return false}
+const client= @ 9816:    const client=window.aesSharedClient;if(!client)return;
+const client= @ 9826:    const client=window.aesSharedClient,request=++busy;if(!client||$('aesAuthGate')?.style.display!=='none')return;
+const client= @ 9836:    const client=window.aesSharedClient;if(!client||!cloudSupported)return;
+const client= @ 9938:          const client=window.aesSharedClient;if(!client)throw Error('Entre no sistema para salvar a situação.');
+const client= @ 10315:   const client=window.aesSharedClient;
+const client= @ 10714:    const client=window.aesSharedClient;
+const client= @ 10783:    const client=window.aesSharedClient;if(!client)return;
+const client= @ 10858:   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
+window.supabase @ 8816:   const client = window.supabase?.createClient(URL, KEY);
+function saveFinanceReceipt @ 6044: async function saveFinanceReceipt(){
+aesFinanceSaveMovement @ 5994: async function aesFinanceSaveMovement(kind,fields,requestKey){
+aesFinanceSaveMovement @ 6053:     await aesFinanceSaveMovement('receipt',{amount,date:getVal('finReceiptDate'),bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef'),paymentType:getVal('finReceiptType'),currency:getVal('finReceiptCurrency')},requestKey);
