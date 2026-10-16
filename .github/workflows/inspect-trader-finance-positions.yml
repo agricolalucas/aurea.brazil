@@ -1,0 +1,34 @@
+name: Inspect trader finance positions
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/inspect-trader-finance-positions.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find finance position renderer
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('index.html').read_text(encoding='utf-8').splitlines()
+          terms=('TRADER:', 'aes_finance_order_movements','finOrderRows','financeTable','financePosition','financeOrder','renderFinanceHistory','openFinanceOrder')
+          out=[]
+          for i,line in enumerate(lines):
+              if any(t in line for t in terms):
+                  if len(line)>6500:line=line[:6500]
+                  out.append(str(i+1)+': '+line)
+          Path('.github/trader-finance-position-inspection.txt').write_text('\n\n'.join(out[:95]),encoding='utf-8')
+          PY
+      - name: Commit inspection
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/trader-finance-position-inspection.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Inspect trader financial position receipt mapping"
+          git push
