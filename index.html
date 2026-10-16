@@ -5985,7 +5985,7 @@ async function aesFinanceLoadSaved(order){
   const d=window.financeData[order];if(!d)return;
   const rows=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
   // Retain only local, unpersisted entries visibly; never treat them as confirmed.
-  const local=(d.history||[]).filter(x=>!x.persisted);
+  const local=[]; /* AES_RECEIPT_HISTORY_DISPLAY_V4: Supabase is authoritative */
   d.history=[...rows,...local];
   d.received=d.history.filter(x=>x.type==='Recebimento').reduce((n,x)=>n+Number(x.amount||0),0);
   d.fxClosed=d.history.filter(x=>x.type==='Fechamento Câmbio').reduce((n,x)=>n+Number(x.amount||0),0);
