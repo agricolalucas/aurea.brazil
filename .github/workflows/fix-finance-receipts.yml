@@ -1,0 +1,92 @@
+name: Persist Finance Receipts in Supabase
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-finance-receipts.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch finance receipts and verify JavaScript
+        run: |
+          cat > /tmp/fix_receipts.py <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='AES_FINANCE_RECEIPT_PERSISTENCE_V1'
+          if marker in s:raise SystemExit(0)
+          if len(s)<100000:raise SystemExit('Unexpected ERP file size')
+          start=s.find('function openFinanceOrder(')
+          end=s.find('function closeFinanceOrder()',start)
+          save=s.find('function saveFinanceReceipt()')
+          save_end=s.find('function saveFxClosing()',save)
+          if min(start,end,save,save_end)<0 or end<start or save_end<save:raise SystemExit('Finance function anchors not found')
+          old=s[save:save_end]
+          if 'd.history.push' not in old:raise SystemExit('Unexpected receipt function; abort')
+          helpers="""/* AES_FINANCE_RECEIPT_PERSISTENCE_V1 */
+          async function aesFinanceLoadSaved(order){
+            const db=window.aesSharedClient;
+            if(!db)throw Error('Conexão Supabase indisponível');
+            const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
+            if(error)throw error;
+            const d=window.financeData[order];if(!d)return;
+            const existing=(d.history||[]).filter(x=>!x.persisted);
+            const remote=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
+            d.history=[...existing.filter(x=>!remote.some(y=>y.id&&y.id===x.id)),...remote];
+            d.received=d.history.filter(x=>x.type==='Recebimento').reduce((n,x)=>n+Number(x.amount||0),0);
+            d.fxClosed=d.history.filter(x=>x.type==='Fechamento Câmbio').reduce((n,x)=>n+Number(x.amount||0),0);
+            if(window.currentFinanceOrder===order)refreshFinanceOrder();
+          }
+          async function aesFinanceSaveMovement(kind,fields){
+            const db=window.aesSharedClient,order=window.currentFinanceOrder;
+            if(!db||!order)throw Error('Sessão financeira indisponível');
+            const {data:session,error:authError}=await db.auth.getUser();
+            if(authError||!session?.user)throw Error('Entre novamente no sistema');
+            const row={order_number:order,operation_type:'export',movement_type:kind,amount:fields.amount,currency:'USD',movement_date:fields.date||null,bank:fields.bank||null,reference:fields.ref||null,payment_type:fields.paymentType||null,exchange_rate:fields.rate||null,created_by:session.user.id};
+            const {data,error}=await db.from('aes_finance_order_movements').insert(row).select().single();
+            if(error)throw error;
+            return data;
+          }
+          """
+          s=s[:start]+helpers+s[start:]
+          # load records whenever the finance workspace is opened
+          start=s.find('function openFinanceOrder(')
+          end=s.find('function closeFinanceOrder()',start)
+          block=s[start:end]
+          if block.count('refreshFinanceOrder();')!=1:raise SystemExit('Unexpected order-open code')
+          block=block.replace('refreshFinanceOrder();',"""refreshFinanceOrder();
+            aesFinanceLoadSaved(order).catch(e=>notify('Não foi possível carregar recebimentos do Supabase: '+e.message));""",1)
+          s=s[:start]+block+s[end:]
+          start=s.find('function saveFinanceReceipt()')
+          end=s.find('function saveFxClosing()',start)
+          block="""async function saveFinanceReceipt(){
+            const o=window.currentFinanceOrder,d=window.financeData[o];if(!d)return;
+            const amount=Number(getVal('finReceiptAmount')||0);
+            if(!(amount>0)){notify('Informe o valor recebido.');return;}
+            try{
+              await aesFinanceSaveMovement('receipt',{amount,date:getVal('finReceiptDate'),bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef'),paymentType:getVal('finReceiptType')});
+              await aesFinanceLoadSaved(o);
+              notify('Recebimento salvo no Supabase para '+o+'.');
+            }catch(e){notify('ERRO: recebimento NÃO foi salvo. '+e.message);}
+          }
+          """
+          s=s[:start]+block+s[end:]
+          # Ensure finance workspace reads from DB, not only in-memory
+          if s.count(marker)!=1:raise SystemExit('Marker check failed')
+          p.write_text(s,encoding='utf-8')
+          print('Finance receipt saving/loading integrated with Supabase')
+          PY
+          python3 -m py_compile /tmp/fix_receipts.py
+          python3 /tmp/fix_receipts.py
+      - name: Commit corrected ERP
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Persist finance receipts to Supabase and reload on order open"
+          git push
