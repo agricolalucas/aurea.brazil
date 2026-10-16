@@ -5974,6 +5974,30 @@ function refreshFinanceTotals(){
   document.getElementById('finTotalPending').textContent=usd(pending);
   document.getElementById('finFxClosed').textContent=usd(fx);
 }
+/* AES_FINANCE_RECEIPT_PERSISTENCE_V1 */
+async function aesFinanceLoadSaved(order){
+  const db=window.aesSharedClient;
+  if(!db)throw Error('Conexão Supabase indisponível');
+  const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
+  if(error)throw error;
+  const d=window.financeData[order];if(!d)return;
+  const existing=(d.history||[]).filter(x=>!x.persisted);
+  const remote=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
+  d.history=[...existing.filter(x=>!remote.some(y=>y.id&&y.id===x.id)),...remote];
+  d.received=d.history.filter(x=>x.type==='Recebimento').reduce((n,x)=>n+Number(x.amount||0),0);
+  d.fxClosed=d.history.filter(x=>x.type==='Fechamento Câmbio').reduce((n,x)=>n+Number(x.amount||0),0);
+  if(window.currentFinanceOrder===order)refreshFinanceOrder();
+}
+async function aesFinanceSaveMovement(kind,fields){
+  const db=window.aesSharedClient,order=window.currentFinanceOrder;
+  if(!db||!order)throw Error('Sessão financeira indisponível');
+  const {data:session,error:authError}=await db.auth.getUser();
+  if(authError||!session?.user)throw Error('Entre novamente no sistema');
+  const row={order_number:order,operation_type:'export',movement_type:kind,amount:fields.amount,currency:'USD',movement_date:fields.date||null,bank:fields.bank||null,reference:fields.ref||null,payment_type:fields.paymentType||null,exchange_rate:fields.rate||null,created_by:session.user.id};
+  const {data,error}=await db.from('aes_finance_order_movements').insert(row).select().single();
+  if(error)throw error;
+  return data;
+}
 function openFinanceOrder(order,importer,invoice){
   window.currentFinanceOrder=order;
   if(!window.financeData[order]) window.financeData[order]={invoice:Number(invoice)||0,received:0,fxClosed:0,history:[],hedges:[]};
@@ -5984,6 +6008,7 @@ function openFinanceOrder(order,importer,invoice){
   document.getElementById('finImporter').value=importer;
   document.getElementById('finInvoiceAmount').value=usd(window.financeData[order].invoice);
   refreshFinanceOrder();
+  aesFinanceLoadSaved(order).catch(e=>notify('Não foi possível carregar recebimentos do Supabase: '+e.message));
 }
 function closeFinanceOrder(){ document.getElementById('financeOrderWorkspace').style.display='none'; }
 function refreshFinanceOrder(){
@@ -6012,14 +6037,15 @@ function refreshFinanceOrder(){
   renderFinanceHistory();
   refreshFinanceTotals();
 }
-function saveFinanceReceipt(){
-  const o=window.currentFinanceOrder, d=window.financeData[o]; if(!d) return;
+async function saveFinanceReceipt(){
+  const o=window.currentFinanceOrder,d=window.financeData[o];if(!d)return;
   const amount=Number(getVal('finReceiptAmount')||0);
-  if(amount<=0){notify('Informe o valor recebido.');return;}
-  d.received=(d.received||0)+amount;
-  d.history.push({type:'Recebimento',paymentType:getVal('finReceiptType'),date:getVal('finReceiptDate'),amount:amount,rate:'—',bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef')});
-  refreshFinanceOrder();
-  notify('Recebimento lançado para '+o+'.');
+  if(!(amount>0)){notify('Informe o valor recebido.');return;}
+  try{
+    await aesFinanceSaveMovement('receipt',{amount,date:getVal('finReceiptDate'),bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef'),paymentType:getVal('finReceiptType')});
+    await aesFinanceLoadSaved(o);
+    notify('Recebimento salvo no Supabase para '+o+'.');
+  }catch(e){notify('ERRO: recebimento NÃO foi salvo. '+e.message);}
 }
 function saveFxClosing(){
   const o=window.currentFinanceOrder, d=window.financeData[o]; if(!d) return;
