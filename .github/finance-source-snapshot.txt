@@ -1,0 +1,294 @@
+5965: 
+5966: function usd(v){ return 'USD '+Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+5967: 
+5968: function refreshFinanceTotals(){
+5969:   let inv=0,rec=0,fx=0;
+5970:   Object.values(window.financeData).forEach(x=>{inv+=x.invoice||0;rec+=x.received||0;fx+=x.fxClosed||0;});
+5971:   const pending=inv-rec;
+5972:   document.getElementById('finTotalReceivable').textContent=usd(inv);
+5973:   document.getElementById('finTotalReceived').textContent=usd(rec);
+5974:   document.getElementById('finTotalPending').textContent=usd(pending);
+5975:   document.getElementById('finFxClosed').textContent=usd(fx);
+5976: }
+5977: /* AES_FINANCE_RECEIPT_PERSISTENCE_V1 */
+5978: /* AES_RECEIPT_GUARD_V2 */
+5979: const aesReceiptPending=new Set();
+5980: async function aesFinanceLoadSaved(order){
+5981:   const db=window.aesSharedClient;
+5982:   if(!db)throw Error('Supabase indisponível');
+5983:   const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
+5984:   if(error)throw error;
+5985:   const d=window.financeData[order];if(!d)return;
+5986:   const rows=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
+5987:   // Retain only local, unpersisted entries visibly; never treat them as confirmed.
+5988:   const local=[]; /* AES_RECEIPT_HISTORY_DISPLAY_V4: Supabase is authoritative */
+5989:   d.history=[...rows,...local];
+5990:   d.received=d.history.filter(x=>x.type==='Recebimento').reduce((n,x)=>n+Number(x.amount||0),0);
+5991:   d.fxClosed=d.history.filter(x=>x.type==='Fechamento Câmbio').reduce((n,x)=>n+Number(x.amount||0),0);
+5992:   if(window.currentFinanceOrder===order)refreshFinanceOrder();
+5993: }
+5994: async function aesFinanceSaveMovement(kind,fields,requestKey){
+5995:   const db=window.aesSharedClient,order=window.currentFinanceOrder;
+5996:   if(!db||!order)throw Error('Conexão Supabase ou ordem indisponível');
+5997:   const {data:auth,error:authError}=await db.auth.getUser();
+5998:   if(authError||!auth?.user)throw Error('Sessão expirada. Faça login novamente');
+5999:   const record={order_number:order,operation_type:'export',movement_type:kind,amount:fields.amount,currency:fields.currency||'USD',movement_date:fields.date||null,bank:fields.bank||null,reference:fields.ref||null,payment_type:fields.paymentType||null,exchange_rate:fields.rate||null,created_by:auth.user.id,request_key:requestKey};
+6000:   /* AES_RECEIPT_INSERT_FIX_V3 */
+6001:   const {data,error}=await db.from('aes_finance_order_movements').insert(record).select().single();
+6002:   if(error)throw error;
+6003:   if(!data?.id)throw Error('Supabase não confirmou o registro');
+6004:   const {data:verified,error:verifyError}=await db.from('aes_finance_order_movements').select('id,order_number,amount').eq('id',data.id).single();
+6005:   if(verifyError||!verified||verified.order_number!==order)throw Error('Registro inserido, mas a confirmação de leitura falhou; verifique o histórico antes de tentar novamente');
+6006:   return data;
+6007: }
+6008: function openFinanceOrder(order,importer,invoice){
+6009:   window.currentFinanceOrder=order;
+6010:   if(!window.financeData[order]) window.financeData[order]={invoice:Number(invoice)||0,received:0,fxClosed:0,history:[],hedges:[]};
+6011:   document.getElementById('financeOrderWorkspace').style.display='block';
+6012:   document.getElementById('finOrderTitle').textContent=order;
+6013:   document.getElementById('finImporterTitle').textContent=importer;
+6014:   document.getElementById('finOrder').value=order;
+6015:   document.getElementById('finImporter').value=importer;
+6016:   document.getElementById('finInvoiceAmount').value=usd(window.financeData[order].invoice);
+6017:   refreshFinanceOrder();
+6018:   aesFinanceLoadSaved(order).catch(e=>notify('Não foi possível carregar recebimentos do Supabase: '+e.message));
+6019: }
+6020: function closeFinanceOrder(){ document.getElementById('financeOrderWorkspace').style.display='none'; }
+6021: function refreshFinanceOrder(){
+6022:   const o=window.currentFinanceOrder, d=window.financeData[o]; if(!d) return; if(!d.hedges)d.hedges=[];
+6023:   const bal=Math.max((d.invoice||0)-(d.received||0),0);
+6024:   document.getElementById('finOrderBalance').value=usd(bal);
+6025:   const recEl=document.getElementById('finReceived-'+o), pendEl=document.getElementById('finPending-'+o);
+6026:   const st=document.getElementById('finStatus-'+o);
+6027:   const fxEl=document.getElementById('finFxClosed-'+o), fxPendEl=document.getElementById('finFxPending-'+o);
+6028:   const fxSt=document.getElementById('finFxStatus-'+o);
+6029:   if(recEl) recEl.textContent=usd(d.received);
+6030:   if(pendEl) pendEl.textContent=usd(bal);
+6031:   if(st && st.tagName!=='SELECT'){
+6032:     if(bal<=0){st.textContent='Received';st.className='badge good';}
+6033:     else if((d.received||0)>0){st.textContent='Partial';st.className='badge warn';}
+6034:     else {st.textContent='Pending';st.className='badge bad';}
+6035:   }
+6036:   const fxPending=Math.max((d.invoice||0)-(d.fxClosed||0),0);
+6037:   if(fxEl) fxEl.textContent=usd(d.fxClosed);
+6038:   if(fxPendEl) fxPendEl.textContent=usd(fxPending);
+6039:   if(fxSt){
+6040:     if(fxPending<=0){fxSt.textContent='Closed';fxSt.className='badge good';}
+6041:     else if((d.fxClosed||0)>0){fxSt.textContent='Partial';fxSt.className='badge warn';}
+6042:     else {fxSt.textContent='Open';fxSt.className='badge bad';}
+6043:   }
+6044:   renderFinanceHistory();
+6045:   refreshFinanceTotals();
+6046: }
+6047: async function saveFinanceReceipt(){
+6048:   const order=window.currentFinanceOrder;
+6049:   const amount=Number(getVal('finReceiptAmount')||0);
+6050:   if(!order||!(amount>0)||!Number.isFinite(amount)){notify('Informe ordem e valor válido.');return;}
+6051:   if(aesReceiptPending.has(order)){notify('Aguarde a confirmação do lançamento anterior.');return;}
+6052:   const button=document.querySelector('[onclick="saveFinanceReceipt()"]');
+6053:   const requestKey=crypto.randomUUID();
+6054:   aesReceiptPending.add(order);if(button)button.disabled=true;
+6055:   try{
+6056:     await aesFinanceSaveMovement('receipt',{amount,date:getVal('finReceiptDate'),bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef'),paymentType:getVal('finReceiptType'),currency:getVal('finReceiptCurrency')},requestKey);
+6057:     await aesFinanceLoadSaved(order);
+6058:     notify('Recebimento gravado e confirmado no Supabase.');
+6059:   }catch(e){
+6060:     notify('ERRO: recebimento NÃO confirmado. '+e.message);
+6061:   }finally{
+6062:     aesReceiptPending.delete(order);if(button)button.disabled=false;
+6063:   }
+6064: }
+6065: function saveFxClosing(){
+6066:   const o=window.currentFinanceOrder, d=window.financeData[o]; if(!d) return;
+6067:   const amount=Number(getVal('finFxAmount')||0);
+6068:   const rate=Number(getVal('finFxRate')||0);
+6069:   if(amount<=0){notify('Informe o valor fechado.');return;}
+6070:   d.fxClosed=(d.fxClosed||0)+amount;
+6071:   d.history.push({type:'Fechamento Câmbio',date:getVal('finFxDate'),amount:amount,rate:rate||'—',bank:getVal('finFxBank'),ref:getVal('finFxContract')});
+6072:   refreshFinanceOrder();
+6073:   notify('Fechamento de câmbio lançado para '+o+'.');
+6074: }
+6075: document.addEventListener('input',function(e){
+6076:   if(e.target && (e.target.id==='finFxAmount' || e.target.id==='finFxRate')){
+6077:     const a=Number(getVal('finFxAmount')||0), r=Number(getVal('finFxRate')||0);
+6078:     const el=document.getElementById('finFxBRL');
+6079:     if(el) el.value='BRL '+(a*r).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+6080:   }
+6081: });
+6082: function renderFinanceHistory(){
+6083:   const tbody=document.querySelector('#finHistoryTable tbody'); if(!tbody) return;
+6084:   tbody.innerHTML='';
+6085:   const d=window.financeData[window.currentFinanceOrder]; if(!d) return;
+6086:   d.history.forEach(x=>{
+6087:     const tr=document.createElement('tr');
+6088:     tr.innerHTML='<td>'+formatDateBR(x.date)+'</td><td>'+escHtml(getVal('finImporter')||'—')+'</td><td>'+escHtml(window.currentFinanceOrder)+'</td><td>'+escHtml(x.bank||'—')+'</td><td>'+escHtml(x.type||'')+'</td><td>'+escHtml(x.ref||'—')+'</td><td>'+usd(d.invoice)+'</td><td>'+usd(x.amount)+'</td><td>'+(x.rate==='—'?'—':Number(x.rate||0).toFixed(4))+'</td><td>'+(Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—')+'</td><td>'+escHtml(x.ref||'—')+'</td>';
+6089:     tbody.appendChild(tr);
+6090:   });
+6091: }
+6092: function filterFinance(){
+6093:   const order=(getVal('finFilterOrder')||'').toLowerCase();
+6094:   const importer=(getVal('finFilterImporter')||'').toLowerCase();
+6095:   const status=getVal('finFilterStatus');
+6096:   const fx=getVal('finFilterFx');
+6097:   const kind=getVal('finFilterKind');
+6098:   document.querySelectorAll('#financeTable tbody tr').forEach(row=>{
+6099:     const rowKind=row.dataset.kind||'export';
+6100:     const kindOK=!kind||kind===rowKind||(kind==='receivable'&&rowKind!=='purchase');
+6101:     const ok=kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
+6102:       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
+6103:       (!status||(row.dataset.status||'')===status) &&
+6104:       (!fx||(row.dataset.fx||'')===fx);
+6105:     row.style.display=ok?'':'none';
+9895:  const bookings=()=>{try{return JSON.parse(localStorage.getItem('aes_booking_request_v86')||'{}')}catch{return {}}};
+9896:  const amount=v=>Number(v)||0;
+9897:  const replace=(root,from,to)=>{
+9898:    const nodes=[root,...root.querySelectorAll('*')];
+9899:    for(const node of nodes){for(const a of [...node.attributes||[]])if(a.value.includes(from))node.setAttribute(a.name,a.value.split(from).join(to));for(const child of node.childNodes)if(child.nodeType===3&&child.textContent.includes(from))child.textContent=child.textContent.split(from).join(to)}
+9900:  };
+9901:  const td=(row,value)=>{const c=row.insertCell();c.textContent=String(value??'—');return c};
+9902:  const action=(row,label,fn)=>{const b=document.createElement('button');b.type='button';b.className='btn primary';b.textContent=label;b.onclick=fn;row.insertCell().append(b)};
+9903:  function render(contracts,names){
+9904:    const docs=$('documentContractsTable')?.tBodies[0],broker=$('brokerOrdersTable')?.tBodies[0],finance=$('financeTable')?.tBodies[0];
+9905:    if(!docs||!broker||!finance)return;
+9906:    docs.replaceChildren();broker.replaceChildren();finance.replaceChildren();
+9907:    document.querySelectorAll('.doc-contract-panel').forEach(panel=>panel.remove());
+9908:    const savedBookings=bookings();
+9909:    const current=(contracts||[]).filter(c=>c.order_number&&String(c.status||'').toLowerCase()!=='cancelled');
+9910:    const validOrders=new Set(current.map(c=>c.order_number));
+9911:    for(const key of Object.keys(window.financeData||{}))if(!validOrders.has(key))delete window.financeData[key];
+9912:    for(const c of current){
+9913:      const order=c.order_number,importer=names?.[c.importer_id]||'—',product=c.product||'—';
+9914:      const booking=c.details?.booking_request||{},saved=savedBookings[order]||{};
+9915:      const number=saved.brBookingNo||booking.brBookingNo||booking.booking_number||c.details?.booking_number||'—';
+9916:      const dr=docs.insertRow();dr.dataset.product=product;
+9917:      td(dr,order).style.fontWeight='700';td(dr,number);
+9918:      for(const key of docKeys){const status=td(dr,'');const b=document.createElement('button');b.id=`gridBtn-${order}-${key}`;b.type='button';b.className='btn';b.style.padding='6px 8px';b.disabled=true;b.onclick=()=>window.openDocumentFromGrid?.(order,key);const s=document.createElement('span');s.id=`gridStatus-${order}-${key}`;s.className='badge bad';s.textContent='Pending';b.append(s);status.append(b)}
+9919:      action(dr,'Abrir',()=>window.openDocumentContract(order,importer));
+9920:      if(docTemplate){const panel=docTemplate.cloneNode(true);replace(panel,'EX-1026',order);const head=panel.querySelector('.pagehead .sub');if(head)head.textContent=`${importer} · ${product}`;panel.style.display='none';$('docs')?.append(panel)}
+9921:      const br=broker.insertRow();Object.assign(br.dataset,{order,booking:number,importer});
+9922:      [order,number,importer,product,c.port_of_loading||'—',c.port_of_discharge||'—'].forEach(v=>td(br,v));
+9923:      td(br,'Drafts Pending').className='badge warn';
+9924:      action(br,'Abrir Order',()=>window.openBrokerOrder(order,number,importer,product,c.port_of_loading||'',c.port_of_discharge||''));
+9925:      const invoice=amount(c.quantity_mt)*amount(c.unit_price),fr=finance.insertRow(),d=window.financeData[order]||{};
+9926:      if(!window.financeData[order])window.financeData[order]={invoice,received:0,fxClosed:0,history:[],hedges:[]};
+9927:      else window.financeData[order].invoice=invoice;
+9928:      const received=amount(d.received),fx=amount(d.fxClosed),pending=Math.max(0,invoice-received),fxPending=Math.max(0,invoice-fx);
+9929:      Object.assign(fr.dataset,{order,importer,status:pending===0&&invoice>0?'Received':received>0?'Partial':'Pending',fx:fxPending===0&&invoice>0?'Closed':fx>0?'Partial':'Open'});
+9930:      const details=c.details||{},nfe=details.nfe_number||details.nf_number||details.invoice_number||'—',due=details.due_number||details.due||'—',access=details.nfe_access_key||details.access_key||'—',maturity=details.payment_due_date||'—',eta=details.eta||saved.brEta||booking.eta||'—';
+9931:      Object.assign(fr.dataset,{nfe,due,access,maturity});
+9932:      td(fr,order);td(fr,nfe);td(fr,product);td(fr,importer);td(fr,number);td(fr,window.usd(invoice));
+9933:      for(const [id,value] of [[`finReceived-${order}`,window.usd(received)],[`finPending-${order}`,window.usd(pending)]])td(fr,value).id=id;
+9934:      td(fr,window.usd(Math.max(0,pending-(d.hedges||[]).filter(x=>x.status!=='Settled'&&x.status!=='Cancelled').reduce((sum,x)=>sum+amount(x.amount),0))));td(fr,maturity);td(fr,eta);
+9935:      const statusCell=td(fr,''),statusSelect=document.createElement('select');statusSelect.id=`finStatus-${order}`;statusSelect.setAttribute('aria-label','Situação financeira '+order);statusSelect.style.minWidth='155px';
+9936:      for(const [value,label] of [['Pending','Pendente'],['Partial','Parcial'],['Received','Recebido'],['Financiamento RTS','Financiamento RTS']])statusSelect.add(new Option(label,value));
+9937:      statusSelect.value=details.finance_status||fr.dataset.status;fr.dataset.status=statusSelect.value;statusCell.append(statusSelect);
+9938:      statusSelect.onchange=async()=>{
+9939:        const previous=details.finance_status|| (pending===0&&invoice>0?'Received':received>0?'Partial':'Pending');const chosen=statusSelect.value;statusSelect.disabled=true;
+9940:        try{
+9941:          const client=window.aesSharedClient;if(!client)throw Error('Entre no sistema para salvar a situação.');
+9942:          const {data:latest,error:readError}=await client.from('contracts').select('id,details').eq('id',c.id).single();if(readError)throw readError;
+9943:          const updatedDetails={...(latest.details||{}),finance_status:chosen};
+9944:          const {data:updated,error:writeError}=await client.from('contracts').update({details:updatedDetails}).eq('id',c.id).select('id');if(writeError)throw writeError;if(!updated?.length)throw Error('Sem permissão para salvar a situação financeira.');
+9945:          c.details=updatedDetails;details.finance_status=chosen;fr.dataset.status=chosen;window.filterFinance?.();window.notify?.('Situação financeira salva para '+order+'.');
+9946:        }catch(error){statusSelect.value=previous;window.notify?.('Situação não salva: '+(error.message||String(error)))}finally{statusSelect.disabled=false}
+9947:      };
+9948:      action(fr,'Abrir',()=>window.openFinanceOrder(order,importer,invoice));
+9949:    }
+9950:    if(!current.length){for(const [body,count] of [[docs,17],[broker,8],[finance,13]]){const row=body.insertRow();const cell=row.insertCell();cell.colSpan=count;cell.textContent='Nenhum contrato cadastrado em Contracts.'}}
+9951:    window.refreshFinanceTotals?.();window.filterDocumentContracts?.();window.filterBrokerOrders?.();window.filterFinance?.();
+9952:  }
+9953:  window.addEventListener('aes-contracts-updated',event=>{if(event.detail?.contracts)render(event.detail.contracts,event.detail.names)});
+9954: })();
+9955: </script>
+10845: })();
+10846: </script>
+10847: <style>#aesTraderEditor.broker-mode .aes-trader-sidebyside,#aesTraderEditor.broker-mode .aes-trade-payments-grid{grid-template-columns:1fr}#aesTraderEditor [hidden]{display:none!important}#aesTraderEditor.broker-mode .aes-trader-totals{grid-template-columns:1fr}#brokerFinance [hidden]{display:none!important}</style><style>
+10848: #brokerFinance{color:#20364c}#brokerFinance>.card{padding:24px;border:1px solid #dce5ed;border-radius:12px;background:#fff}#brokerFinance .pagehead{margin-bottom:20px}#brokerFinance h3{margin:0;font-size:17px}.bc-orders-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px}#brokerFinance .bc-orders{max-height:460px;min-height:220px;border:1px solid #dce5ed;border-radius:8px;overflow:auto}#brokerFinance .bc-orders table{width:100%;min-width:950px;border-collapse:collapse}#brokerFinance .bc-orders th{background:#203e58;color:#fff;font-size:11px;padding:13px 10px;position:sticky;top:0;text-align:left}#brokerFinance .bc-orders td{padding:13px 10px;font-size:12px;border-bottom:1px solid #e8edf2;vertical-align:middle}#brokerFinance .bc-orders tbody tr:nth-child(even){background:#f7f9fc}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5),#brokerFinance .bc-orders td:nth-child(6){white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance #bcOperation{max-width:520px;width:100%;margin:6px 0 8px}#brokerFinance #bcFinanceMessage{padding:12px 16px;background:#edf4f8;border-left:3px solid #294f6b;border-radius:4px;line-height:1.5}#brokerFinance .aes-trader-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}#brokerFinance .aes-trader-totals>div{padding:16px;background:#f4f7fa;border:1px solid #e1e8ef;border-radius:8px}#brokerFinance .aes-trader-totals small{font-size:11px;color:#64748b;display:block;margin-bottom:7px}#brokerFinance .aes-trader-totals strong{font-size:21px;display:block}#brokerFinance #bcBalance{color:#b42318}#brokerFinance .bc-entries{overflow:visible;border:0;min-height:0}#brokerFinance .bc-entries table,#brokerFinance .bc-entries tbody{display:block;width:100%}#brokerFinance .bc-entries thead{display:none}#brokerFinance #bcRows tr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px 14px;padding:20px;margin:0 0 16px;border:1px solid #dce5ed;border-top:3px solid #294f6b;border-radius:8px;background:#fbfcfe}#brokerFinance #bcRows td{display:block;padding:0;border:0;min-width:0;font-size:12px}#brokerFinance #bcRows td:before{content:attr(data-label);display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#294f6b;letter-spacing:.3px;margin-bottom:8px}#brokerFinance #bcRows label{display:block;font-size:10px;color:#66788b;margin:5px 0 3px;font-weight:400}#brokerFinance #bcRows input,#brokerFinance #bcRows select{width:100%!important;min-width:0!important;max-width:100%;box-sizing:border-box;height:35px;padding:7px 9px;font-size:12px;border:1px solid #cad7e2;border-radius:5px;background:white}#brokerFinance #bcRows input[readonly]{background:#edf2f6;color:#516577}#brokerFinance #bcRows [data-amount],#brokerFinance #bcRows [data-balance]{font-weight:700;line-height:1.7}#brokerFinance #bcRows .btn{margin:0 4px 7px 0;font-size:12px;padding:8px 10px}#brokerFinance .toolbar{gap:14px}#brokerFinance .btn.primary{background:#203e58;color:white}#brokerFinance [hidden]{display:none!important}@media(max-width:1200px){#brokerFinance #bcRows tr{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){#brokerFinance>.card{padding:14px}#brokerFinance #bcRows tr{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}#brokerFinance .aes-trader-totals{grid-template-columns:1fr}.bc-orders-heading{display:block}}
+10849: </style><style>#brokerFinance .bc-orders table{min-width:1450px;table-layout:fixed}#brokerFinance .bc-orders th,#brokerFinance .bc-orders td{padding:12px 10px;vertical-align:middle;overflow-wrap:anywhere;text-align:left}#brokerFinance .bc-orders th:nth-child(1){width:105px}#brokerFinance .bc-orders th:nth-child(2){width:225px}#brokerFinance .bc-orders th:nth-child(3){width:135px}#brokerFinance .bc-orders th:nth-child(4),#brokerFinance .bc-orders th:nth-child(5){width:90px}#brokerFinance .bc-orders th:nth-child(6){width:170px}#brokerFinance .bc-orders th:nth-child(7),#brokerFinance .bc-orders th:nth-child(8),#brokerFinance .bc-orders th:nth-child(9){width:115px;text-align:right}#brokerFinance .bc-orders td:nth-child(7),#brokerFinance .bc-orders td:nth-child(8),#brokerFinance .bc-orders td:nth-child(9){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance .bc-orders td:nth-child(6){white-space:normal}#brokerFinance .bc-orders th:nth-child(10){width:175px}#brokerFinance .bc-orders th:nth-child(11){width:155px}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5){white-space:nowrap}</style><script>
+10850: (()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');if(!frame.getAttribute('src'))frame.src='expenses_cash.html';else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
+10851: </script>
+10852: <script>
+10853: /* Financeiro: append trader purchase and resale to the existing export orders. */
+10854: (()=>{
+10855:  const $=id=>document.getElementById(id);
+10856:  let busy=false;
+10857:  const num=x=>Number(x)||0;
+10858:  const money=(v,c)=>String(c||'USD')+' '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+10859:  const add=(tr,v)=>{const td=tr.insertCell();td.textContent=String(v??'—');return td};
+10860:  async function refresh(){
+10861:   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
+10862:   if(!client||!body||busy)return;
+10863:   busy=true;
+10864:   try{
+10865:    const [result,companiesResult]=await Promise.all([
+10866:     client.from('aes_trader_deals').select('*').range(0,1999),
+10867:     client.from('companies').select('id,name').range(0,1999)
+10868:    ]);
+10869:    if(result.error)throw result.error;
+10870:    const names=new Map((companiesResult.data||[]).map(x=>[String(x.id),x.name]));
+10871:    const fragment=document.createDocumentFragment();
+10872:    for(const deal of result.data||[]){
+10873:     if(deal.sale_flow?.operation_kind==='broker'||deal.status==='cancelled')continue;
+10874:     for(const [kind,flow,label] of [['purchase',deal.purchase_flow,'COMPRA'],['sale',deal.sale_flow,'REVENDA']]){
+10875:      const commercial=flow?.commercial||{},parties=flow?.parties||{};
+10876:      const qty=num(commercial.quantity??deal.quantity),price=num(commercial.unit_price??(kind==='purchase'?deal.purchase_unit_price:deal.sale_unit_price));
+10877:      const total=qty*price,paid=(Array.isArray(flow?.payments)?flow.payments:[]).reduce((a,p)=>a+num(p.amount),0),balance=Math.max(0,total-paid);
+10878:      const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
+10879:      const party=names.get(String(id))||'—';
+10880:      const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
+10881:      const first=add(tr,deal.trade_number||'—');const tag=document.createElement('div');tag.className='badge '+(kind==='purchase'?'warn':'info');tag.textContent=kind==='purchase'?'COMPRA · A PAGAR':'REVENDA · A RECEBER';tag.classList.add('aes-fin-mini-kind');first.append(tag);
+10882:      add(tr,'—');add(tr,commercial.product||deal.product||'—');add(tr,party);add(tr,'—');
+10883:      [total,paid,balance,balance].forEach(v=>add(tr,money(v,deal.currency)));
+10884:      add(tr,'—');add(tr,'—');
+10885:      // Situação editável, independente para COMPRA e REVENDA.
+10886:      const statusTd=tr.insertCell();
+10887:      const statusControl=document.createElement('select');
+10888:      statusControl.setAttribute('aria-label','Situação financeira '+(deal.trade_number||'')+' '+label);
+10889:      statusControl.style.minWidth='135px';
+10890:      for(const [v,txt] of [['Pending','Pendente'],['Partial','Parcial'],['Received','Recebido'],['Financiamento RTS','Financiamento RTS']]) statusControl.add(new Option(txt,v));
+10891:      const statusStorageKey='aes-trader-finance-status:'+deal.id+':'+kind;
+10892:      let savedStatus='';try{savedStatus=localStorage.getItem(statusStorageKey)||'';}catch(_e){}
+10893:      statusControl.value=['Pending','Partial','Received','Financiamento RTS'].includes(savedStatus)?savedStatus:tr.dataset.status;
+10894:      tr.dataset.status=statusControl.value;
+10895:      statusControl.addEventListener('change',()=>{
+10896:        tr.dataset.status=statusControl.value;
+10897:        try{localStorage.setItem(statusStorageKey,statusControl.value);}catch(_e){}
+10898:        window.filterFinance?.();
+10899:      });
+10900:      statusTd.append(statusControl);
+10901:      const action=tr.insertCell(),button=document.createElement('button');button.type='button';button.className='btn primary';button.textContent='Abrir';button.onclick=()=>{
+10902:        // Abrir o mesmo formulário financeiro dos contratos de exportação.
+10903:        // Chave exclusiva por operação para não misturar COMPRA e REVENDA.
+10904:        const financeKey='TRADER:'+deal.id+':'+kind;
+10905:        const existing=window.financeData?.[financeKey];
+10906:        const previousPayments=Array.isArray(flow?.payments)?flow.payments:[];
+10907:        if(!window.financeData)window.financeData={};
+10908:        if(!existing){
+10909:          window.financeData[financeKey]={invoice:total,received:paid,fxClosed:0,history:previousPayments.map(p=>({type:kind==='purchase'?'Pagamento Compra':'Recebimento Revenda',date:p.date||p.payment_date||'',amount:num(p.amount),rate:'—',bank:p.bank||'',ref:p.reference||''})),hedges:[]};
+10910:        }else{existing.invoice=total;}
+10911:        window.openFinanceOrder(financeKey,party,total);
+10912:        const title=$('finOrderTitle'),orderInput=$('finOrder');
+10913:        if(title)title.textContent=(deal.trade_number||'—')+' · '+label;
+10914:        if(orderInput)orderInput.value=(deal.trade_number||'—')+' · '+label;
+10915:        const subtitle=$('finImporterTitle');if(subtitle)subtitle.textContent=party+' · '+(kind==='purchase'?'A PAGAR':'A RECEBER');
+10916:        const balanceLabel=document.querySelector('label[for="finOrderBalance"]');
+10917:        if(balanceLabel)balanceLabel.textContent=kind==='purchase'?'Saldo a Pagar':'Saldo a Receber';
+10918:        $('financeOrderWorkspace')?.scrollIntoView({behavior:'smooth',block:'start'});
+10919:      };action.append(button);fragment.append(tr);
+10920:     }
+10921:    }
+10922:    body.querySelectorAll('[data-finance-trader="1"]').forEach(x=>x.remove());
+10923:    body.append(fragment);
+10924:    window.filterFinance?.();
+10925:   }catch(error){console.error('Falha ao carregar Compra e Revenda:',error);window.notify?.('Não foi possível carregar Compra e Revenda: '+error.message)}finally{busy=false}
+10926:  }
+10927:  document.addEventListener('DOMContentLoaded',()=>{
+10928:   document.querySelectorAll('[data-view="finance"]').forEach(b=>b.addEventListener('click',()=>setTimeout(refresh,200)));
+10929:   const gate=$('aesAuthGate');if(gate){new MutationObserver(()=>{if(gate.style.display==='none')refresh()}).observe(gate,{attributes:true,attributeFilter:['style']});if(gate.style.display==='none')refresh()}
+10930:   window.addEventListener('aes-contracts-updated',()=>setTimeout(refresh,150));
+10931:  });
+10932:  window.aesFinanceRefreshTrades=refresh;
+10933: })();
+10934: </script>
+10935: </body>
+10936: </html>
