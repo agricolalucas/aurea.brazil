@@ -1,4 +1,4 @@
-name: Fix trader finance receipts and balances - targeted
+name: Fix trader finance receipts and balances - publish
 on:
   push:
     branches: [main]
