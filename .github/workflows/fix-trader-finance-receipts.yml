@@ -1,4 +1,4 @@
-name: Fix trader finance receipts and balances - urgent
+name: Fix trader finance receipts and balances - targeted
 on:
   push:
     branches: [main]
@@ -22,10 +22,11 @@ jobs:
           end=s.find('</script>',begin)
           if begin<0 or end<begin:raise SystemExit('Trader finance script missing')
           block=s[begin:end]
-          old="""const [result,companiesResult]=await Promise.all([
-     client.from('aes_trader_deals').select('*').range(0,1999),
-     client.from('companies').select('id,name').range(0,1999)
-    ]);"""
+          import re
+          old_pattern=r"const \[result,companiesResult\]=await Promise\.all\(\[\s*client\.from\('aes_trader_deals'\)\.select\('\*'\)\.range\(0,1999\),\s*client\.from\('companies'\)\.select\('id,name'\)\.range\(0,1999\)\s*\]\);"
+          match=re.search(old_pattern,block)
+          if not match:raise SystemExit('Trader finance fetch not found')
+          old=match.group(0)
           new="""/* AES_TRADER_RECEIPT_BALANCE_V5 */
     const [result,companiesResult,receiptsResult]=await Promise.all([
      client.from('aes_trader_deals').select('*').range(0,1999),
