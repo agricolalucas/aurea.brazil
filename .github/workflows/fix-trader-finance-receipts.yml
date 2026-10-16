@@ -1,0 +1,77 @@
+name: Fix trader finance receipts and balances
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-trader-finance-receipts.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch trader list using confirmed Supabase receipts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html');s=p.read_text(encoding='utf-8')
+          marker='AES_TRADER_RECEIPT_BALANCE_V5'
+          if marker in s:raise SystemExit(0)
+          begin=s.find('/* Financeiro: append trader purchase and resale')
+          end=s.find('</script>',begin)
+          if begin<0 or end<begin:raise SystemExit('Trader finance script missing')
+          block=s[begin:end]
+          old="""const [result,companiesResult]=await Promise.all([
+     client.from('aes_trader_deals').select('*').range(0,1999),
+     client.from('companies').select('id,name').range(0,1999)
+    ]);"""
+          new="""/* AES_TRADER_RECEIPT_BALANCE_V5 */
+    const [result,companiesResult,receiptsResult]=await Promise.all([
+     client.from('aes_trader_deals').select('*').range(0,1999),
+     client.from('companies').select('id,name').range(0,1999),
+     client.from('aes_finance_order_movements').select('order_number,amount,movement_type').eq('movement_type','receipt').range(0,4999)
+    ]);
+    if(receiptsResult.error)throw receiptsResult.error;
+    const savedReceipts=new Map();
+    for(const payment of receiptsResult.data||[])savedReceipts.set(payment.order_number,(savedReceipts.get(payment.order_number)||0)+Number(payment.amount||0));"""
+          if block.count(old)!=1:raise SystemExit('Trader finance fetch anchor changed')
+          block=block.replace(old,new,1)
+          old2="const total=qty*price,paid=(Array.isArray(flow?.payments)?flow.payments:[]).reduce((a,p)=>a+num(p.amount),0),balance=Math.max(0,total-paid);"
+          new2="const total=qty*price,financeKey='TRADER:'+deal.id+':'+kind,flowPaid=(Array.isArray(flow?.payments)?flow.payments:[]).reduce((a,p)=>a+num(p.amount),0),paid=savedReceipts.has(financeKey)?savedReceipts.get(financeKey):flowPaid,balance=Math.max(0,total-paid);"
+          if block.count(old2)!=1:raise SystemExit('Trader paid calculation anchor changed')
+          block=block.replace(old2,new2,1)
+          old3="const financeKey='TRADER:'+deal.id+':'+kind;"
+          if block.count(old3)!=1:raise SystemExit('Finance key open anchor changed')
+          block=block.replace(old3,"// financeKey computed for this operation above",1)
+          old4="window.financeData[financeKey]={invoice:total,received:paid,fxClosed:0,history:previousPayments.map(p=>({type:kind==='purchase'?'Pagamento Compra':'Recebimento Revenda',date:p.date||p.payment_date||'',amount:num(p.amount),rate:'—',bank:p.bank||'',ref:p.reference||''})),hedges:[]};"
+          new4="window.financeData[financeKey]={invoice:total,received:paid,fxClosed:0,history:[],hedges:[]};"
+          if block.count(old4)!=1:raise SystemExit('Finance workspace anchor changed')
+          block=block.replace(old4,new4,1)
+          old5="}else{existing.invoice=total;}"
+          new5="}else{existing.invoice=total;existing.received=paid;}"
+          if block.count(old5)!=1:raise SystemExit('Finance workspace update anchor changed')
+          block=block.replace(old5,new5,1)
+          old6="document.addEventListener('DOMContentLoaded',()=>{"
+          if block.count(old6)!=1:raise SystemExit('Trader refresh listener anchor changed')
+          block=block.replace(old6,"window.addEventListener('aes-finance-receipts-updated',()=>refresh());\n  "+old6,1)
+          s=s[:begin]+block+s[end:]
+          load_start=s.find('async function aesFinanceLoadSaved(order){')
+          load_end=s.find('async function aesFinanceSaveMovement(',load_start)
+          load=s[load_start:load_end]
+          old7="if(window.currentFinanceOrder===order)refreshFinanceOrder();"
+          if load.count(old7)!=1:raise SystemExit('Finance history refresh anchor changed')
+          load=load.replace(old7,old7+"\n  window.dispatchEvent(new CustomEvent('aes-finance-receipts-updated'));",1)
+          s=s[:load_start]+load+s[load_end:]
+          if len(s)<100000:raise SystemExit('ERP integrity failed')
+          p.write_text(s,encoding='utf-8')
+          print('Trader receipt totals now sourced from Supabase and refreshed after save/load')
+          PY
+      - name: Commit correction
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix trader receipts and balances in financial position list"
+          git push
