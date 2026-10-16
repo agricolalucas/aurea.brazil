@@ -1,0 +1,92 @@
+name: Protect AUREA finance receipt persistence
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/protect-finance-receipts.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch receipt persistence with safeguards
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='AES_RECEIPT_GUARD_V2'
+          if marker in s:
+              print('Already applied')
+              raise SystemExit(0)
+          a=s.find('async function aesFinanceLoadSaved(order){')
+          b=s.find('function openFinanceOrder(',a)
+          c=s.find('async function saveFinanceReceipt(){',b)
+          d=s.find('function saveFxClosing(){',c)
+          if min(a,b,c,d)<0 or not (a<b<c<d) or len(s)<100000:
+              raise SystemExit('Finance source mismatch, no modifications')
+          helpers="""/* AES_RECEIPT_GUARD_V2 */
+          const aesReceiptPending=new Set();
+          async function aesFinanceLoadSaved(order){
+            const db=window.aesSharedClient;
+            if(!db)throw Error('Supabase indisponível');
+            const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
+            if(error)throw error;
+            const d=window.financeData[order];if(!d)return;
+            const rows=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
+            // Retain only local, unpersisted entries visibly; never treat them as confirmed.
+            const local=(d.history||[]).filter(x=>!x.persisted);
+            d.history=[...rows,...local];
+            d.received=d.history.filter(x=>x.type==='Recebimento').reduce((n,x)=>n+Number(x.amount||0),0);
+            d.fxClosed=d.history.filter(x=>x.type==='Fechamento Câmbio').reduce((n,x)=>n+Number(x.amount||0),0);
+            if(window.currentFinanceOrder===order)refreshFinanceOrder();
+          }
+          async function aesFinanceSaveMovement(kind,fields,requestKey){
+            const db=window.aesSharedClient,order=window.currentFinanceOrder;
+            if(!db||!order)throw Error('Conexão Supabase ou ordem indisponível');
+            const {data:auth,error:authError}=await db.auth.getUser();
+            if(authError||!auth?.user)throw Error('Sessão expirada. Faça login novamente');
+            const record={order_number:order,operation_type:'export',movement_type:kind,amount:fields.amount,currency:fields.currency||'USD',movement_date:fields.date||null,bank:fields.bank||null,reference:fields.ref||null,payment_type:fields.paymentType||null,exchange_rate:fields.rate||null,created_by:auth.user.id,request_key:requestKey};
+            const {data,error}=await db.from('aes_finance_order_movements').upsert(record,{onConflict:'request_key'}).select().single();
+            if(error)throw error;
+            if(!data?.id)throw Error('Supabase não confirmou o registro');
+            return data;
+          }
+          """
+          s=s[:a]+helpers+s[b:]
+          c=s.find('async function saveFinanceReceipt(){')
+          d=s.find('function saveFxClosing(){',c)
+          receipt="""async function saveFinanceReceipt(){
+            const order=window.currentFinanceOrder;
+            const amount=Number(getVal('finReceiptAmount')||0);
+            if(!order||!(amount>0)||!Number.isFinite(amount)){notify('Informe ordem e valor válido.');return;}
+            if(aesReceiptPending.has(order)){notify('Aguarde a confirmação do lançamento anterior.');return;}
+            const button=document.querySelector('[onclick="saveFinanceReceipt()"]');
+            const requestKey=crypto.randomUUID();
+            aesReceiptPending.add(order);if(button)button.disabled=true;
+            try{
+              await aesFinanceSaveMovement('receipt',{amount,date:getVal('finReceiptDate'),bank:getVal('finReceiptBank'),ref:getVal('finReceiptRef'),paymentType:getVal('finReceiptType'),currency:getVal('finReceiptCurrency')},requestKey);
+              await aesFinanceLoadSaved(order);
+              notify('Recebimento gravado e confirmado no Supabase.');
+            }catch(e){
+              notify('ERRO: recebimento NÃO confirmado. '+e.message);
+            }finally{
+              aesReceiptPending.delete(order);if(button)button.disabled=false;
+            }
+          }
+          """
+          s=s[:c]+receipt+s[d:]
+          if s.count(marker)!=1:raise SystemExit('Patch validation failed')
+          p.write_text(s,encoding='utf-8')
+          print('Finance receipts protected: DB confirmation, request ID, duplicate-click guard')
+          PY
+      - name: Commit guarded ERP
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Guard receipt persistence with confirmed Supabase writes"
+          git push
