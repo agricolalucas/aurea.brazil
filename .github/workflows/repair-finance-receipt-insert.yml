@@ -1,0 +1,45 @@
+name: Repair finance receipt insert permissions
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/repair-finance-receipt-insert.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Correct Supabase receipt write and verification
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          mark='AES_RECEIPT_INSERT_FIX_V3'
+          if mark in s:
+              print('Already patched');raise SystemExit(0)
+          old="const {data,error}=await db.from('aes_finance_order_movements').upsert(record,{onConflict:'request_key'}).select().single();"
+          new="""/* AES_RECEIPT_INSERT_FIX_V3 */
+            const {data,error}=await db.from('aes_finance_order_movements').insert(record).select().single();"""
+          if s.count(old)!=1:raise SystemExit('Expected receipt upsert not found uniquely')
+          s=s.replace(old,new,1)
+          old2="if(!data?.id)throw Error('Supabase não confirmou o registro');"
+          new2="""if(!data?.id)throw Error('Supabase não confirmou o registro');
+            const {data:verified,error:verifyError}=await db.from('aes_finance_order_movements').select('id,order_number,amount').eq('id',data.id).single();
+            if(verifyError||!verified||verified.order_number!==order)throw Error('Registro inserido, mas a confirmação de leitura falhou; verifique o histórico antes de tentar novamente');"""
+          if s.count(old2)!=1:raise SystemExit('Confirmation anchor changed')
+          s=s.replace(old2,new2,1)
+          if len(s)<100000:raise SystemExit('Unexpected ERP size')
+          p.write_text(s,encoding='utf-8')
+          print('Receipt INSERT + verification patch applied')
+          PY
+      - name: Commit verified change
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Fix finance receipt INSERT and confirm persisted record"
+          git push
