@@ -1,0 +1,40 @@
+name: Repair finance receipt history display
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/repair-receipt-history-display.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prevent stale local receipt history and refresh all finance orders
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html');s=p.read_text(encoding='utf-8')
+          mark='AES_RECEIPT_HISTORY_DISPLAY_V4'
+          if mark in s:raise SystemExit(0)
+          a=s.find('async function aesFinanceLoadSaved(order){')
+          b=s.find('async function aesFinanceSaveMovement(',a)
+          if a<0 or b<a:raise SystemExit('Receipt load function not found')
+          block=s[a:b]
+          old="const local=(d.history||[]).filter(x=>!x.persisted);"
+          if block.count(old)!=1:raise SystemExit('Local history expression changed')
+          block=block.replace(old,"const local=[]; /* AES_RECEIPT_HISTORY_DISPLAY_V4: Supabase is authoritative */")
+          s=s[:a]+block+s[b:]
+          if len(s)<100000:raise SystemExit('Unexpected HTML size')
+          p.write_text(s,encoding='utf-8')
+          print('Finance history now renders only confirmed Supabase receipts')
+          PY
+      - name: Commit
+        run: |
+          if git diff --quiet -- index.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Display confirmed Supabase receipt history without stale local entries"
+          git push
