@@ -1,0 +1,32 @@
+name: Finance receipt exact source snapshot
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/finance-source-snapshot.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract finance code only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          lines=Path('index.html').read_text(encoding='utf-8').splitlines()
+          spans=[(5965,6105),(9895,9955),(10845,10945)]
+          out=[]
+          for a,b in spans:
+              out.extend(f'{i+1}: {lines[i][:6000]}' for i in range(a-1,min(b,len(lines))) if not any(k in lines[i].lower() for k in ('sb_publishable_','service_role','eyj')))
+          Path('.github/finance-source-snapshot.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/finance-source-snapshot.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Snapshot finance position renderer for targeted fix"
+          git push
