@@ -1,0 +1,81 @@
+212: #financeOrderWorkspace .pagehead{margin:10px 0!important}
+
+213: #financeOrderWorkspace .pagehead h2{font-size:17px}
+
+214: #financeOrderWorkspace>.card:not(.fin-inline-card){padding:12px 14px}
+
+215: #financeOrderWorkspace label{font-size:10px;margin-bottom:3px}
+
+216: #financeOrderWorkspace input[readonly]{height:30px;font-size:11px}
+
+274: #financeOrderList .tablewrap{overflow-x:auto}
+
+275: #financeTable{width:100%;min-width:1050px;border-collapse:collapse;font-size:10.5px}
+
+276: #financeTable th,#financeTable td{padding:6px 5px!important;vertical-align:middle;line-height:1.25}
+
+277: #financeTable th{font-size:9px;letter-spacing:0;white-space:normal}
+
+278: #financeTable td{white-space:nowrap}
+
+279: #financeTable td:nth-child(3),#financeTable td:nth-child(4){white-space:normal;min-width:85px;max-width:155px;overflow-wrap:anywhere}
+
+280: #financeTable td:nth-child(1){min-width:96px}
+
+281: #financeTable .aes-fin-mini-kind{display:block;width:max-content;max-width:105px;padding:2px 4px;margin:3px 0 0;font-size:8px!important;line-height:1.1;font-weight:700;letter-spacing:0;white-space:nowrap}
+
+282: #financeTable td select{width:110px!important;min-width:0!important;max-width:110px;min-height:29px;padding:3px 4px;font-size:10px}
+
+283: #financeTable td .btn{min-height:27px;padding:4px 7px;font-size:10px;margin:0}
+
+3660:   <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2>
+
+3662:       <table id="financeTable"><thead><tr><th>Order / PO</th><th>NF-e</th><th>Produto</th><th>Importer</th><th>Booking</th><th>Valor total</th><th>Recebido</th><th>Saldo atual</th><th>Disponível</th><th>Vencimento</th><th>ETA</th><th>Situação</th><th>Ação</th></tr></thead><tbody></tbody></table>
+
+3699: <div id="financeOrderWorkspace" style="display:none">
+
+4545:       'freightOrdersTable','frExpenseTable','frPaymentTable','financeTable',
+
+5983:   const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
+
+6001:   const {data,error}=await db.from('aes_finance_order_movements').insert(record).select().single();
+
+6004:   const {data:verified,error:verifyError}=await db.from('aes_finance_order_movements').select('id,order_number,amount').eq('id',data.id).single();
+
+6008: function openFinanceOrder(order,importer,invoice){
+
+6011:   document.getElementById('financeOrderWorkspace').style.display='block';
+
+6020: function closeFinanceOrder(){ document.getElementById('financeOrderWorkspace').style.display='none'; }
+
+6044:   renderFinanceHistory();
+
+6082: function renderFinanceHistory(){
+
+6098:   document.querySelectorAll('#financeTable tbody tr').forEach(row=>{
+
+6110:   document.querySelectorAll('#financeTable tbody tr').forEach(row=>row.style.display='');
+
+6211: const _openFinanceOrderBase=openFinanceOrder;
+
+6212: openFinanceOrder=function(order,importer,invoice){
+
+6213:   _openFinanceOrderBase(order,importer,invoice);
+
+9904:    const docs=$('documentContractsTable')?.tBodies[0],broker=$('brokerOrdersTable')?.tBodies[0],finance=$('financeTable')?.tBodies[0];
+
+9948:      action(fr,'Abrir',()=>window.openFinanceOrder(order,importer,invoice));
+
+10822: window.switchFinanceTab=function(tab){window.financeActiveTab=tab;const orders=tab==='orders';$('financeFilters').style.display=orders?'':'none';$('financeOrderList').style.display=orders?'':'none';$('financeOrderWorkspace').style.display=orders&&window.currentFinanceOrder?'block':'none';$('financeHedgeStandalone').style.display=orders?'none':'block';$('finHedgeType').value=orders?'ACC':tab;$('finHedgeType').parentElement.style.display=orders?'':'none';const index=$('finHedgeType').parentElement.cellIndex;const header=$('finHedgeType').closest('table').tHead.rows[0].cells[index];if(header)header.style.display=orders?'':'none';document.querySelectorAll('#financeTabs button').forEach(x=>x.classList.toggle('primary',x.dataset.tab===tab));document.querySelectorAll('#finHedgeTable tbody tr').forEach(r=>r.style.display=orders||r.cells[0]?.textContent?.trim()===tab?'':'none');};
+
+10823: const open=window.openFinanceOrder;window.openFinanceOrder=function(order,importer,invoice){window.switchFinanceTab('orders');open(order,importer,invoice);const row=[...document.querySelectorAll('#financeTable tbody tr')].find(r=>r.dataset.order===order);[['finNfe','nfe'],['finDue','due'],['finAccessKey','access'],['finExpiration','maturity']].forEach(([id,key])=>$(id).value=row?.dataset[key]||'—');$('financeOrderWorkspace').scrollIntoView({behavior:'smooth',block:'start'});};
+
+10850: (()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');if(!frame.getAttribute('src'))frame.src='expenses_cash.html';else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
+
+10861:   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
+
+10904:        const financeKey='TRADER:'+deal.id+':'+kind;
+
+10911:        window.openFinanceOrder(financeKey,party,total);
+
+10918:        $('financeOrderWorkspace')?.scrollIntoView({behavior:'smooth',block:'start'});
