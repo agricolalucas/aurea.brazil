@@ -1,4 +1,4 @@
-name: Fix trader finance receipts and balances - retry
+name: Fix trader finance receipts and balances - urgent
 on:
   push:
     branches: [main]
