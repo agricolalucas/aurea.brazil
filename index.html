@@ -9909,7 +9909,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    const savedBookings=bookings();
    const current=(contracts||[]).filter(c=>c.order_number&&String(c.status||'').toLowerCase()!=='cancelled');
    const validOrders=new Set(current.map(c=>c.order_number));
-   for(const key of Object.keys(window.financeData||{}))if(!validOrders.has(key))delete window.financeData[key];
+   for(const key of Object.keys(window.financeData||{}))if(!key.startsWith('TRADER:')&&!validOrders.has(key))delete window.financeData[key];
    for(const c of current){
      const order=c.order_number,importer=names?.[c.importer_id]||'—',product=c.product||'—';
      const booking=c.details?.booking_request||{},saved=savedBookings[order]||{};
@@ -10854,29 +10854,39 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 /* Financeiro: append trader purchase and resale to the existing export orders. */
 (()=>{
  const $=id=>document.getElementById(id);
- let busy=false;
+ let busy=false,queued=false;
  const num=x=>Number(x)||0;
  const money=(v,c)=>String(c||'USD')+' '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
  const add=(tr,v)=>{const td=tr.insertCell();td.textContent=String(v??'—');return td};
+ async function loadMovements(client){const data=[];for(let offset=0;;offset+=500){const page=await client.from('aes_finance_order_movements').select('*').order('id').range(offset,offset+499);if(page.error)return {data:[],error:page.error};data.push(...page.data);if(page.data.length<500)return {data,error:null};}}
+ function applyMovements(position,movements){const ordered=[...movements].sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));position.history=ordered.map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:num(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));position.received=ordered.filter(x=>x.movement_type==='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;position.fxClosed=ordered.filter(x=>x.movement_type!=='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;}
  async function refresh(){
   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
-  if(!client||!body||busy)return;
+  if(!client||!body)return;if(busy){queued=true;return;}
   busy=true;
   try{
    /* AES_TRADER_RECEIPT_BALANCE_V6: use confirmed movements as financial source */
    const [result,companiesResult,receiptsResult]=await Promise.all([
     client.from('aes_trader_deals').select('*').range(0,1999),
     client.from('companies').select('id,name').range(0,1999),
-    client.from('aes_finance_order_movements').select('order_number,amount').eq('movement_type','receipt').range(0,4999)
+    loadMovements(client)
    ]);
    if(receiptsResult.error)throw receiptsResult.error;
-   const confirmedReceipts=new Map();
+   const confirmedReceipts=new Map(),movementsByOrder=new Map();
    for(const movement of receiptsResult.data||[]){
      const key=String(movement.order_number||'');
-     confirmedReceipts.set(key,(confirmedReceipts.get(key)||0)+num(movement.amount));
+     if(!movementsByOrder.has(key))movementsByOrder.set(key,[]);movementsByOrder.get(key).push(movement);
+     if(movement.movement_type==='receipt')confirmedReceipts.set(key,(confirmedReceipts.get(key)||0)+num(movement.amount));
    }
+   // Load confirmed export receipts before displaying balances; opening a workspace is no longer required.
+   for(const row of body.rows){if(row.dataset.financeTrader==='1')continue;const order=row.dataset.order,d=window.financeData?.[order];if(!order||!d)continue;
+    applyMovements(d,movementsByOrder.get(order)||[]);const pending=Math.max(0,num(d.invoice)-d.received),hedged=(d.hedges||[]).filter(x=>x.status!=='Settled'&&x.status!=='Cancelled').reduce((n,x)=>n+num(x.amount),0);
+    row.cells[6].textContent=money(d.received,'USD');row.cells[7].textContent=money(pending,'USD');row.cells[8].textContent=money(Math.max(0,pending-hedged),'USD');
+   }
+
    if(result.error)throw result.error;
    const names=new Map((companiesResult.data||[]).map(x=>[String(x.id),x.name]));
+   if(companiesResult.error)throw companiesResult.error;
    const fragment=document.createDocumentFragment();
    for(const deal of result.data||[]){
     if(deal.sale_flow?.operation_kind==='broker'||deal.status==='cancelled')continue;
@@ -10884,6 +10894,9 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
      const commercial=flow?.commercial||{},parties=flow?.parties||{};
      const qty=num(commercial.quantity??deal.quantity),price=num(commercial.unit_price??(kind==='purchase'?deal.purchase_unit_price:deal.sale_unit_price));
      const total=qty*price,financeKey='TRADER:'+deal.id+':'+kind,legacyPaid=(Array.isArray(flow?.payments)?flow.payments:[]).reduce((a,p)=>a+num(p.amount),0),paid=confirmedReceipts.has(financeKey)?confirmedReceipts.get(financeKey):legacyPaid,balance=Math.max(0,total-paid);
+     if(!window.financeData)window.financeData={};
+     const position=window.financeData[financeKey]||(window.financeData[financeKey]={invoice:total,received:paid,fxClosed:0,history:[],hedges:[]});position.invoice=total;
+     if(movementsByOrder.has(financeKey))applyMovements(position,movementsByOrder.get(financeKey));else position.received=legacyPaid;
      const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
      const party=names.get(String(id))||'—';
      const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
@@ -10930,8 +10943,9 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
    }
    body.querySelectorAll('[data-finance-trader="1"]').forEach(x=>x.remove());
    body.append(fragment);
-   window.filterFinance?.();
-  }catch(error){console.error('Falha ao carregar Compra e Revenda:',error);window.notify?.('Não foi possível carregar Compra e Revenda: '+error.message)}finally{busy=false}
+   if(window.currentFinanceOrder&&window.financeData?.[window.currentFinanceOrder])window.refreshFinanceOrder?.();
+   window.refreshFinanceTotals?.();window.filterFinance?.();
+  }catch(error){console.error('Falha ao carregar Compra e Revenda:',error);window.notify?.('Não foi possível carregar Compra e Revenda: '+error.message)}finally{busy=false;if(queued){queued=false;refresh();}}
  }
  window.addEventListener('aes-finance-receipts-updated',()=>refresh());
  document.addEventListener('DOMContentLoaded',()=>{
@@ -10939,6 +10953,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   const gate=$('aesAuthGate');if(gate){new MutationObserver(()=>{if(gate.style.display==='none')refresh()}).observe(gate,{attributes:true,attributeFilter:['style']});if(gate.style.display==='none')refresh()}
   window.addEventListener('aes-contracts-updated',()=>setTimeout(refresh,150));
  });
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('finance')?.classList.contains('active'))refresh();});
  window.aesFinanceRefreshTrades=refresh;
 })();
 </script>
