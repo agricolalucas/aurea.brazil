@@ -1,0 +1,48 @@
+name: Fix order reference and importer in cash register
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-cash-order-reference.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted change
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('expenses_cash.html');s=p.read_text(encoding='utf-8')
+          marker='AES_CASH_ORDER_REFERENCE_V2'
+          if marker in s:raise SystemExit('Already patched')
+          old="receiptImporters=new Map((contractResult.data||[]).map(c=>{"
+          assert s.count(old)==1
+          s=s.replace(old,"/* AES_CASH_ORDER_REFERENCE_V2 */\n  receiptImporters=new Map((contractResult.data||[]).map(c=>{",1)
+          old2="const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||'';"
+          new2="const d=c.details||{};const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||d.importer_name||d.importer||d.importer_id||d.buyer||'';"
+          assert s.count(old2)==1;s=s.replace(old2,new2,1)
+          old3="systems=source.data||[];registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()];"
+          new3="""systems=source.data||[];
+            const contractOrderMap=new Map((contractResult.data||[]).map(c=>[String(c.id),String(c.order_number||'')]));
+            registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()].map(x=>{
+             const order=String(x.invoice_order||x.order_number||x.details?.order_number||x.details?.order||contractOrderMap.get(String(x.contract_id||x.details?.contract_id||''))||'').trim();
+             if(order&&!String(x.invoice||'').toUpperCase().includes(order.toUpperCase()))x.invoice=[x.invoice,order].filter(Boolean).join(' / ');
+             if(x.kind==='receipt'&&receiptImporters.get(String(x.invoice||'').toUpperCase()))x.party=receiptImporters.get(String(x.invoice||'').toUpperCase());
+             return x;
+            });"""
+          assert s.count(old3)==1;s=s.replace(old3,new3,1)
+          p.write_text(s,encoding='utf-8')
+          print('Order references and importer lookup adjusted')
+          
+          PY
+      - name: Commit updated HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add expenses_cash.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Show linked order number alongside invoice and importer"
+          git push
