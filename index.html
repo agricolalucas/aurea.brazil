@@ -3722,7 +3722,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <h2 style="font-size:18px;margin-top:0">Histórico Financeiro</h2>
       <div class="tablewrap">
         <table id="finHistoryTable">
-          <thead><tr><th>Data</th><th>Importer</th><th>Order</th><th>Banco</th><th>Tipo</th><th>Descrição</th><th>Valor NF-e</th><th>Valor USD</th><th>Taxa</th><th>Valor BRL</th><th>Contrato / Referência</th></tr></thead>
+          <thead><tr><th>Data</th><th>Importer</th><th>Order</th><th>Banco</th><th>Tipo</th><th>Descrição</th><th>Valor NF-e</th><th>Valor USD</th><th>Taxa</th><th>Valor BRL</th><th>Contrato / Referência</th><th>Ações</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -6080,15 +6080,53 @@ document.addEventListener('input',function(e){
     if(el) el.value='BRL '+(a*r).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
 });
+/* AES_FINANCE_HISTORY_EDIT_DELETE_V2 */
+const aesFinanceHistoryBusy=new Set();
+async function aesFinanceEditHistory(id){
+ const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
+ if(!item?.persisted||aesFinanceHistoryBusy.has(String(id)))return;
+ const date=prompt('Data (AAAA-MM-DD):',item.date||'');if(date===null)return;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))){notify('Data inválida');return;}
+ const amountText=prompt('Valor:',String(item.amount));if(amountText===null)return;
+ const amount=Number(amountText.trim().replace(',','.'));if(!Number.isFinite(amount)||amount<=0){notify('Valor inválido');return;}
+ const bank=prompt('Banco:',item.bank||'');if(bank===null)return;
+ const ref=prompt('Referência / SWIFT:',item.ref||'');if(ref===null)return;
+ if(!confirm('Confirmar edição no Supabase?'))return;
+ const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
+ aesFinanceHistoryBusy.add(String(id));
+ try{
+  const {data,error}=await db.from('aes_finance_order_movements').update({movement_date:date,amount,bank:bank||null,reference:ref||null}).eq('id',id).eq('order_number',order).select('id').single();
+  if(error)throw error;if(!data?.id)throw Error('Não confirmado');
+  await aesFinanceLoadSaved(order);notify('Lançamento atualizado.');
+ }catch(e){notify('Erro ao editar: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
+}
+async function aesFinanceDeleteHistory(id){
+ const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
+ if(!item?.persisted||aesFinanceHistoryBusy.has(String(id)))return;
+ if(!confirm('Excluir definitivamente '+usd(item.amount)+' da ordem '+order+'?'))return;
+ const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
+ aesFinanceHistoryBusy.add(String(id));
+ try{
+  const {data,error}=await db.from('aes_finance_order_movements').delete().eq('id',id).eq('order_number',order).select('id').single();
+  if(error)throw error;if(!data?.id)throw Error('Não confirmado');
+  await aesFinanceLoadSaved(order);notify('Lançamento excluído.');
+ }catch(e){notify('Erro ao excluir: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
+}
 function renderFinanceHistory(){
-  const tbody=document.querySelector('#finHistoryTable tbody'); if(!tbody) return;
-  tbody.innerHTML='';
-  const d=window.financeData[window.currentFinanceOrder]; if(!d) return;
-  d.history.forEach(x=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+formatDateBR(x.date)+'</td><td>'+escHtml(getVal('finImporter')||'—')+'</td><td>'+escHtml(window.currentFinanceOrder)+'</td><td>'+escHtml(x.bank||'—')+'</td><td>'+escHtml(x.type||'')+'</td><td>'+escHtml(x.ref||'—')+'</td><td>'+usd(d.invoice)+'</td><td>'+usd(x.amount)+'</td><td>'+(x.rate==='—'?'—':Number(x.rate||0).toFixed(4))+'</td><td>'+(Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—')+'</td><td>'+escHtml(x.ref||'—')+'</td>';
-    tbody.appendChild(tr);
-  });
+ const tbody=document.querySelector('#finHistoryTable tbody');if(!tbody)return;
+ tbody.replaceChildren();const d=window.financeData[window.currentFinanceOrder];if(!d)return;
+ (d.history||[]).forEach(x=>{
+  const tr=document.createElement('tr');
+  const cells=[formatDateBR(x.date),getVal('finImporter')||'—',window.currentFinanceOrder,x.bank||'—',x.type||'',x.ref||'—',usd(d.invoice),usd(x.amount),x.rate==='—'?'—':Number(x.rate||0).toFixed(4),Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—',x.ref||'—'];
+  cells.forEach(value=>{const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)});
+  const td=document.createElement('td');
+  if(x.persisted&&x.id!=null){
+   const edit=document.createElement('button');edit.type='button';edit.className='btn';edit.textContent='Editar';edit.onclick=()=>aesFinanceEditHistory(x.id);
+   const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';del.style.cssText='color:#a22c35;border-color:#efc8cd;margin-left:5px';del.onclick=()=>aesFinanceDeleteHistory(x.id);
+   td.append(edit,del);
+  }else td.textContent='Não salvo';
+  tr.appendChild(td);tbody.appendChild(tr);
+ });
 }
 function filterFinance(){
   const order=(getVal('finFilterOrder')||'').toLowerCase();
