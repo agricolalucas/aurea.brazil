@@ -1,0 +1,93 @@
+name: Publish finance history edit delete
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-finance-history-edit-delete.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='AES_FINANCE_HISTORY_EDIT_DELETE_V2'
+          if marker in s:
+           print('Already patched')
+           raise SystemExit(0)
+          head='<th>Contrato / Referência</th></tr></thead>'
+          assert s.count(head)>=1
+          pos=s.index('id="finHistoryTable"')
+          at=s.index(head,pos)
+          s=s[:at]+s[at:].replace(head,'<th>Contrato / Referência</th><th>Ações</th></tr></thead>',1)
+          start=s.index('function renderFinanceHistory(){')
+          end=s.index('function filterFinance(){',start)
+          new=r"""/* AES_FINANCE_HISTORY_EDIT_DELETE_V2 */
+          const aesFinanceHistoryBusy=new Set();
+          async function aesFinanceEditHistory(id){
+           const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
+           if(!item?.persisted||aesFinanceHistoryBusy.has(String(id)))return;
+           const date=prompt('Data (AAAA-MM-DD):',item.date||'');if(date===null)return;
+           if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))){notify('Data inválida');return;}
+           const amountText=prompt('Valor:',String(item.amount));if(amountText===null)return;
+           const amount=Number(amountText.trim().replace(',','.'));if(!Number.isFinite(amount)||amount<=0){notify('Valor inválido');return;}
+           const bank=prompt('Banco:',item.bank||'');if(bank===null)return;
+           const ref=prompt('Referência / SWIFT:',item.ref||'');if(ref===null)return;
+           if(!confirm('Confirmar edição no Supabase?'))return;
+           const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
+           aesFinanceHistoryBusy.add(String(id));
+           try{
+            const {data,error}=await db.from('aes_finance_order_movements').update({movement_date:date,amount,bank:bank||null,reference:ref||null}).eq('id',id).eq('order_number',order).select('id').single();
+            if(error)throw error;if(!data?.id)throw Error('Não confirmado');
+            await aesFinanceLoadSaved(order);notify('Lançamento atualizado.');
+           }catch(e){notify('Erro ao editar: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
+          }
+          async function aesFinanceDeleteHistory(id){
+           const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
+           if(!item?.persisted||aesFinanceHistoryBusy.has(String(id)))return;
+           if(!confirm('Excluir definitivamente '+usd(item.amount)+' da ordem '+order+'?'))return;
+           const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
+           aesFinanceHistoryBusy.add(String(id));
+           try{
+            const {data,error}=await db.from('aes_finance_order_movements').delete().eq('id',id).eq('order_number',order).select('id').single();
+            if(error)throw error;if(!data?.id)throw Error('Não confirmado');
+            await aesFinanceLoadSaved(order);notify('Lançamento excluído.');
+           }catch(e){notify('Erro ao excluir: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
+          }
+          function renderFinanceHistory(){
+           const tbody=document.querySelector('#finHistoryTable tbody');if(!tbody)return;
+           tbody.replaceChildren();const d=window.financeData[window.currentFinanceOrder];if(!d)return;
+           (d.history||[]).forEach(x=>{
+            const tr=document.createElement('tr');
+            const cells=[formatDateBR(x.date),getVal('finImporter')||'—',window.currentFinanceOrder,x.bank||'—',x.type||'',x.ref||'—',usd(d.invoice),usd(x.amount),x.rate==='—'?'—':Number(x.rate||0).toFixed(4),Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—',x.ref||'—'];
+            cells.forEach(value=>{const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)});
+            const td=document.createElement('td');
+            if(x.persisted&&x.id!=null){
+             const edit=document.createElement('button');edit.type='button';edit.className='btn';edit.textContent='Editar';edit.onclick=()=>aesFinanceEditHistory(x.id);
+             const del=document.createElement('button');del.type='button';del.className='btn';del.textContent='Excluir';del.style.cssText='color:#a22c35;border-color:#efc8cd;margin-left:5px';del.onclick=()=>aesFinanceDeleteHistory(x.id);
+             td.append(edit,del);
+            }else td.textContent='Não salvo';
+            tr.appendChild(td);tbody.appendChild(tr);
+           });
+          }
+          """
+          s=s[:start]+new+s[end:]
+          assert len(s)>4_000_000
+          p.write_text(s,encoding='utf-8')
+          print('Patched finance history only')
+          
+          PY
+      - name: Commit HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add edit and delete to financial history"
+          git push
