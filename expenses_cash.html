@@ -653,7 +653,14 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
     if(name)receiptImporters.set(('TRADER:'+deal.id+':'+side).toUpperCase(),name);
    }
   }
-  systems=source.data||[];registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()];transactions=tt;statements=ff;statementTransactions=statementRows;matches=mm;items=ii;window.brazilUpdateExpenseReconciliation(items);bankSelected.clear();systemSelected.clear();operationId=null;render();}
+  /* AES_CASH_ORDER_REFERENCE_V3 */
+  systems=source.data||[];
+  const contractOrderMap=new Map((contractResult.data||[]).map(c=>[String(c.id),String(c.order_number||'')]));
+  registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()].map(x=>{
+    const order=String(x.invoice_order||x.order_number||x.details?.order_number||x.details?.order||contractOrderMap.get(String(x.contract_id||x.details?.contract_id||''))||'').trim();
+    if(order&&!String(x.invoice||'').toUpperCase().includes(order.toUpperCase()))x.invoice=[x.invoice,order].filter(Boolean).join(' / ');
+    return x;
+  });transactions=tt;statements=ff;statementTransactions=statementRows;matches=mm;items=ii;window.brazilUpdateExpenseReconciliation(items);bankSelected.clear();systemSelected.clear();operationId=null;render();}
 
  async function refresh(){try{await load();}catch(err){notify('Could not load bank transactions: '+err.message);}}
  function resetSelections(){bankSelected.clear();systemSelected.clear();operationId=null;render();}
