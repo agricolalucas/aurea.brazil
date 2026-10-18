@@ -1,0 +1,62 @@
+name: Fix finance movement types and importer
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-cash-finance-types-importer.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch expenses cash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('expenses_cash.html');s=p.read_text(encoding='utf-8')
+          assert 'AES_FINANCE_RECEIPT_CASH_REGISTER_V1' in s
+          a=s.index(' function receiptRegisterRows(){');b=s.index(' function extraRegisterRows()',a)
+          replacement=""" let receiptImporters=new Map();
+           function receiptRegisterRows(){
+            const selectedBank=String(form.elements.bank.selectedOptions[0]?.textContent||'').trim().toLowerCase();
+            return receiptRecords.filter(x=>String(x.currency||'USD').toUpperCase()===String(currency()).toUpperCase()).filter(x=>{
+             const receiptBank=String(x.bank||'').trim().toLowerCase();
+             return !receiptBank||!selectedBank||receiptBank===selectedBank||selectedBank.includes(receiptBank)||receiptBank.includes(selectedBank);
+            }).map(x=>{
+             const kind=String(x.movement_type||'receipt').toLowerCase();
+             const credit=kind==='receipt';
+             const amount=Number(x.amount||0);
+             return {id:x.id,kind:'receipt',bankId:bank(),gstin:'',source:'Orders & Entries · '+(x.payment_type||x.movement_type||'Receipt'),direction:credit?'credit':'debit',credit:credit?amount:0,debit:credit?0:amount,invoice:x.order_number||'',date:x.movement_date||'',party:receiptImporters.get(String(x.order_number||'').toUpperCase())||x.order_number||'Importer not registered',description:[x.reference,x.payment_type].filter(Boolean).join(' · '),currency:x.currency||'USD',total:amount,paid:amount,balance:0,status:'Available for reconciliation'};
+            }).filter(x=>x.total>0);
+           }
+          """
+          s=s[:a]+replacement+s[b:]
+          s=s.replace("allRows('aes_finance_order_movements',{movement_type:'receipt'})","allRows('aes_finance_order_movements')")
+          # Importer lookup from registered companies and contracts; do not alter Supabase
+          needle="receiptRecords=receipts;systems=source.data||[];"
+          assert s.count(needle)==1
+          s=s.replace(needle,"""receiptRecords=receipts;
+            const contractResult=await window.brazilDb.from('contracts').select('*').range(0,1999);
+            if(contractResult.error)throw contractResult.error;
+            const companiesResult=await window.brazilDb.from('companies').select('id,name').range(0,1999);
+            if(companiesResult.error)throw companiesResult.error;
+            const companyNames=new Map((companiesResult.data||[]).map(c=>[String(c.id),c.name]));
+            receiptImporters=new Map((contractResult.data||[]).map(c=>{
+             const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||'';
+             return [String(c.order_number||'').toUpperCase(),companyNames.get(String(raw))||String(raw||'')];
+            }));
+            systems=source.data||[];""")
+          p.write_text(s,encoding='utf-8')
+          print('All payment types and importer names integrated')
+          
+          PY
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add expenses_cash.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Include all finance movement types and importer in cash reconciliation"
+          git push
