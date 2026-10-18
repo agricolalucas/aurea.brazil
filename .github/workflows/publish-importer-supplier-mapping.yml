@@ -1,0 +1,54 @@
+name: Publish importer supplier mapping
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-importer-supplier-mapping.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply importer mapping
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('expenses_cash.html');s=p.read_text(encoding='utf-8')
+          tag='AES_IMPORTER_SUPPLIER_MAPPING_V2'
+          if tag in s:raise SystemExit('Already patched')
+          old="<th>Supplier / VKN / Buyer</th>"
+          assert s.count(old)==1
+          s=s.replace(old,"<th>Importer / Supplier / VKN / Buyer</th>",1)
+          old="let receiptImporters=new Map();"
+          assert s.count(old)==1
+          s=s.replace(old,"/* AES_IMPORTER_SUPPLIER_MAPPING_V2 */\n let receiptImporters=new Map();",1)
+          old="const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||'';"
+          assert s.count(old)==1
+          s=s.replace(old,"const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||c.details?.importer||c.details?.importer_id||'';",1)
+          old="systems=source.data||[];registerRows="
+          assert s.count(old)==1
+          s=s.replace(old,"""const traderResult=await window.brazilDb.from('aes_trader_deals').select('id,purchase_flow,sale_flow').range(0,1999);
+            if(traderResult.error)throw traderResult.error;
+            for(const deal of traderResult.data||[]){
+             for(const [side,flow] of [['purchase',deal.purchase_flow],['sale',deal.sale_flow]]){
+              const parties=flow?.parties||{};
+              const raw=parties.importer_id||parties.importer||parties.buyer_id||parties.buyer||flow?.importer||'';
+              const name=companyNames.get(String(raw))||String(raw||'');
+              if(name)receiptImporters.set(('TRADER:'+deal.id+':'+side).toUpperCase(),name);
+             }
+            }
+            systems=source.data||[];registerRows=""",1)
+          p.write_text(s,encoding='utf-8')
+          print('Importer lookup updated for export contracts and trader orders')
+          
+          PY
+      - name: Commit HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add expenses_cash.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Fix importer displayed in cash reconciliation supplier column"
+          git push
