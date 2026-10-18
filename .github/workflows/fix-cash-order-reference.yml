@@ -1,4 +1,4 @@
-name: Fix order reference and importer in cash register
+name: Fix order reference and importer in cash register - final publish
 on:
   push:
     branches: [main]
