@@ -6010,7 +6010,7 @@ function openFinanceOrder(order,importer,invoice){
   window.currentFinanceOrder=order;
   if(!window.financeData[order]) window.financeData[order]={invoice:Number(invoice)||0,received:0,fxClosed:0,history:[],hedges:[]};
   document.getElementById('financeOrderWorkspace').style.display='block';
-  document.getElementById('finOrderTitle').textContent=order;
+  document.getElementById('finOrderTitle').textContent=String(order).startsWith('TRADER:')?'—':order;
   document.getElementById('finImporterTitle').textContent=importer;
   const traderOrder=/^TRADER:([^:]+):(purchase|sale)$/.exec(String(order));
   document.getElementById('finOrder').value=traderOrder?'—':order;
@@ -6018,7 +6018,10 @@ function openFinanceOrder(order,importer,invoice){
     Promise.resolve(window.aesSharedClient.from('aes_trader_deals').select('trade_number').eq('id',traderOrder[1]).single()).then(({data,error})=>{
       if(error)throw error;
       if(window.currentFinanceOrder===order&&data?.trade_number){
+        window.financeData[order].tradeNumber=data.trade_number;
         document.getElementById('finOrder').value=data.trade_number;
+        document.getElementById('finOrderTitle').textContent=data.trade_number+' · '+(traderOrder[2]==='purchase'?'COMPRA':'REVENDA');
+        renderFinanceHistory();
       }
     }).catch(e=>notify('Não foi possível carregar o número comercial: '+e.message));
   }
@@ -6126,7 +6129,7 @@ function renderFinanceHistory(){
  tbody.replaceChildren();const d=window.financeData[window.currentFinanceOrder];if(!d)return;
  (d.history||[]).forEach(x=>{
   const tr=document.createElement('tr');
-  const cells=[formatDateBR(x.date),getVal('finImporter')||'—',window.currentFinanceOrder,x.bank||'—',x.type||'',x.ref||'—',usd(d.invoice),usd(x.amount),x.rate==='—'?'—':Number(x.rate||0).toFixed(4),Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—',x.ref||'—'];
+  const cells=[formatDateBR(x.date),getVal('finImporter')||'—',d.tradeNumber||(/^TRADER:/i.test(window.currentFinanceOrder)?'—':window.currentFinanceOrder),x.bank||'—',x.type||'',x.ref||'—',usd(d.invoice),usd(x.amount),x.rate==='—'?'—':Number(x.rate||0).toFixed(4),Number(x.rate)?'BRL '+(Number(x.amount)*Number(x.rate)).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—',x.ref||'—'];
   cells.forEach(value=>{const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)});
   const td=document.createElement('td');
   if(x.persisted&&x.id!=null){
@@ -10980,7 +10983,9 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
        window.openFinanceOrder(financeKey,party,total);
        const title=$('finOrderTitle'),orderInput=$('finOrder');
        if(title)title.textContent=(deal.trade_number||'—')+' · '+label;
-       if(orderInput)orderInput.value=(deal.trade_number||'—')+' · '+label;
+       if(orderInput)orderInput.value=deal.trade_number||'—';
+       window.financeData[financeKey].tradeNumber=deal.trade_number||'';
+       window.renderFinanceHistory?.();
        const subtitle=$('finImporterTitle');if(subtitle)subtitle.textContent=party+' · '+(kind==='purchase'?'A PAGAR':'A RECEBER');
        const balanceLabel=document.querySelector('label[for="finOrderBalance"]');
        if(balanceLabel)balanceLabel.textContent=kind==='purchase'?'Saldo a Pagar':'Saldo a Receber';
