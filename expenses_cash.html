@@ -383,7 +383,7 @@ window.brazilUpdateExpenseReconciliation=items=>{
 </script><script>
 window.brazilCashRegisterRows=function(sales,expenses){
  const n=v=>Math.round((Number(v)||0)*100)/100;
- return [...sales.filter(x=>x.status!=='Cancelled').map(x=>{const total=n(x.amount_try),paid=n(x.paid_try),balance=n(Math.max(0,total-paid));return {id:x.id,kind:'sales',gstin:'',source:'Sales Invoices · Credit',invoice:x.invoice_number||'',date:x.invoice_date||x.date||'',party:x.buyer_company||'',description:x.product||x.product_name||x.details?.product||x.details?.product_name||'',currency:x.currency||'TRY',total,paid,balance,status:balance===0?'Paid':paid>0?'Partially Paid':'Pending'};}),...expenses.map(x=>{const total=n(x.total_amount),paid=n(x.paid_amount),balance=n(Math.max(0,total-paid)),lines=Array.isArray(x.lines)?x.lines:[];return {id:x.id,kind:'expense',gstin:x.details?.gstin||lines.find(l=>l.gstin)?.gstin||'',source:'Expenses & KDV · Debit',invoice:x.tax_invoice_number||x.details?.invoice_number||'',date:x.expense_date||'',party:x.supplier_company||'',description:lines.map(l=>l.description).filter(Boolean).join(' · ')||x.details?.description||'',currency:x.currency||'TRY',total,paid,balance,status:balance===0?'Paid':paid>0?'Partially Paid':'Payable'};})];
+ return [...sales.filter(x=>x.status!=='Cancelled').map(x=>{const total=n(x.amount_try),paid=n(x.paid_try),balance=n(Math.max(0,total-paid));return {...x,id:x.id,kind:'sales',gstin:'',source:'Sales Invoices · Credit',invoice:x.invoice_number||'',date:x.invoice_date||x.date||'',party:x.buyer_company||'',description:x.product||x.product_name||x.details?.product||x.details?.product_name||'',currency:x.currency||'TRY',total,paid,balance,status:balance===0?'Paid':paid>0?'Partially Paid':'Pending'};}),...expenses.map(x=>{const total=n(x.total_amount),paid=n(x.paid_amount),balance=n(Math.max(0,total-paid)),lines=Array.isArray(x.lines)?x.lines:[];return {...x,id:x.id,kind:'expense',gstin:x.details?.gstin||lines.find(l=>l.gstin)?.gstin||'',source:'Expenses & KDV · Debit',invoice:x.tax_invoice_number||x.details?.invoice_number||'',date:x.expense_date||'',party:x.supplier_company||'',description:lines.map(l=>l.description).filter(Boolean).join(' · ')||x.details?.description||'',currency:x.currency||'TRY',total,paid,balance,status:balance===0?'Paid':paid>0?'Partially Paid':'Payable'};})];
 };
 
 </script><script>(function(){
@@ -583,8 +583,8 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  let orderRecords=[],financialRecords=[],registerRows=[],transactions=[],systems=[],statements=[],statementTransactions=[],matches=[],items=[],legacyClosings=[],generation=0,pending=null,previewRows=[],previewSelected=new Set(),bankSelected=new Set(),systemSelected=new Set(),registerSelected=systemSelected,operationId=null;
  const currency=()=>$('cashCurrency').value,bank=()=>form.elements.bank.value,money=n=>`${currency()} ${Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
- function orderRegisterRows(){return orderRecords.filter(x=>!x.details?.deletedAt).map(x=>{const d=x.details||{},converted=x.currency==='USD'&&d.conversionMode!=='none'&&d.convertedTry!=null?Number(d.convertedTry):null,amount=converted??Number(x.amount),cur=converted!=null?'TRY':x.currency;return {id:x.id,kind:'order',bankId:x.bank_id,gstin:'',source:'Register Order Payment · Debit',invoice:x.shipment_reference||'',date:x.payment_date||'',party:d.exporter||d.orderDisplay||'Order payment',description:[d.bankReference,d.notes].filter(Boolean).join(' · '),currency:cur,total:amount,paid:amount,balance:0,status:'Payment recorded'};}).filter(x=>x.total>0);}
- function financialRegisterRows(){return financialRecords.filter(x=>x.bank_id===bank()&&x.kind==='manual').map(x=>({id:x.id,kind:'financial',bankId:x.bank_id,gstin:'',source:'Financial Entry · '+(Number(x.credit)>0?'Credit':'Debit'),direction:Number(x.credit)>0?'credit':'debit',credit:Number(x.credit),debit:Number(x.debit),invoice:x.reference,date:x.entry_date,party:'Financial Expense',description:x.description,currency:x.currency,total:Number(x.debit)||Number(x.credit),paid:0,balance:Number(x.debit)||Number(x.credit),status:'Available for reconciliation'}));}
+ function orderRegisterRows(){return orderRecords.filter(x=>!x.details?.deletedAt).map(x=>{const d=x.details||{},converted=x.currency==='USD'&&d.conversionMode!=='none'&&d.convertedTry!=null?Number(d.convertedTry):null,amount=converted??Number(x.amount),cur=converted!=null?'TRY':x.currency;return {...x,id:x.id,kind:'order',bankId:x.bank_id,gstin:'',source:'Register Order Payment · Debit',invoice:x.shipment_reference||'',date:x.payment_date||'',party:d.exporter||d.orderDisplay||'Order payment',description:[d.bankReference,d.notes].filter(Boolean).join(' · '),currency:cur,total:amount,paid:amount,balance:0,status:'Payment recorded'};}).filter(x=>x.total>0);}
+ function financialRegisterRows(){return financialRecords.filter(x=>x.bank_id===bank()&&x.kind==='manual').map(x=>({...x,id:x.id,kind:'financial',bankId:x.bank_id,gstin:'',source:'Financial Entry · '+(Number(x.credit)>0?'Credit':'Debit'),direction:Number(x.credit)>0?'credit':'debit',credit:Number(x.credit),debit:Number(x.debit),invoice:x.reference,date:x.entry_date,party:'Financial Expense',description:x.description,currency:x.currency,total:Number(x.debit)||Number(x.credit),paid:0,balance:Number(x.debit)||Number(x.credit),status:'Available for reconciliation'}));}
  /* AES_FINANCE_RECEIPT_CASH_REGISTER_V1 */
  let receiptRecords=[];
  /* AES_IMPORTER_SUPPLIER_MAPPING_V2 */
@@ -598,7 +598,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
    const kind=String(x.movement_type||'receipt').toLowerCase();
    const credit=kind==='receipt';
    const amount=Number(x.amount||0);
-   return {id:x.id,kind:'receipt',bankId:bank(),gstin:'',source:'Orders & Entries · '+(x.payment_type||x.movement_type||'Receipt'),direction:credit?'credit':'debit',credit:credit?amount:0,debit:credit?0:amount,invoice:x.order_number||'',date:x.movement_date||'',party:receiptImporters.get(String(x.order_number||'').toUpperCase())||x.order_number||'Importer not registered',description:[x.reference,x.payment_type].filter(Boolean).join(' · '),currency:x.currency||'USD',total:amount,paid:amount,balance:0,status:'Available for reconciliation'};
+   return {...x,id:x.id,kind:'receipt',bankId:bank(),gstin:'',source:'Orders & Entries · '+(x.payment_type||x.movement_type||'Receipt'),direction:credit?'credit':'debit',credit:credit?amount:0,debit:credit?0:amount,invoice:x.order_number||'',date:x.movement_date||'',party:receiptImporters.get(String(x.order_number||'').toUpperCase())||x.order_number||'Importer not registered',description:[x.reference,x.payment_type].filter(Boolean).join(' · '),currency:x.currency||'USD',total:amount,paid:amount,balance:0,status:'Available for reconciliation'};
   }).filter(x=>x.total>0);
  }
  function extraRegisterRows(){return [...orderRegisterRows(),...financialRegisterRows(),...receiptRegisterRows()];}
@@ -662,7 +662,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
    for(const candidate of raw){
     const v=String(candidate||'').trim();
     if(!v)continue;
-    const idMatch=v.match(/^TRADER:([0-9a-f-]{36})(?::(?:purchase|sale))?$/i);
+    const idMatch=v.match(/\bTRADER:([0-9a-f-]{36})(?::(?:purchase|sale))?\b/i);
     const found=tradeNumbers.get((idMatch?idMatch[1]:v).toLowerCase())||tradeByNumber.get(v.toUpperCase());
     if(found)return found;
    }
@@ -672,7 +672,8 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
   systems=source.data||[];
   const contractOrderMap=new Map((contractResult.data||[]).map(c=>[String(c.id),String(c.order_number||'')]));
   registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()].map(x=>{
-    const order=String(x.invoice_order||x.order_number||x.details?.order_number||x.details?.order||contractOrderMap.get(String(x.contract_id||x.details?.contract_id||''))||'').trim();
+    const order=String(x.invoice_order||x.order_number||x.details?.order_number||x.details?.order||contractOrderMap.get(String(x.contract_id||x.details?.contract_id||''))||'').trim().replace(/\bTRADER:([0-9a-f-]{36})(?::(?:purchase|sale))?\b/gi,(ref,id)=>tradeNumbers.get(id.toLowerCase())||ref);
+    x.invoice=String(x.invoice||'').replace(/\bTRADER:([0-9a-f-]{36})(?::(?:purchase|sale))?\b/gi,(ref,id)=>tradeNumbers.get(id.toLowerCase())||ref);
     if(order&&!String(x.invoice||'').toUpperCase().includes(order.toUpperCase()))x.invoice=[x.invoice,order].filter(Boolean).join(' / ');
     const trade=linkedTrade(x);
     if(trade&&!String(x.invoice||'').toUpperCase().includes(trade.toUpperCase()))x.invoice=[x.invoice,'Trade: '+trade].filter(Boolean).join(' / ');
