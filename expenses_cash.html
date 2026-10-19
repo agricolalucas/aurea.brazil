@@ -643,7 +643,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
    const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||c.details?.importer||c.details?.importer_id||'';
    return [String(c.order_number||'').toUpperCase(),companyNames.get(String(raw))||String(raw||'')];
   }));
-  const traderResult=await window.brazilDb.from('aes_trader_deals').select('id,purchase_flow,sale_flow').range(0,1999);
+  const traderResult=await window.brazilDb.from('aes_trader_deals').select('id,trade_number,purchase_flow,sale_flow').range(0,1999);
   if(traderResult.error)throw traderResult.error;
   for(const deal of traderResult.data||[]){
    for(const [side,flow] of [['purchase',deal.purchase_flow],['sale',deal.sale_flow]]){
@@ -653,12 +653,29 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
     if(name)receiptImporters.set(('TRADER:'+deal.id+':'+side).toUpperCase(),name);
    }
   }
+  /* AES_CASH_TRADE_REFERENCE_V4: resolve only explicit Trader identifiers. */
+  const tradeNumbers=new Map((traderResult.data||[]).filter(d=>d.id&&d.trade_number).map(d=>[String(d.id).toLowerCase(),String(d.trade_number).trim()]));
+  const tradeByNumber=new Map((traderResult.data||[]).filter(d=>d.trade_number).map(d=>[String(d.trade_number).trim().toUpperCase(),String(d.trade_number).trim()]));
+  function linkedTrade(row){
+   const details=row.details||{};
+   const raw=[row.trade_id,row.trader_deal_id,row.deal_id,details.trade_id,details.trader_deal_id,details.deal_id,row.order_number,row.invoice_order,details.order_number,details.order,row.invoice,row.reference];
+   for(const candidate of raw){
+    const v=String(candidate||'').trim();
+    if(!v)continue;
+    const idMatch=v.match(/^TRADER:([0-9a-f-]{36})(?::(?:purchase|sale))?$/i);
+    const found=tradeNumbers.get((idMatch?idMatch[1]:v).toLowerCase())||tradeByNumber.get(v.toUpperCase());
+    if(found)return found;
+   }
+   return '';
+  }
   /* AES_CASH_ORDER_REFERENCE_V3 */
   systems=source.data||[];
   const contractOrderMap=new Map((contractResult.data||[]).map(c=>[String(c.id),String(c.order_number||'')]));
   registerRows=[...window.brazilCashRegisterRows(sales,expenses),...extraRegisterRows()].map(x=>{
     const order=String(x.invoice_order||x.order_number||x.details?.order_number||x.details?.order||contractOrderMap.get(String(x.contract_id||x.details?.contract_id||''))||'').trim();
     if(order&&!String(x.invoice||'').toUpperCase().includes(order.toUpperCase()))x.invoice=[x.invoice,order].filter(Boolean).join(' / ');
+    const trade=linkedTrade(x);
+    if(trade&&!String(x.invoice||'').toUpperCase().includes(trade.toUpperCase()))x.invoice=[x.invoice,'Trade: '+trade].filter(Boolean).join(' / ');
     return x;
   });transactions=tt;statements=ff;statementTransactions=statementRows;matches=mm;items=ii;window.brazilUpdateExpenseReconciliation(items);bankSelected.clear();systemSelected.clear();operationId=null;render();}
 
