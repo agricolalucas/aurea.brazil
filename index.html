@@ -283,10 +283,17 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #financeTable td .btn{min-height:27px;padding:4px 7px;font-size:10px;margin:0}
 </style>
 <link rel="stylesheet" href="css/brokerage-table-fix.css">
+<style id="aesSidebarCollapseStyle">
+.app.aes-sidebar-collapsed{grid-template-columns:minmax(0,1fr)}
+.app.aes-sidebar-collapsed>.sidebar{display:none}
+.aes-topbar-start{display:flex;align-items:center;gap:12px;min-width:0}
+#aesSidebarToggle{flex-shrink:0;width:40px;height:40px;padding:0;font-size:21px}
+@media(max-width:650px){.aes-topbar-start{gap:0}}
+</style>
 </head>
 <body><datalist id="aesCarrierList"></datalist><datalist id="aesBookingAgentList"></datalist><datalist id="aesBookingResponsibleList"></datalist>
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" id="aesMainSidebar">
     <div class="logo">AUREA <span>EXPORT SYSTEM</span><small>AES · Export Management ERP</small></div>
     <div class="group">Visão Geral</div>
     <button class="navbtn active" data-view="dashboard"><span class="ico">▦</span>Dashboard</button>
@@ -309,7 +316,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
 
   <div class="shell">
     <div class="topbar">
-      <div class="search">⌕ <input placeholder="Buscar Order, Importer, Booking, BL, Container..."></div>
+      <div class="aes-topbar-start"><button type="button" class="btn" id="aesSidebarToggle" aria-controls="aesMainSidebar" aria-expanded="true" aria-label="Recolher menu lateral" title="Recolher menu lateral">☰</button><div class="search">⌕ <input placeholder="Buscar Order, Importer, Booking, BL, Container..."></div></div>
       <div class="userbox"><label for="aesLanguage" class="language-label">Language</label><select id="aesLanguage" aria-label="Interface language" onchange="aesSetLanguage(this.value)"><option value="en">English</option><option value="pt">Português</option></select><div class="avatar">PG</div><div><b style="font-size:12px">Paula Gobbi</b><div class="sub" style="margin:0">Administrador</div></div></div>
     </div>
 
@@ -11007,6 +11014,25 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  });
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('finance')?.classList.contains('active'))refresh();});
  window.aesFinanceRefreshTrades=refresh;
+})();
+</script>
+<script id="aesSidebarCollapseScript">
+(()=>{
+ const app=document.querySelector('.app'),button=document.getElementById('aesSidebarToggle');
+ if(!app||!button)return;
+ const key='aesBrazilSidebarCollapsed';
+ function apply(collapsed){
+  app.classList.toggle('aes-sidebar-collapsed',collapsed);
+  button.setAttribute('aria-expanded',String(!collapsed));
+  const label=collapsed?'Expandir menu lateral':'Recolher menu lateral';
+  button.setAttribute('aria-label',label);button.title=label;
+ }
+ let collapsed=false;try{collapsed=localStorage.getItem(key)==='1';}catch(_e){}
+ apply(collapsed);
+ button.addEventListener('click',()=>{
+  const collapsed=!app.classList.contains('aes-sidebar-collapsed');
+  apply(collapsed);try{localStorage.setItem(key,collapsed?'1':'0');}catch(_e){}
+ });
 })();
 </script>
 </body>
