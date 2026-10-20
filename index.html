@@ -6126,8 +6126,9 @@ async function aesFinanceDeleteHistory(id){
  const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
  aesFinanceHistoryBusy.add(String(id));
  try{
-  const {data,error}=await db.from('aes_finance_order_movements').delete().eq('id',id).eq('order_number',order).select('id').single();
-  if(error)throw error;if(!data?.id)throw Error('Não confirmado');
+  const {data,error}=await db.from('aes_finance_order_movements').delete().eq('id',id).eq('order_number',order).select('id');
+  if(error)throw error;
+  if(!Array.isArray(data)||data.length!==1||String(data[0].id)!==String(id))throw Error('Exclusão não autorizada ou lançamento indisponível. Lançamentos conciliados precisam ser desconciliados primeiro. Atualize os dados e verifique a permissão de exclusão.');
   await aesFinanceLoadSaved(order);notify('Lançamento excluído.');
  }catch(e){notify('Erro ao excluir: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
 }
