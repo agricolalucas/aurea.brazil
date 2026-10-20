@@ -11049,5 +11049,47 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  });
 })();
 </script>
+<script id="aesBrokerLiveFilters">
+
+(()=>{
+ const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+ const ids=['bcBrokerClientFilter','bcBrokerExporterFilter','bcBrokerInvoiceFilter'];
+ function filterBrokerRows(){
+  const body=document.getElementById('bcOperationRows');if(!body)return;
+  const client=normalize(document.getElementById(ids[0])?.value);
+  const exporter=normalize(document.getElementById(ids[1])?.value);
+  const status=document.getElementById(ids[2])?.value||'';
+  let total=0,visible=0;
+  for(const row of body.rows){
+   if(row.cells.length<2)continue;
+   const parties=row.cells[1];
+   const blocks=Array.from(parties.children);
+   const partyText=index=>{
+    const block=blocks[index];if(!block)return '';
+    const value=block.lastElementChild;
+    return value&&value!==block.firstElementChild?value.textContent:block.textContent;
+   };
+   const exporterName=normalize(partyText(0)||row.dataset.exporter);
+   const clientName=normalize(partyText(1)||row.dataset.client);
+   const invoiceStatus=row.querySelector('select')?.value||row.dataset.invoiceStatus||'pending';
+   const statuses=(row.dataset.invoiceStatuses||invoiceStatus).split(',');
+   const match=exporterName.includes(exporter)&&clientName.includes(client)&&(!status||statuses.includes(status));
+   row.hidden=!match;row.style.setProperty('display',match?'table-row':'none','important');
+   total++;if(match)visible++;
+  }
+  let result=document.getElementById('bcBrokerFilterResult');
+  if(!result){result=document.createElement('p');result.id='bcBrokerFilterResult';result.className='sub';result.setAttribute('role','status');body.closest('.bc-orders')?.before(result);}
+  result.textContent=visible+' de '+total+' operações';
+ }
+ window.aesBrokerFilterRows=filterBrokerRows;
+ for(const type of ['input','change'])document.addEventListener(type,event=>{
+  if(ids.includes(event.target?.id))filterBrokerRows();
+ },true);
+ const body=document.getElementById('bcOperationRows');
+ if(body)new MutationObserver(filterBrokerRows).observe(body,{childList:true,subtree:true});
+ filterBrokerRows();
+})();
+
+</script>
 </body>
 </html>
