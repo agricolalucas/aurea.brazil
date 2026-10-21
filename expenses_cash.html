@@ -621,11 +621,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  /* AES_IMPORTER_SUPPLIER_MAPPING_V2 */
  let receiptImporters=new Map();
  function receiptRegisterRows(){
-  const selectedBank=String(form.elements.bank.selectedOptions[0]?.textContent||'').trim().toLowerCase();
-  return receiptRecords.filter(x=>String(x.currency||'USD').toUpperCase()===String(currency()).toUpperCase()).filter(x=>{
-   const receiptBank=String(x.bank||'').trim().toLowerCase();
-   return !receiptBank||!selectedBank||receiptBank===selectedBank||selectedBank.includes(receiptBank)||receiptBank.includes(selectedBank);
-  }).map(x=>{
+  return receiptRecords.map(x=>{
    const kind=String(x.movement_type||'receipt').toLowerCase();
    const credit=kind==='receipt';
    const amount=Number(x.amount||0);
@@ -664,7 +660,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  function render(){
  const showDate=v=>v?String(v).replace(/^(\d{4})-(\d{2})-(\d{2})$/,'$3/$2/$1'):'';document.querySelectorAll('.bank-currency-label').forEach(x=>x.textContent=currency());
  const fmt=(n,c)=>`${c} ${Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
- $('cashRegisteredInvoiceRows').innerHTML=registerRows.filter(x=>visible('system',x.kind+'-'+x.id)&&passesFilter('system',x)).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>{const key=x.kind+'-'+x.id,m=matched('system',key);return `<tr class="${m?'bank-reconciled':''}"><td><input type="checkbox" data-register-pick="${esc(key)}" ${registerSelected.has(key)?'checked':''} ${m||x.currency!==currency()||Number(x.total)<=0||(x.kind==='order'&&!systems.some(y=>y.id===key))?'disabled':''} aria-label="Select invoice ${esc(x.invoice)}"></td><td>${esc(x.source)}</td><td>${esc(showDate(x.date))}</td><td><b>${esc(x.party)}</b>${x.description?'<br><small>'+esc(x.description)+'</small>':''}${x.kind==='expense'?`<br><small>${esc(x.gstin||'VKN not entered')}</small>`:''}</td><td>${esc(x.invoice||'—')}</td><td>${fmt(x.total,x.currency)}</td><td>${esc(x.currency)}</td><td>${m?'Reconciled':esc(x.status)}</td></tr>`;}).join('')||'<tr><td colspan="8">No registered invoices for this view.</td></tr>';
+ $('cashRegisteredInvoiceRows').innerHTML=registerRows.filter(x=>visible('system',x.kind+'-'+x.id)&&passesFilter('system',x)).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>{const key=x.kind+'-'+x.id,m=matched('system',key);return `<tr class="${m?'bank-reconciled':''}"><td><input type="checkbox" data-register-pick="${esc(key)}" ${registerSelected.has(key)?'checked':''} ${m||x.currency!==currency()||Number(x.total)<=0||(['order','receipt'].includes(x.kind)&&!systems.some(y=>y.id===key))?'disabled':''} aria-label="Select invoice ${esc(x.invoice)}"></td><td>${esc(x.source)}</td><td>${esc(showDate(x.date))}</td><td><b>${esc(x.party)}</b>${x.description?'<br><small>'+esc(x.description)+'</small>':''}${x.kind==='expense'?`<br><small>${esc(x.gstin||'VKN not entered')}</small>`:''}</td><td>${esc(x.invoice||'—')}</td><td>${fmt(x.total,x.currency)}</td><td>${esc(x.currency)}</td><td>${m?'Reconciled':esc(x.status)}</td></tr>`;}).join('')||'<tr><td colspan="8">No registered invoices for this view.</td></tr>';
 
  const groups={};registerRows.forEach(x=>{const key=x.source+' | '+x.currency;if(!groups[key])groups[key]={total:0,paid:0,balance:0,count:0};const g=groups[key];g.count++;g.total+=core.cents(x.total);g.paid+=core.cents(x.paid);g.balance+=core.cents(x.balance);});$('cashRegisteredInvoiceSummary').textContent=Object.entries(groups).map(([key,g])=>{const cur=key.split(' | ')[1];return `${key}: ${g.count} invoices · Total ${fmt(g.total/100,cur)} · Paid ${fmt(g.paid/100,cur)} · Balance ${fmt(g.balance/100,cur)}`;}).join(' / ');
  $('bankTransactionRows').innerHTML=transactions.filter(x=>visible('bank',x.id)&&passesFilter('bank',x)).sort((a,b)=>a.transaction_date.localeCompare(b.transaction_date)||a.source_row-b.source_row).map(x=>`<tr class="${matched('bank',x.id)?'bank-reconciled':''}"><td><input type="checkbox" data-bank-pick="bank" data-id="${x.id}" ${matched('bank',x.id)?'disabled':''} ${bankSelected.has(x.id)?'checked':''}></td><td>${esc(x.bank_serial||x.source_row)}</td><td>${esc(showDate(x.transaction_date))}</td><td>${esc(showDate(x.value_date))}</td><td>${esc(x.description)}</td><td>${money(Number(x.debit)||Number(x.credit))}</td><td>${Number(x.debit)>0?'Debit':'Credit'}</td><td>${x.balance==null?'—':money(x.balance)}</td><td>${esc(x.reference)}</td><td>${esc(x.branch_name||'')}</td><td>${esc(x.channel||'')}</td><td>${esc(x.transaction_type||'')}</td><td>${matched('bank',x.id)?'Matched':'Unmatched'}</td></tr>`).join('')||'<tr><td colspan="13">No bank transactions for this view. Upload a statement to begin.</td></tr>';
@@ -689,12 +685,12 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
    const raw=c.importer_name||c.importer||c.importer_id||c.buyer_name||c.buyer||c.details?.importer||c.details?.importer_id||'';
    return [String(c.order_number||'').toUpperCase(),companyNames.get(String(raw))||String(raw||'')];
   }));
-  const traderResult=await window.brazilDb.from('aes_trader_deals').select('id,trade_number,purchase_flow,sale_flow').range(0,1999);
+  const traderResult=await window.brazilDb.from('aes_trader_deals').select('id,trade_number,supplier_id,buyer_id,purchase_flow,sale_flow').range(0,1999);
   if(traderResult.error)throw traderResult.error;
   for(const deal of traderResult.data||[]){
    for(const [side,flow] of [['purchase',deal.purchase_flow],['sale',deal.sale_flow]]){
     const parties=flow?.parties||{};
-    const raw=parties.importer_id||parties.importer||parties.buyer_id||parties.buyer||flow?.importer||'';
+    const raw=side==='purchase'?(parties.exporter_id||parties.exporter||deal.supplier_id||''):(parties.importer_id||parties.importer||parties.buyer_id||parties.buyer||flow?.importer||deal.buyer_id||'');
     const name=companyNames.get(String(raw))||String(raw||'');
     if(name)receiptImporters.set(('TRADER:'+deal.id+':'+side).toUpperCase(),name);
    }
