@@ -10919,7 +10919,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 <style>#aesTraderEditor.broker-mode .aes-trader-sidebyside,#aesTraderEditor.broker-mode .aes-trade-payments-grid{grid-template-columns:1fr}#aesTraderEditor [hidden]{display:none!important}#aesTraderEditor.broker-mode .aes-trader-totals{grid-template-columns:1fr}#brokerFinance [hidden]{display:none!important}</style><style>
 #brokerFinance{color:#20364c}#brokerFinance>.card{padding:24px;border:1px solid #dce5ed;border-radius:12px;background:#fff}#brokerFinance .pagehead{margin-bottom:20px}#brokerFinance h3{margin:0;font-size:17px}.bc-orders-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:14px}#brokerFinance .bc-orders{max-height:460px;min-height:220px;border:1px solid #dce5ed;border-radius:8px;overflow:auto}#brokerFinance .bc-orders table{width:100%;min-width:950px;border-collapse:collapse}#brokerFinance .bc-orders th{background:#203e58;color:#fff;font-size:11px;padding:13px 10px;position:sticky;top:0;text-align:left}#brokerFinance .bc-orders td{padding:13px 10px;font-size:12px;border-bottom:1px solid #e8edf2;vertical-align:middle}#brokerFinance .bc-orders tbody tr:nth-child(even){background:#f7f9fc}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5),#brokerFinance .bc-orders td:nth-child(6){white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance #bcOperation{max-width:520px;width:100%;margin:6px 0 8px}#brokerFinance #bcFinanceMessage{padding:12px 16px;background:#edf4f8;border-left:3px solid #294f6b;border-radius:4px;line-height:1.5}#brokerFinance .aes-trader-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}#brokerFinance .aes-trader-totals>div{padding:16px;background:#f4f7fa;border:1px solid #e1e8ef;border-radius:8px}#brokerFinance .aes-trader-totals small{font-size:11px;color:#64748b;display:block;margin-bottom:7px}#brokerFinance .aes-trader-totals strong{font-size:21px;display:block}#brokerFinance #bcBalance{color:#b42318}#brokerFinance .bc-entries{overflow:visible;border:0;min-height:0}#brokerFinance .bc-entries table,#brokerFinance .bc-entries tbody{display:block;width:100%}#brokerFinance .bc-entries thead{display:none}#brokerFinance #bcRows tr{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px 14px;padding:20px;margin:0 0 16px;border:1px solid #dce5ed;border-top:3px solid #294f6b;border-radius:8px;background:#fbfcfe}#brokerFinance #bcRows td{display:block;padding:0;border:0;min-width:0;font-size:12px}#brokerFinance #bcRows td:before{content:attr(data-label);display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#294f6b;letter-spacing:.3px;margin-bottom:8px}#brokerFinance #bcRows label{display:block;font-size:10px;color:#66788b;margin:5px 0 3px;font-weight:400}#brokerFinance #bcRows input,#brokerFinance #bcRows select{width:100%!important;min-width:0!important;max-width:100%;box-sizing:border-box;height:35px;padding:7px 9px;font-size:12px;border:1px solid #cad7e2;border-radius:5px;background:white}#brokerFinance #bcRows input[readonly]{background:#edf2f6;color:#516577}#brokerFinance #bcRows [data-amount],#brokerFinance #bcRows [data-balance]{font-weight:700;line-height:1.7}#brokerFinance #bcRows .btn{margin:0 4px 7px 0;font-size:12px;padding:8px 10px}#brokerFinance .toolbar{gap:14px}#brokerFinance .btn.primary{background:#203e58;color:white}#brokerFinance [hidden]{display:none!important}@media(max-width:1200px){#brokerFinance #bcRows tr{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:760px){#brokerFinance>.card{padding:14px}#brokerFinance #bcRows tr{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px}#brokerFinance .aes-trader-totals{grid-template-columns:1fr}.bc-orders-heading{display:block}}
 </style><style>#brokerFinance .bc-orders table{min-width:1450px;table-layout:fixed}#brokerFinance .bc-orders th,#brokerFinance .bc-orders td{padding:12px 10px;vertical-align:middle;overflow-wrap:anywhere;text-align:left}#brokerFinance .bc-orders th:nth-child(1){width:105px}#brokerFinance .bc-orders th:nth-child(2){width:225px}#brokerFinance .bc-orders th:nth-child(3){width:135px}#brokerFinance .bc-orders th:nth-child(4),#brokerFinance .bc-orders th:nth-child(5){width:90px}#brokerFinance .bc-orders th:nth-child(6){width:170px}#brokerFinance .bc-orders th:nth-child(7),#brokerFinance .bc-orders th:nth-child(8),#brokerFinance .bc-orders th:nth-child(9){width:115px;text-align:right}#brokerFinance .bc-orders td:nth-child(7),#brokerFinance .bc-orders td:nth-child(8),#brokerFinance .bc-orders td:nth-child(9){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}#brokerFinance .bc-orders td:nth-child(6){white-space:normal}#brokerFinance .bc-orders th:nth-child(10){width:175px}#brokerFinance .bc-orders th:nth-child(11){width:155px}#brokerFinance .bc-orders td:nth-child(4),#brokerFinance .bc-orders td:nth-child(5){white-space:nowrap}</style><script>
-(()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');const cashUrl='expenses_cash.html?v=4f96b78487c955b0';if(frame.getAttribute('src')!==cashUrl)frame.src=cashUrl;else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
+(()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');const cashUrl='expenses_cash.html?v=21c4d796e9a6c3e2';if(frame.getAttribute('src')!==cashUrl)frame.src=cashUrl;else frame.contentWindow.cashReload?.().catch(e=>window.notify?.(e.message));}else original(tab);};})();
 </script>
 <script>
 /* Financeiro: append trader purchase and resale to the existing export orders. */
@@ -11088,6 +11088,92 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  const body=document.getElementById('bcOperationRows');
  if(body)new MutationObserver(filterBrokerRows).observe(body,{childList:true,subtree:true});
  filterBrokerRows();
+})();
+
+</script>
+<script id="aesSearchableUserSelects">
+
+(()=>{
+ if(window.aesSearchableSelectsInstalled)return;
+ window.aesSearchableSelectsInstalled=true;
+ const normalize=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ const states=new Set();let opened=null,sequence=0;
+ const descriptor=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+ const css=document.createElement('style');
+ css.textContent='.aes-search-select{position:relative;display:inline-block;min-width:0;width:100%;vertical-align:middle}.aes-search-select>select.aes-search-native{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;margin:-1px!important;clip-path:inset(50%);overflow:hidden;white-space:nowrap;border:0!important}.aes-search-select-input{width:100%;box-sizing:border-box;padding-right:28px!important;background:#fff}.aes-search-select:after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#526477}.aes-search-select-menu{position:fixed;z-index:100100;background:#fff;border:1px solid #b8c9dc;border-radius:8px;box-shadow:0 6px 22px #142b4626;max-height:260px;overflow:auto;padding:4px;box-sizing:border-box}.aes-search-select-menu[hidden]{display:none!important}.aes-search-select-option{display:block;width:100%;text-align:left;border:0;border-radius:5px;padding:9px 10px;background:#fff;color:#172033;cursor:pointer;white-space:normal;font:inherit;font-size:12px}.aes-search-select-option:hover,.aes-search-select-option[aria-selected=true]{background:#e4efff}.aes-search-select-empty{padding:10px;color:#526477;font-size:12px}';
+ document.head.append(css);
+ function close(state=opened){if(!state)return;state.menu.hidden=true;state.input.setAttribute('aria-expanded','false');state.input.removeAttribute('aria-activedescendant');if(opened===state)opened=null;}
+ function sync(state){
+  const {select,input}=state;input.disabled=select.disabled;input.required=false;
+  if(document.activeElement!==input){input.value=select.selectedOptions[0]?.textContent?.trim()||'';}
+ }
+ function choose(state,option){
+  if(option.disabled)return;
+  descriptor.set.call(state.select,option.value);
+  state.input.value=option.textContent.trim();
+  close(state);
+  state.select.dispatchEvent(new Event('input',{bubbles:true}));
+  state.select.dispatchEvent(new Event('change',{bubbles:true}));
+  sync(state);state.input.focus();
+ }
+ function position(state){
+  const r=state.input.getBoundingClientRect(),height=Math.min(260,state.menu.scrollHeight||260),below=window.innerHeight-r.bottom;
+  state.menu.style.left=Math.max(4,Math.min(r.left,window.innerWidth-Math.min(Math.max(r.width,220),window.innerWidth-8)-4))+'px';
+  state.menu.style.width=Math.min(Math.max(r.width,220),window.innerWidth-8)+'px';
+  state.menu.style.top=(below<Math.min(height,150)&&r.top>height?Math.max(4,r.top-height):r.bottom+3)+'px';
+  state.menu.style.maxHeight=Math.max(100,Math.min(260,below<150&&r.top>height?r.top-8:below-8))+'px';
+ }
+ function highlight(state,index){
+  const buttons=state.menu.querySelectorAll('[role=option]');if(!buttons.length)return;
+  state.index=(index+buttons.length)%buttons.length;
+  buttons.forEach((b,i)=>b.setAttribute('aria-selected',String(i===state.index)));
+  state.input.setAttribute('aria-activedescendant',buttons[state.index].id);
+  buttons[state.index].scrollIntoView({block:'nearest'});
+ }
+ function render(state,query=''){
+  close(opened===state?null:opened);opened=state;state.menu.replaceChildren();state.index=-1;
+  const needle=normalize(query),options=Array.from(state.select.options).filter(o=>!o.disabled&&!o.hidden&&normalize(o.textContent).includes(needle));
+  for(const option of options){
+   const button=document.createElement('button');button.type='button';button.className='aes-search-select-option';
+   button.id=state.menu.id+'-'+state.menu.children.length;button.setAttribute('role','option');button.setAttribute('aria-selected','false');
+   button.textContent=option.textContent;button.addEventListener('mousedown',e=>e.preventDefault());
+   button.addEventListener('click',()=>choose(state,option));state.menu.append(button);
+  }
+  if(!options.length){const empty=document.createElement('div');empty.className='aes-search-select-empty';empty.textContent='Nenhum cadastro encontrado';state.menu.append(empty);}
+  state.menu.hidden=false;state.input.setAttribute('aria-expanded','true');position(state);
+ }
+ function enhance(select){
+  if(select.hidden||select.style.display==='none'||select.multiple||select.size>1||select.classList.contains('aes-search-native')||select.closest('[data-aes-no-search]'))return;
+  const wrapper=document.createElement('span');wrapper.className='aes-search-select';
+  const input=document.createElement('input');input.type='text';input.className='aes-search-select-input';input.autocomplete='off';
+  input.placeholder='Digite para pesquisar…';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');
+  const label=select.getAttribute('aria-label')||select.labels?.[0]?.textContent?.trim()||select.options[0]?.textContent||'Pesquisar cadastro';
+  input.setAttribute('aria-label',label);input.title='Digite o nome e selecione uma opção';
+  const menu=document.createElement('div');menu.id='aesSelectOptions-'+(++sequence);menu.className='aes-search-select-menu';menu.hidden=true;menu.setAttribute('role','listbox');
+  input.setAttribute('aria-controls',menu.id);
+  select.before(wrapper);wrapper.append(select,input);select.classList.add('aes-search-native');select.tabIndex=-1;document.body.append(menu);
+  const state={select,input,menu,wrapper,index:-1};states.add(state);sync(state);
+  input.addEventListener('focus',()=>{sync(state);render(state);input.select();});
+  input.addEventListener('input',()=>render(state,input.value));
+  input.addEventListener('keydown',e=>{
+   if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(menu.hidden)render(state,input.value);highlight(state,state.index+(e.key==='ArrowDown'?1:-1));}
+   else if(e.key==='Enter'&&!menu.hidden){e.preventDefault();const buttons=menu.querySelectorAll('[role=option]');if(buttons.length===1||state.index>=0)buttons[state.index>=0?state.index:0].click();}
+   else if(e.key==='Escape'){e.preventDefault();close(state);input.value=select.selectedOptions[0]?.textContent?.trim()||'';}
+   else if(e.key==='Tab')close(state);
+  });
+  input.addEventListener('blur',()=>{setTimeout(()=>{if(!menu.contains(document.activeElement)){close(state);sync(state);}},0);});
+  select.addEventListener('change',()=>{input.value=select.selectedOptions[0]?.textContent?.trim()||'';sync(state);});
+  select.addEventListener('focus',()=>input.focus());
+  select.addEventListener('invalid',e=>{e.preventDefault();input.focus();input.setCustomValidity('Selecione uma opção cadastrada.');input.reportValidity();input.setCustomValidity('');});
+  new MutationObserver(()=>{sync(state);if(opened===state)render(state,document.activeElement===input?input.value:'');}).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','label']});
+ }
+ function scan(root){if(root.nodeType!==1&&root!==document)return;if(root.matches?.('select'))enhance(root);root.querySelectorAll?.('select').forEach(enhance);}
+ scan(document);
+ new MutationObserver(records=>{for(const r of records)for(const node of r.addedNodes)scan(node);}).observe(document.body,{childList:true,subtree:true});
+ document.addEventListener('pointerdown',e=>{if(opened&&!opened.wrapper.contains(e.target)&&!opened.menu.contains(e.target))close();},true);
+ window.addEventListener('resize',()=>close());window.addEventListener('scroll',e=>{if(opened&&!opened.menu.contains(e.target))close();},true);
+ document.addEventListener('reset',()=>setTimeout(()=>states.forEach(sync),0),true);
+ setInterval(()=>{for(const state of states){if(!state.select.isConnected){state.menu.remove();states.delete(state);}else if(state.wrapper.getClientRects().length)sync(state);}},500);
 })();
 
 </script>
