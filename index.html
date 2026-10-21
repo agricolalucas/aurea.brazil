@@ -11253,5 +11253,29 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  wrap();observer.observe(body,{childList:true,subtree:true,characterData:true});
 })();
 </script>
+
+<script id="aesOrdersLoadRecovery">
+(()=>{
+ let ticket=0;
+ async function reloadOrders(view){
+  const current=++ticket;
+  if(view==='finance'){window.switchFinanceTab?.('orders');}
+  for(let attempt=0;attempt<20;attempt++){
+   if(current!==ticket)return;
+   if(window.aesSharedClient){
+    if(view==='trader')await window.aesTraderRefresh?.();
+    else await window.aesFinanceRefreshTrades?.();
+    return;
+   }
+   await new Promise(resolve=>setTimeout(resolve,500));
+  }
+  window.notify?.('Conexão ainda indisponível. Entre novamente e clique em Atualizar ordens.');
+ }
+ for(const view of ['finance','trader'])document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>button.addEventListener('click',()=>reloadOrders(view)));
+ const list=document.getElementById('financeOrderList');
+ if(list){const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Atualizar ordens';button.style.marginBottom='10px';button.onclick=async()=>{button.disabled=true;try{await reloadOrders('finance');}finally{button.disabled=false;}};list.querySelector('h2')?.after(button);}
+ const gate=document.getElementById('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none'){const view=document.querySelector('#finance.active,#trader.active')?.id;if(view)reloadOrders(view);}}).observe(gate,{attributes:true,attributeFilter:['style']});
+})();
+</script>
 </body>
 </html>
