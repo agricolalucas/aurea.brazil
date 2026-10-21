@@ -10521,22 +10521,9 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
   for(const [key,label] of siKeys){const wrap=document.createElement('div'),title=document.createElement('label'),field=key==='instructions'?document.createElement('textarea'):document.createElement('input');title.textContent=label;field.dataset.key=key;if(['etd','eta'].includes(key))field.type='date';if(key==='instructions'){field.rows=3;wrap.className='wide'}wrap.append(title,field);si.append(wrap)}
  }
  function sharedSI(){return Object.fromEntries(siKeys.map(([k])=>[k,sideNode('shared','si',k).value.trim()]))}
-   /* AES_EXPORTER_SYNC_REPAIR_V2 */
-function aesSyncTradeExporter(){
-  if(broker)return;
-  const source=sideNode('purchase','parties','exporter');
-  const target=sideNode('sale','parties','exporter');
-  if(!source||!target)return;
-  if(source.value && target.value!==source.value)target.value=source.value;
-  target.title='Mesmo Exportador selecionado em 01 · COMPRA';
-}
-document.addEventListener('change',function(ev){
-  if(broker)return;
-  const source=sideNode('purchase','parties','exporter');
-  if(source&&ev.target===source)aesSyncTradeExporter();
-},true);
-function sideData(side){if(side==='sale'&&!broker)aesSyncTradeExporter();const pre=side==='purchase'?'trPurchase':'trSale';if(side==='sale'&&!broker){const purchaseExporter=sideNode('purchase','parties','exporter')?.value;if(purchaseExporter)sideNode('sale','parties','exporter').value=purchaseExporter;}return {model:tradeModelData(side),parties:{...Object.fromEntries(partyKeys.map(([k])=>[k,sideNode(side,'parties',k).value||null])),broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null},si:sharedSI(),delivery:$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value.trim(),payments:paymentData(side),commercial:{product:$(pre+'Product').value.trim(),quantity:Number($(pre+'Quantity').value),unit:$(pre+'Unit').value,unit_price:Number($(pre+'UnitPrice').value),payment_terms:$(pre+'Payment').value.trim()}}}
- function fillSide(side,data={}){if(side==='sale'&&!broker)queueMicrotask(aesSyncTradeExporter);for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';{const intermediary=document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker');if(intermediary)intermediary.value=data.parties?.broker||'';}const pre=side==='purchase'?'trPurchase':'trSale',c=data.commercial||{};for(const [suffix,key] of [['Product','product'],['Quantity','quantity'],['Unit','unit'],['UnitPrice','unit_price'],['Payment','payment_terms']])$(pre+suffix).value=c[key]??(suffix==='Unit'?'MT':'');$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value=data.delivery??'';fillTradeModel(side,{pol:data.si?.pol||'',pod:data.si?.pod||'',clauses:$(side==='purchase'?'trBuyTerms':'trSellTerms').value||'',...(data.model||{})})}
+ /* Keep saved purchase and sale parties independent when opening an operation. */
+ function sideData(side){const pre=side==='purchase'?'trPurchase':'trSale';return {model:tradeModelData(side),parties:{...Object.fromEntries(partyKeys.map(([k])=>[k,sideNode(side,'parties',k).value||null])),broker:document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker')?.value||null},si:sharedSI(),delivery:$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value.trim(),payments:paymentData(side),commercial:{product:$(pre+'Product').value.trim(),quantity:Number($(pre+'Quantity').value),unit:$(pre+'Unit').value,unit_price:Number($(pre+'UnitPrice').value),payment_terms:$(pre+'Payment').value.trim()}}}
+ function fillSide(side,data={}){for(const [key] of partyKeys)sideNode(side,'parties',key).value=data.parties?.[key]??'';{const intermediary=document.getElementById(side==='purchase'?'trPurchaseBroker':'trSaleBroker');if(intermediary)intermediary.value=data.parties?.broker||'';}const pre=side==='purchase'?'trPurchase':'trSale',c=data.commercial||{};for(const [suffix,key] of [['Product','product'],['Quantity','quantity'],['Unit','unit'],['UnitPrice','unit_price'],['Payment','payment_terms']])$(pre+suffix).value=c[key]??(suffix==='Unit'?'MT':'');$(side==='purchase'?'trPurchaseDelivery':'trSaleDelivery').value=data.delivery??'';fillTradeModel(side,{pol:data.si?.pol||'',pod:data.si?.pod||'',clauses:$(side==='purchase'?'trBuyTerms':'trSellTerms').value||'',...(data.model||{})})}
  function fillSI(data={}){for(const [key] of siKeys)sideNode('shared','si',key).value=data[key]??''}
  function syncTraderParties(){
  if(broker){$('trSupplier').value='';$('trTrader').value=sideNode('sale','parties','exporter').value;$('trBuyer').value=sideNode('sale','parties','importer').value;$('trDelivery').value=$('trSaleDelivery').value.trim();return true}
