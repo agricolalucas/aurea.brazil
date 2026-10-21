@@ -11177,5 +11177,68 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 })();
 
 </script>
+
+<script id="aesFinanceAllHistory">
+(()=>{
+ const $=id=>document.getElementById(id);
+ const button=document.createElement('button');button.type='button';button.className='btn';button.dataset.tab='history';button.textContent='Histórico Financeiro';button.onclick=()=>window.switchFinanceTab('history');
+ $('financeTabs').querySelector('[data-tab="orders"]').after(button);
+ const panel=document.createElement('div');panel.id='financeAllHistoryPanel';panel.hidden=true;panel.className='card';
+ panel.innerHTML='<div class="toolbar"><h2 style="font-size:18px;margin:0">Histórico Financeiro · Todas as ordens</h2><button type="button" class="btn" id="financeAllHistoryReload">Atualizar dados</button></div><div class="grid3" style="margin:12px 0"><div><label>Pesquisar</label><input id="financeAllHistorySearch" placeholder="Order, nome, banco ou referência"></div><div><label>Conciliação</label><select id="financeAllHistoryStatus"><option value="">Todos</option><option value="yes">Conciliados</option><option value="no">Não conciliados</option></select></div></div><p id="financeAllHistoryMessage" role="status"></p><div class="tablewrap"><table id="financeAllHistoryTable"><thead><tr><th>Data</th><th>Importer / Supplier / Buyer</th><th>Order</th><th>Operação</th><th>Banco</th><th>Tipo</th><th>Descrição</th><th>Valor</th><th>Taxa</th><th>Valor BRL</th><th>Contrato / Referência</th><th>Conciliação</th></tr></thead><tbody></tbody></table></div>';
+ $('financeOrderList').after(panel);
+ const style=document.createElement('style');style.textContent='#financeAllHistoryTable th,#financeAllHistoryTable td{padding:6px 8px;font-size:12px}#financeAllHistoryTable td{white-space:nowrap}#financeAllHistoryTable td:nth-child(2),#financeAllHistoryTable td:nth-child(7){white-space:normal;max-width:220px}';document.head.append(style);
+ let rows=[],busy=false,sequence=0;
+ const normalize=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const money=(v,c)=>String(c||'USD')+' '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ function render(){
+  const search=normalize($('financeAllHistorySearch').value),status=$('financeAllHistoryStatus').value,body=$('financeAllHistoryTable').tBodies[0];body.replaceChildren();let count=0;
+  for(const row of rows){
+   if(status&&status!==(row.reconciled?'yes':'no'))continue;
+   if(search&&!normalize([row.order,row.party,row.bank,row.reference,row.payment_type,row.operation].join(' ')).includes(search))continue;
+   const tr=body.insertRow();tr.dataset.movementId=row.id;
+   const rate=Number(row.exchange_rate)||0;
+   const values=[row.movement_date?row.movement_date.slice(0,10).split('-').reverse().join('/'):'—',row.party,row.order,row.operation,row.bank||'—',row.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',row.payment_type||'—',money(row.amount,row.currency),rate?rate.toFixed(4):'—',rate?money(Number(row.amount)*rate,'BRL'):'—',row.reference||'—',row.reconciled?'Conciliado':'Não conciliado'];
+   values.forEach(v=>{tr.insertCell().textContent=String(v)});count++;
+  }
+  if(!count){const td=body.insertRow().insertCell();td.colSpan=12;td.textContent='Nenhum lançamento encontrado.';}
+  $('financeAllHistoryMessage').textContent=count+' de '+rows.length+' lançamentos · '+rows.filter(r=>r.reconciled).length+' conciliados';
+ }
+ async function all(db,table,columns,filter){
+  const result=[];for(let offset=0;;offset+=500){let query=db.from(table).select(columns).order('id').range(offset,offset+499);if(filter)query=filter(query);const page=await query;if(page.error)throw page.error;result.push(...(page.data||[]));if((page.data||[]).length<500)return result;}
+ }
+ async function load(){
+  if(busy)return;busy=true;const request=++sequence;$('financeAllHistoryReload').disabled=true;$('financeAllHistoryMessage').textContent='Carregando histórico e conciliações…';
+  try{
+   const db=window.aesSharedClient;if(!db)throw Error('Supabase indisponível');
+   const [movements,items,matches,contracts,deals,companies]=await Promise.all([
+    all(db,'aes_finance_order_movements','id,order_number,movement_type,movement_date,amount,currency,exchange_rate,bank,reference,payment_type,created_at'),
+    all(db,'aes_cash_bank_match_items','id,match_id,system_key',q=>q.eq('side','system').like('system_key','receipt-%')),
+    all(db,'aes_cash_bank_matches','id'),
+    all(db,'contracts','id,order_number,importer_id'),
+    all(db,'aes_trader_deals','id,trade_number,supplier_id,buyer_id,purchase_flow,sale_flow'),
+    all(db,'companies','id,name')
+   ]);
+   const names=new Map(companies.map(c=>[String(c.id),c.name])),contractMap=new Map(contracts.map(c=>[c.order_number,c])),dealMap=new Map(deals.map(d=>[String(d.id),d])),active=new Set(matches.map(m=>m.id)),reconciled=new Set(items.filter(i=>active.has(i.match_id)).map(i=>i.system_key));
+   const next=movements.map(m=>{
+    const key=String(m.order_number||''),trader=/^TRADER:([^:]+):(purchase|sale)$/i.exec(key),deal=trader?dealMap.get(trader[1]):null,flow=trader?(trader[2].toLowerCase()==='purchase'?deal?.purchase_flow:deal?.sale_flow):null,purchase=trader?.[2].toLowerCase()==='purchase';
+    const partyId=trader?(purchase?(flow?.parties?.exporter||deal?.supplier_id):(flow?.parties?.importer||deal?.buyer_id)):contractMap.get(key)?.importer_id;
+    return {...m,order:trader?(deal?.trade_number||'—'):key,party:names.get(String(partyId))||'—',operation:trader?(purchase?'Compra':'Revenda'):'Exportação',reconciled:reconciled.has('receipt-'+m.id)};
+   }).sort((a,b)=>String(b.movement_date||b.created_at).localeCompare(String(a.movement_date||a.created_at))||String(b.created_at).localeCompare(String(a.created_at)));
+   if(request===sequence){rows=next;render();}
+  }catch(e){rows=[];$('financeAllHistoryTable').tBodies[0].replaceChildren();$('financeAllHistoryMessage').textContent='Não foi possível carregar o histórico: '+e.message;}
+  finally{busy=false;$('financeAllHistoryReload').disabled=false;}
+ }
+ $('financeAllHistoryReload').onclick=load;$('financeAllHistorySearch').addEventListener('input',render);$('financeAllHistoryStatus').addEventListener('change',render);
+ const original=window.switchFinanceTab;
+ window.switchFinanceTab=function(tab){
+  panel.hidden=tab!=='history';
+  if(tab!=='history')return original.apply(this,arguments);
+  window.financeActiveTab='history';$('financeCashPanel').hidden=true;
+  for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])$(id).style.display='none';
+  document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='history'));load();
+ };
+ window.addEventListener('aes-finance-receipts-updated',()=>{if(window.financeActiveTab==='history')load();});
+})();
+</script>
 </body>
 </html>
