@@ -11195,7 +11195,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   for(const row of rows){
    if(status&&status!==(row.reconciled?'yes':'no'))continue;
    if(search&&!normalize([row.order,row.party,row.bank,row.reference,row.payment_type,row.operation].join(' ')).includes(search))continue;
-   const tr=body.insertRow();tr.dataset.movementId=row.id;
+   const tr=body.insertRow();tr.dataset.movementId=row.id;if(row.reconciled){tr.style.backgroundColor='#dff4e9';tr.style.color='#197a50';}
    const rate=Number(row.exchange_rate)||0;
    const values=[row.movement_date?row.movement_date.slice(0,10).split('-').reverse().join('/'):'—',row.party,row.order,row.operation,row.bank||'—',row.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',row.payment_type||'—',money(row.amount,row.currency),rate?rate.toFixed(4):'—',rate?money(Number(row.amount)*rate,'BRL'):'—',row.reference||'—',row.reconciled?'Conciliado':'Não conciliado'];
    values.forEach(v=>{tr.insertCell().textContent=String(v)});count++;
