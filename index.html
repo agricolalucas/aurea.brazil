@@ -6142,20 +6142,52 @@ const aesFinanceHistoryBusy=new Set();
 async function aesFinanceEditHistory(id){
  const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
  if(!item?.persisted||aesFinanceHistoryBusy.has(String(id)))return;
- const date=prompt('Data (AAAA-MM-DD):',item.date||'');if(date===null)return;
- if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date))){notify('Data inválida');return;}
- const amountText=prompt('Valor:',String(item.amount));if(amountText===null)return;
- const amount=Number(amountText.trim().replace(',','.'));if(!Number.isFinite(amount)||amount<=0){notify('Valor inválido');return;}
- const bank=prompt('Banco:',item.bank||'');if(bank===null)return;
- const ref=prompt('Referência / SWIFT:',item.ref||'');if(ref===null)return;
- if(!confirm('Confirmar edição no Supabase?'))return;
  const db=window.aesSharedClient;if(!db){notify('Supabase indisponível');return;}
+ if(document.getElementById('aesFinanceEditDialog'))return;
  aesFinanceHistoryBusy.add(String(id));
  try{
-  const {data,error}=await db.from('aes_finance_order_movements').update({movement_date:date,amount,bank:bank||null,reference:ref||null}).eq('id',id).eq('order_number',order).select('id').single();
-  if(error)throw error;if(!data?.id)throw Error('Não confirmado');
-  await aesFinanceLoadSaved(order);notify('Lançamento atualizado.');
- }catch(e){notify('Erro ao editar: '+e.message)}finally{aesFinanceHistoryBusy.delete(String(id))}
+  const {data:record,error}=await db.from('aes_finance_order_movements').select('id,order_number,movement_type,movement_date,amount,currency,payment_type,exchange_rate,bank,reference').eq('id',id).eq('order_number',order).single();
+  if(error)throw error;if(!record)throw Error('Lançamento indisponível');
+  const dialog=document.createElement('dialog');dialog.id='aesFinanceEditDialog';dialog.setAttribute('aria-labelledby','aesFinanceEditTitle');dialog.style.cssText='width:min(760px,94vw);max-height:90vh;overflow:auto;border:1px solid #cad7e2;border-radius:12px;padding:20px;color:#172033';
+  dialog.innerHTML='<form><h2 id="aesFinanceEditTitle" style="margin-top:0;font-size:19px">Editar lançamento financeiro</h2><div class="grid2"><div><label>Order</label><input name="orderDisplay" readonly></div><div><label>Importer / Supplier / Buyer</label><input name="partyDisplay" readonly></div><div><label>Movimento</label><input name="movementDisplay" readonly></div><div><label>Valor da ordem</label><input name="invoiceDisplay" readonly></div><div><label>Data *</label><input name="movement_date" type="date" required></div><div><label>Valor *</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div><label>Moeda *</label><select name="currency" required data-aes-no-search></select></div><div><label>Tipo de pagamento / recebimento</label><select name="payment_type" data-aes-no-search></select></div><div><label>Banco</label><select name="bank" aria-label="Banco cadastrado"></select></div><div><label>Taxa de câmbio</label><input name="exchange_rate" type="number" min="0" step="0.000001"></div><div><label>Valor BRL · calculado</label><input name="brlDisplay" readonly></div><div><label>Contrato / Referência / SWIFT</label><input name="reference"></div></div><p role="status" data-message style="color:#9f2f2f"></p><div class="toolbar" style="justify-content:flex-end;margin-top:16px"><button type="button" class="btn" data-cancel>Cancelar</button><button type="submit" class="btn primary">Salvar alterações</button></div></form>';
+  const form=dialog.querySelector('form'),field=name=>form.elements.namedItem(name),message=dialog.querySelector('[data-message]');
+  function options(name,source,value,defaults=[]){
+   const select=field(name);select.add(new Option('—',''));
+   const entries=source?Array.from(source.options).map(o=>[o.textContent,o.value]):defaults.map(v=>[v,v]);
+   for(const [label,key] of entries)if(key&&!Array.from(select.options).some(o=>o.value===String(key)))select.add(new Option(label,key));
+   if(value&&!Array.from(select.options).some(o=>o.value===String(value)))select.add(new Option(String(value),String(value)));
+   select.value=value||'';
+  }
+  const position=window.financeData[order]||{};
+  field('orderDisplay').value=position.tradeNumber||(/^TRADER:/i.test(order)?document.getElementById('finOrder')?.value||'—':order);
+  field('partyDisplay').value=document.getElementById('finImporter')?.value||'—';
+  field('movementDisplay').value=record.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio';
+  field('invoiceDisplay').value=usd(position.invoice);
+  for(const name of ['movement_date','amount','exchange_rate','reference'])field(name).value=record[name]??'';
+  options('currency',document.getElementById('finReceiptCurrency'),record.currency||'USD',['USD','EUR','BRL']);
+  options('payment_type',document.getElementById('finReceiptType'),record.payment_type);
+  options('bank',document.getElementById(record.movement_type==='receipt'?'finReceiptBank':'finFxBank'),record.bank);
+  const calculate=()=>{const amount=Number(field('amount').value),rate=Number(field('exchange_rate').value);field('brlDisplay').value=rate>0?'BRL '+(amount*rate).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';};
+  form.addEventListener('input',calculate);calculate();
+  let saving=false;
+  dialog.querySelector('[data-cancel]').onclick=()=>{if(!saving)dialog.close();};
+  dialog.addEventListener('cancel',event=>{if(saving)event.preventDefault();});
+  dialog.addEventListener('close',()=>{dialog.remove();aesFinanceHistoryBusy.delete(String(id));});
+  form.addEventListener('submit',async event=>{
+   event.preventDefault();if(saving||!form.reportValidity())return;
+   const amount=Number(field('amount').value),rateText=field('exchange_rate').value,rate=rateText===''?null:Number(rateText);
+   if(!Number.isFinite(amount)||amount<=0||(rate!==null&&(!Number.isFinite(rate)||rate<0))){message.textContent='Confira valor e taxa de câmbio.';return;}
+   const patch={movement_date:field('movement_date').value,amount,currency:field('currency').value,payment_type:field('payment_type').value||null,bank:field('bank').value||null,exchange_rate:rate,reference:field('reference').value.trim()||null};
+   saving=true;const submit=form.querySelector('[type="submit"]');submit.disabled=true;message.textContent='Salvando…';
+   try{
+    const {data:updated,error:updateError}=await db.from('aes_finance_order_movements').update(patch).eq('id',id).eq('order_number',order).select('id').single();
+    if(updateError)throw updateError;if(String(updated?.id)!==String(id))throw Error('Atualização não confirmada');
+    await aesFinanceLoadSaved(order);notify('Lançamento atualizado.');dialog.close();
+   }catch(error){message.textContent='Não foi possível salvar: '+error.message;}
+   finally{saving=false;submit.disabled=false;}
+  });
+  document.body.append(dialog);dialog.showModal();field('movement_date').focus();
+ }catch(error){aesFinanceHistoryBusy.delete(String(id));notify('Erro ao editar: '+error.message);}
 }
 async function aesFinanceDeleteHistory(id){
  const order=window.currentFinanceOrder,item=window.financeData[order]?.history?.find(x=>String(x.id)===String(id));
