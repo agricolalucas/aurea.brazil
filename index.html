@@ -8902,7 +8902,7 @@ function scheduling(){
 document.addEventListener('click',e=>{const button=e.target.closest?.('[data-schedule-order]');if(!button)return;const order=button.dataset.scheduleOrder;go('schedule');[...document.querySelectorAll('#releasedContractsTable tbody tr')].find(r=>r.dataset.order===order)?.querySelector('.contractPick')?.click()});
 window.addEventListener('storage',e=>{if(e.key==='aesShippingPrograms')scheduling()});window.addEventListener('aes-shipping-program-updated',scheduling);window.addEventListener('aes-contracts-updated',scheduling);
 
-const init=()=>{document.querySelectorAll('select option:not([value])').forEach(o=>o.value=o.textContent.trim());const saved=localStorage.getItem('aes_interface_language');current=saved==='pt'?'pt':'en';document.getElementById('aesLanguage').value=current;document.documentElement.lang=current==='pt'?'pt-BR':'en';scheduling();process(document.body);const observer=new MutationObserver(m=>{if(changing)return;let relevant=false;for(const change of m){if(change.type==='childList'){for(const n of change.addedNodes)if(n.nodeType===1||n.nodeType===3){process(n);relevant=true}}else if(change.type==='characterData'){process(change.target);relevant=true}}if(relevant&&!observer.scheduled){observer.scheduled=true;setTimeout(()=>{observer.scheduled=false;scheduling();process(document.body)},120)}});observer.observe(document.body,{subtree:true,childList:true,characterData:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+const init=()=>{document.querySelectorAll('select option:not([value])').forEach(o=>o.value=o.textContent.trim());const saved=localStorage.getItem('aes_interface_language');current=saved==='pt'?'pt':'en';document.getElementById('aesLanguage').value=current;document.documentElement.lang=current==='pt'?'pt-BR':'en';scheduling();process(document.body);const pendingRoots=new Set();let translateTimer=null;const observer=new MutationObserver(m=>{for(const change of m){if(change.type==='childList'){for(const node of change.addedNodes)if(node.nodeType===1||node.nodeType===3)pendingRoots.add(node);}else if(change.type==='characterData')pendingRoots.add(change.target);}if(!pendingRoots.size||translateTimer!==null)return;translateTimer=setTimeout(()=>{translateTimer=null;const roots=[...pendingRoots],rootSet=new Set(roots);pendingRoots.clear();for(const node of roots){if(!node.isConnected)continue;if(node.parentElement?.closest('script,style,textarea,[data-no-translate]'))continue;let parent=node.parentNode,covered=false;while(parent){if(rootSet.has(parent)){covered=true;break;}parent=parent.parentNode;}if(!covered)process(node);}},120);});observer.observe(document.body,{subtree:true,childList:true,characterData:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
 <style>#aesAuthGate{position:fixed;inset:0;z-index:99999;background:#f3f6fa;display:flex;align-items:center;justify-content:center;padding:20px}#aesAuthGate form{width:min(420px,100%);background:white;padding:26px;border:1px solid #dfe5ec;border-radius:14px;box-shadow:0 10px 40px #1232}#aesAuthGate label{display:block;margin:12px 0 4px}#aesAuthGate input{width:100%;padding:10px}#aesAuthMessage{color:#9f2f2f;min-height:22px}#aesForgot{background:none;border:0;box-shadow:none;padding:0;color:#1f5685;text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:500;cursor:pointer}#aesForgot:hover{color:#103a60}#aesForgot:disabled{opacity:.55;cursor:wait}#aesSharedStatus{padding:9px 18px;background:#fff4d5;color:#5d4300;font-size:12px}</style>
@@ -11138,7 +11138,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  document.head.append(css);
  function close(state=opened){if(!state)return;state.menu.hidden=true;state.input.setAttribute('aria-expanded','false');state.input.removeAttribute('aria-activedescendant');if(opened===state)opened=null;}
  function sync(state){
-  const {select,input}=state;input.disabled=select.disabled;input.required=false;
+  const {select,input}=state;if(input.disabled!==select.disabled)input.disabled=select.disabled;
   if(document.activeElement!==input){input.value=select.selectedOptions[0]?.textContent?.trim()||'';}
  }
  function choose(state,option){
@@ -11177,7 +11177,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   state.menu.hidden=false;state.input.setAttribute('aria-expanded','true');position(state);
  }
  function enhance(select){
-  if(select.hidden||select.style.display==='none'||select.multiple||select.size>1||select.classList.contains('aes-search-native')||select.closest('[data-aes-no-search]'))return;
+  if(select.hidden||select.style.display==='none'||select.multiple||select.size>1||select.classList.contains('aes-search-native')||select.closest('[data-aes-no-search]')||select.closest('.view:not(.active),[hidden]'))return;
   const wrapper=document.createElement('span');wrapper.className='aes-search-select';
   const input=document.createElement('input');input.type='text';input.className='aes-search-select-input';input.autocomplete='off';
   input.placeholder='Digite para pesquisar…';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');
@@ -11202,7 +11202,10 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   new MutationObserver(()=>{sync(state);if(opened===state)render(state,document.activeElement===input?input.value:'');}).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','label']});
  }
  function scan(root){if(root.nodeType!==1&&root!==document)return;if(root.matches?.('select'))enhance(root);root.querySelectorAll?.('select').forEach(enhance);}
- scan(document);
+ let scanPending=false;
+ function scanVisible(){if(scanPending)return;scanPending=true;setTimeout(()=>{scanPending=false;scan(document);},0);}
+ scanVisible();
+ document.addEventListener('click',scanVisible);
  new MutationObserver(records=>{for(const r of records)for(const node of r.addedNodes)scan(node);}).observe(document.body,{childList:true,subtree:true});
  document.addEventListener('pointerdown',e=>{if(opened&&!opened.wrapper.contains(e.target)&&!opened.menu.contains(e.target))close();},true);
  window.addEventListener('resize',()=>close());window.addEventListener('scroll',e=>{if(opened&&!opened.menu.contains(e.target))close();},true);
