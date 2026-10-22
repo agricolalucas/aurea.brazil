@@ -793,6 +793,7 @@ cashReload().catch(e=>notify('Não foi possível carregar: '+e.message));
 window.addEventListener('focus',()=>cashReload().catch(e=>notify(e.message)));
 </script><script id="aesSearchableUserSelects">
 
+
 (()=>{
  if(window.aesSearchableSelectsInstalled)return;
  window.aesSearchableSelectsInstalled=true;
@@ -804,8 +805,8 @@ window.addEventListener('focus',()=>cashReload().catch(e=>notify(e.message)));
  document.head.append(css);
  function close(state=opened){if(!state)return;state.menu.hidden=true;state.input.setAttribute('aria-expanded','false');state.input.removeAttribute('aria-activedescendant');if(opened===state)opened=null;}
  function sync(state){
-  const {select,input}=state;input.disabled=select.disabled;input.required=false;
-  if(document.activeElement!==input){input.value=select.selectedOptions[0]?.textContent?.trim()||'';}
+  const {select,input}=state;if(input.disabled!==select.disabled)input.disabled=select.disabled;
+  if(document.activeElement!==input){const label=select.selectedOptions[0]?.textContent?.trim()||'';if(input.value!==label)input.value=label;}
  }
  function choose(state,option){
   if(option.disabled)return;
@@ -843,11 +844,11 @@ window.addEventListener('focus',()=>cashReload().catch(e=>notify(e.message)));
   state.menu.hidden=false;state.input.setAttribute('aria-expanded','true');position(state);
  }
  function enhance(select){
-  if(select.hidden||select.style.display==='none'||select.multiple||select.size>1||select.classList.contains('aes-search-native')||select.closest('[data-aes-no-search]'))return;
+  if(select.hidden||select.style.display==='none'||select.multiple||select.size>1||select.classList.contains('aes-search-native')||select.closest('[data-aes-no-search]')||select.closest('.view:not(.active),[hidden]'))return;
   const wrapper=document.createElement('span');wrapper.className='aes-search-select';
   const input=document.createElement('input');input.type='text';input.className='aes-search-select-input';input.autocomplete='off';
   input.placeholder='Digite para pesquisar…';input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','false');
-  const label=select.getAttribute('aria-label')||select.labels?.[0]?.textContent?.trim()||select.options[0]?.textContent||'Pesquisar cadastro';
+  const label=select.getAttribute('aria-label')||select.parentElement?.querySelector('label')?.textContent?.trim()||select.options[0]?.textContent||'Pesquisar cadastro';
   input.setAttribute('aria-label',label);input.title='Digite o nome e selecione uma opção';
   const menu=document.createElement('div');menu.id='aesSelectOptions-'+(++sequence);menu.className='aes-search-select-menu';menu.hidden=true;menu.setAttribute('role','listbox');
   input.setAttribute('aria-controls',menu.id);
@@ -867,14 +868,18 @@ window.addEventListener('focus',()=>cashReload().catch(e=>notify(e.message)));
   select.addEventListener('invalid',e=>{e.preventDefault();input.focus();input.setCustomValidity('Selecione uma opção cadastrada.');input.reportValidity();input.setCustomValidity('');});
   new MutationObserver(()=>{sync(state);if(opened===state)render(state,document.activeElement===input?input.value:'');}).observe(select,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['disabled','label']});
  }
- function scan(root){if(root.nodeType!==1&&root!==document)return;if(root.matches?.('select'))enhance(root);root.querySelectorAll?.('select').forEach(enhance);}
- scan(document);
- new MutationObserver(records=>{for(const r of records)for(const node of r.addedNodes)scan(node);}).observe(document.body,{childList:true,subtree:true});
+ function scan(root){if(root.nodeType!==1&&root!==document)return;if(root.matches?.('select')){enhance(root);return;}root.querySelectorAll?.('select:not(.aes-search-native)').forEach(enhance);}
+ let scanPending=false;
+ function scanVisible(){if(scanPending)return;scanPending=true;setTimeout(()=>{scanPending=false;scan(document);},0);}
+ scanVisible();
+ document.addEventListener('click',scanVisible);
+ new MutationObserver(records=>{if(records.some(r=>Array.from(r.addedNodes).some(node=>node.nodeType===1&&!['OPTION','OPTGROUP','INPUT','BUTTON','SMALL'].includes(node.tagName)&&!node.closest('.aes-search-select-menu'))))scanVisible();}).observe(document.body,{childList:true,subtree:true});
  document.addEventListener('pointerdown',e=>{if(opened&&!opened.wrapper.contains(e.target)&&!opened.menu.contains(e.target))close();},true);
  window.addEventListener('resize',()=>close());window.addEventListener('scroll',e=>{if(opened&&!opened.menu.contains(e.target))close();},true);
  document.addEventListener('reset',()=>setTimeout(()=>states.forEach(sync),0),true);
- setInterval(()=>{for(const state of states){if(!state.select.isConnected){state.menu.remove();states.delete(state);}else if(state.wrapper.getClientRects().length)sync(state);}},500);
+ setInterval(()=>{if(document.hidden)return;for(const state of states){if(!state.select.isConnected){state.menu.remove();states.delete(state);}else if(!state.select.closest('.view:not(.active),[hidden]'))sync(state);}},1000);
 })();
+
 
 </script>
 </body></html>
