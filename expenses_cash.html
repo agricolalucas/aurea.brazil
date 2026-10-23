@@ -623,9 +623,10 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  function receiptRegisterRows(){
   return receiptRecords.map(x=>{
    const kind=String(x.movement_type||'receipt').toLowerCase();
-   const credit=kind==='receipt';
+   const purchase=/^TRADER:[0-9a-f-]{36}:purchase$/i.test(String(x.order_number||''));
+   const credit=kind==='receipt'&&!purchase;
    const amount=Number(x.amount||0);
-   return {...x,id:x.id,kind:'receipt',bankId:bank(),gstin:'',source:'Orders & Entries · '+(x.payment_type||x.movement_type||'Receipt'),direction:credit?'credit':'debit',credit:credit?amount:0,debit:credit?0:amount,invoice:x.order_number||'',date:x.movement_date||'',party:receiptImporters.get(String(x.order_number||'').toUpperCase())||x.order_number||'Importer not registered',description:[x.reference,x.payment_type].filter(Boolean).join(' · '),currency:x.currency||'USD',total:amount,paid:amount,balance:0,status:'Available for reconciliation'};
+   return {...x,id:x.id,kind:'receipt',bankId:bank(),gstin:'',source:'Orders & Entries · '+(x.payment_type||x.movement_type||'Receipt')+' · '+(credit?'Crédito':'Débito'),direction:credit?'credit':'debit',credit:credit?amount:0,debit:credit?0:amount,invoice:x.order_number||'',date:x.movement_date||'',party:receiptImporters.get(String(x.order_number||'').toUpperCase())||x.order_number||'Importer not registered',description:[x.reference,x.payment_type].filter(Boolean).join(' · '),currency:x.currency||'USD',total:amount,paid:amount,balance:0,status:'Available for reconciliation'};
   }).filter(x=>x.total>0);
  }
  function extraRegisterRows(){return [...orderRegisterRows(),...financialRegisterRows(),...receiptRegisterRows()];}
