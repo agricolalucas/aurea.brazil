@@ -3680,11 +3680,11 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div><label>Importer</label><input id="finFilterImporter" placeholder="Buscar Importer"></div>
       <div>
         <label>Status</label>
-        <select id="finFilterStatus">
-          <option value="">Todos</option>
+        <select id="finFilterStatus" onchange="filterFinance()">
+          <option value="">Todas as ordens · All orders</option>
           <option value="Pending">Pending</option>
-          <option value="Partial" selected>Partial</option>
-          <option value="Received">Received</option>
+          <option value="Partial" selected>Parcial · saldo a receber</option>
+          <option value="Received">Pago</option>
         <option value="Financiamento RTS">Financiamento RTS</option></select>
       </div>
       <div>
@@ -3703,7 +3703,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2><p class="sub">Somente ordens com situação Parcial e saldo a receber maior que zero.</p>
+  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2><p class="sub">Situação: Parcial mostra saldo a receber; Pago mostra ordens quitadas; Todas as ordens inclui pagas e com saldo.</p>
     <div class="tablewrap">
       <table id="financeTable"><thead><tr><th>Order / PO</th><th>NF-e</th><th>Produto</th><th>Importer</th><th>Booking</th><th>Valor total</th><th>Recebido</th><th>Saldo atual</th><th>Disponível</th><th>Vencimento</th><th>ETA</th><th>Situação</th><th>Ação</th></tr></thead><tbody></tbody></table>
     </div>
@@ -6229,10 +6229,11 @@ function filterFinance(){
     const rowKind=row.dataset.kind||'export';
     const kindOK=!kind||kind===rowKind||(kind==='receivable'&&rowKind!=='purchase');
     const balance=Number(row.dataset.balance??String(row.cells[7]?.textContent||'').replace(/[^0-9.-]/g,''));
-    const receivablePartial=rowKind!=='purchase'&&row.dataset.status==='Partial'&&Math.round(balance*100)>0;
-    const ok=receivablePartial && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
+    const balanceCents=Math.round(balance*100);
+    const invoice=Number(String(row.cells[5]?.textContent||'').replace(/[^0-9.-]/g,''));
+    const statusOK=status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&row.dataset.status==='Partial'&&balanceCents>0):(!status||row.dataset.status===status);
+    const ok=statusOK && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
-      (!status||(row.dataset.status||'')===status) &&
       (!fx||(row.dataset.fx||'')===fx);
     row.style.display=ok?'':'none';
   });
