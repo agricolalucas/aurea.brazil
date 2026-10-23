@@ -3683,7 +3683,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <select id="finFilterStatus">
           <option value="">Todos</option>
           <option value="Pending">Pending</option>
-          <option value="Partial">Partial</option>
+          <option value="Partial" selected>Partial</option>
           <option value="Received">Received</option>
         <option value="Financiamento RTS">Financiamento RTS</option></select>
       </div>
@@ -3703,7 +3703,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2>
+  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2><p class="sub">Somente ordens com situação Parcial e saldo a receber maior que zero.</p>
     <div class="tablewrap">
       <table id="financeTable"><thead><tr><th>Order / PO</th><th>NF-e</th><th>Produto</th><th>Importer</th><th>Booking</th><th>Valor total</th><th>Recebido</th><th>Saldo atual</th><th>Disponível</th><th>Vencimento</th><th>ETA</th><th>Situação</th><th>Ação</th></tr></thead><tbody></tbody></table>
     </div>
@@ -6228,7 +6228,9 @@ function filterFinance(){
   document.querySelectorAll('#financeTable tbody tr').forEach(row=>{
     const rowKind=row.dataset.kind||'export';
     const kindOK=!kind||kind===rowKind||(kind==='receivable'&&rowKind!=='purchase');
-    const ok=kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
+    const balance=Number(row.dataset.balance??String(row.cells[7]?.textContent||'').replace(/[^0-9.-]/g,''));
+    const receivablePartial=rowKind!=='purchase'&&row.dataset.status==='Partial'&&Math.round(balance*100)>0;
+    const ok=receivablePartial && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
       (!status||(row.dataset.status||'')===status) &&
       (!fx||(row.dataset.fx||'')===fx);
@@ -6237,7 +6239,7 @@ function filterFinance(){
 }
 function clearFinanceFilters(){
   ['finFilterOrder','finFilterImporter','finFilterStatus','finFilterFx','finFilterKind'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.querySelectorAll('#financeTable tbody tr').forEach(row=>row.style.display='');
+  filterFinance();
 }
 refreshFinanceTotals();
 
@@ -11039,6 +11041,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
    // Load confirmed export receipts before displaying balances; opening a workspace is no longer required.
    for(const row of body.rows){if(row.dataset.financeTrader==='1')continue;const order=row.dataset.order,d=window.financeData?.[order];if(!order||!d)continue;
     applyMovements(d,movementsByOrder.get(order)||[]);const pending=Math.max(0,num(d.invoice)-d.received),hedged=(d.hedges||[]).filter(x=>x.status!=='Settled'&&x.status!=='Cancelled').reduce((n,x)=>n+num(x.amount),0);
+    row.dataset.balance=String(pending);
     row.cells[6].textContent=money(d.received,'USD');row.cells[7].textContent=money(pending,'USD');row.cells[8].textContent=money(Math.max(0,pending-hedged),'USD');
    }
 
@@ -11057,7 +11060,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
      if(movementsByOrder.has(financeKey))applyMovements(position,movementsByOrder.get(financeKey));else position.received=legacyPaid;
      const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
      const party=names.get(String(id))||'—';
-     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
+     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.balance=String(balance);tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
      const first=add(tr,deal.trade_number||'—');const tag=document.createElement('div');tag.className='badge '+(kind==='purchase'?'warn':'info');tag.textContent=kind==='purchase'?'COMPRA · A PAGAR':'REVENDA · A RECEBER';tag.classList.add('aes-fin-mini-kind');first.append(tag);
      add(tr,'—');add(tr,commercial.product||deal.product||'—');add(tr,party);add(tr,'—');
      [total,paid,balance,balance].forEach(v=>add(tr,money(v,deal.currency)));
