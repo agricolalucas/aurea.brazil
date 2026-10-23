@@ -41,3 +41,7 @@
  grid-template-columns:minmax(0,1fr)!important;
  }
 }
+
+/* Financeiro > Orders: highlight only the current balance column. */
+#financeTable thead th:nth-child(8){background:#b7791f!important;color:#fff!important}
+#financeTable tbody td:nth-child(8){background:#fff3cd!important;font-weight:700!important;box-shadow:inset 1px 0 #e7c46a,inset -1px 0 #e7c46a}
