@@ -6181,8 +6181,8 @@ async function aesFinanceEditHistory(id){
    const patch={movement_date:field('movement_date').value,amount,currency:field('currency').value,payment_type:field('payment_type').value||null,bank:field('bank').value||null,exchange_rate:rate,reference:field('reference').value.trim()||null};
    saving=true;const submit=form.querySelector('[type="submit"]');submit.disabled=true;message.textContent='Salvando…';
    try{
-    const {data:updated,error:updateError}=await db.from('aes_finance_order_movements').update(patch).eq('id',id).eq('order_number',order).select('id').single();
-    if(updateError)throw updateError;if(String(updated?.id)!==String(id))throw Error('Atualização não confirmada');
+    const {data:updated,error:updateError}=await db.from('aes_finance_order_movements').update(patch).eq('id',id).eq('order_number',record.order_number).select('id').maybeSingle();
+    if(updateError)throw updateError;if(String(updated?.id)!==String(id))throw Error('Lançamento conciliado, indisponível ou sem permissão de edição. Desconcilie antes de alterar ou atualize os dados.');
     await aesFinanceLoadSaved(order);notify('Lançamento atualizado.');dialog.close();
    }catch(error){message.textContent='Não foi possível salvar: '+error.message;}
    finally{saving=false;submit.disabled=false;}
