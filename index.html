@@ -10709,7 +10709,23 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
 
  function nextNumber(){const nums=[...deals,...deletedDeals].map(d=>/^TR-2026-(\d+)$/i.exec(d.trade_number)).filter(Boolean).map(m=>Number(m[1]));return 'TR-2026-'+String(Math.max(0,...nums)+1).padStart(3,'0')}
  function open(d){broker=d?isBroker(d):listMode==='broker';$('trHasCommission').value=(broker||hasCommission(d))?'yes':'no';brokerUI();editing=d?.id||null;$('aesTraderList').hidden=true;$('aesTraderEditor').hidden=false;$('aesTraderFormTitle').textContent=d?(broker?'Corretor · ':'Operação ')+d.trade_number:(broker?'Nova operação de Corretor · Venda':'Nova operação comercial');ids.forEach((id,i)=>{$(id).value=d?.[keys[i]]??''});if(!d){$('trTradeNumber').value=nextNumber();$('trDate').value=new Date().toLocaleDateString('en-CA');$('trStatus').value='draft';$('trCurrency').value='USD';$('trUnit').value='MT'}initFlows();initTradeModels();fillSide('purchase',{...d?.purchase_flow,parties:d?.purchase_flow?.parties||{exporter:d?.supplier_id,importer:d?.trader_company_id},delivery:d?.purchase_flow?.delivery??d?.delivery_terms,commercial:d?.purchase_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.purchase_unit_price,payment_terms:''}});fillSide('sale',{...d?.sale_flow,parties:d?.sale_flow?.parties||{exporter:d?.trader_company_id,importer:d?.buyer_id},delivery:d?.sale_flow?.delivery??d?.delivery_terms,commercial:d?.sale_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.sale_unit_price,payment_terms:''}});fillSI(d?.purchase_flow?.si||d?.sale_flow?.si||{});if(!d)defaultParties();fillDocs(d?.document_flow);fillTasks(d?.tasks);fillPayments('purchase',d?.purchase_flow?.payments);fillPayments('sale',d?.sale_flow?.payments);fillCommissions(d?.sale_flow?.commissions);aesTraderSetTab('operation');$('trMessage').textContent='';totals();$('trTradeNumber').focus()}
- window.aesTraderNew=async()=>{if(!companies.length)await refresh();open(null)};
+ let partyReload=null,partyLoadedAt=0;
+ async function reloadTraderPartyCompanies(){
+  if(partyReload)return partyReload;
+  if(!client())return;
+  partyReload=(async()=>{
+   const {data,error}=await client().from('companies').select('id,name,address,country,tax_id,email,phone,contact_name,logo_data,signature_templates').order('name');
+   if(error)throw error;
+   companies=data||[];partyLoadedAt=Date.now();
+   document.querySelectorAll('.aes-trader-parties select,#trTrader,#trSupplier,#trBuyer,#trPurchaseBroker,#trSaleBroker').forEach(select=>options(select));
+  })();
+  try{await partyReload;}finally{partyReload=null;}
+ }
+ document.addEventListener('focusin',event=>{
+  if(!event.target.closest?.('.aes-trader-parties')||Date.now()-partyLoadedAt<5000)return;
+  reloadTraderPartyCompanies().catch(error=>message('Não foi possível atualizar empresas: '+error.message));
+ });
+ window.aesTraderNew=async()=>{try{await reloadTraderPartyCompanies();open(null);}catch(error){message('Não foi possível carregar empresas: '+error.message);}};
  window.aesTraderBack=()=>{$('aesTraderEditor').hidden=true;$('aesTraderList').hidden=false;editing=null};
  window.aesTraderRefresh=refresh;
  window.aesTraderListTab=function(tab){listMode=tab;$('aesTraderList').classList.toggle('aes-broker-compact',tab==='broker');const docs=tab==='documents';$('trOperationFilters').hidden=docs;$('trFilterCount').hidden=docs;$('trExportToolbar').hidden=docs;$('aesTraderList').querySelector(':scope > .tablewrap').hidden=docs;$('trAllDocumentsPane').hidden=!docs;for(const [id,key] of [['trListOperationsTab','operations'],['trListBrokerTab','broker'],['trListDocumentsTab','documents']])$(id).classList.toggle('active',tab===key);render();const table=$('aesTraderRows').closest('table');for(const row of table.rows)for(const i of [4,6])if(row.cells[i])row.cells[i].hidden=tab==='broker';table.tHead.rows[0].cells[2].textContent=tab==='broker'?'Exportador → Importador':'Fornecedor → Comprador';};
