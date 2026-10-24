@@ -9123,7 +9123,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   const val=id=>($(id)?.value||'').trim();
   const status=value=>{if($('contractCloudStatus'))$('contractCloudStatus').textContent=value};
   const dateBR=v=>v?(/^\d{4}-\d{2}$/.test(v)?aesShippingMonth(v):new Date(v+'T12:00:00').toLocaleDateString('pt-BR')):'—';
-  const normalized=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().trim();
+  const normalized=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu,'').trim();
   const companyFields=[['contractImporterId','contractImporterSearch','cImporter'],['contractExporterId','contractExporterSearch','cExporter']];
   function closeCompanyMenus(){for(const [,searchId] of companyFields){$(searchId+'Results').hidden=true;$(searchId).setAttribute('aria-expanded','false')}}
   function chooseCompany(id,searchId,hiddenId,company){const changed=$(id).value!==String(company.id);$(id).value=String(company.id);$(searchId).value=company.name||'';$(hiddenId).value=company.name||'';closeCompanyMenus();if(id==='contractImporterId')syncConsignee();if(id==='contractExporterId'&&changed){aesChooseSignature('');document.getElementById('contractSignatureSelect').value='';aesLoadSignatures()}}
@@ -10733,7 +10733,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
  const commissionAmount=c=>c.method==='percent'?Number(c.base)*Number(c.rate)/100:Number(c.rate);
 
  function commissionMatchesFilters(d,c){
-  const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+  const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'').trim().replace(/\s+/g,' ');
   return [[name(d.sale_flow?.parties?.importer||d.buyer_id),'bcBrokerClientFilter'],[name(d.sale_flow?.parties?.exporter||d.trader_company_id),'bcBrokerExporterFilter'],[d.sale_flow?.commercial?.product||d.product,'bcBrokerProductFilter']].every(([v,id])=>norm(v).includes(norm($(id)?.value)))&&(!$('bcBrokerInvoiceFilter')?.value||(c.invoice_status||'pending')===$('bcBrokerInvoiceFilter').value);
  }
  function commissionReportData(selected=false){
@@ -11175,7 +11175,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 <script id="aesBrokerLiveFilters">
 
 (()=>{
- const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+ const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'').trim().replace(/\s+/g,' ');
  const ids=['bcBrokerClientFilter','bcBrokerExporterFilter','bcBrokerInvoiceFilter','bcBrokerProductFilter'];
  function filterBrokerRows(){
   const body=document.getElementById('bcOperationRows');if(!body)return;
@@ -11221,7 +11221,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 (()=>{
  if(window.aesSearchableSelectsInstalled)return;
  window.aesSearchableSelectsInstalled=true;
- const normalize=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ const normalize=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'').trim();
  const states=new Set();let opened=null,sequence=0;
  const descriptor=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
  const css=document.createElement('style');
