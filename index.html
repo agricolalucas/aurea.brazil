@@ -10595,7 +10595,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
  function initFlows(){
   for(const side of ['purchase','sale']){
    const parties=document.querySelector(`.aes-trader-parties[data-side="${side}"]`);parties.replaceChildren();
-   for(const [key,label] of partyKeys){const wrap=document.createElement('div'),title=document.createElement('label'),select=document.createElement('select');title.textContent=label;select.dataset.key=key;select.add(new Option('Selecione em USER',''));for(const c of companies)select.add(new Option(c.name,c.id));wrap.append(title,select);parties.append(wrap)}
+   for(const [key,label] of partyKeys){const wrap=document.createElement('div'),title=document.createElement('label'),select=document.createElement('select');title.textContent=label;select.dataset.key=key;select.add(new Option('Selecione em USER',''));for(const c of companies)select.add(new Option(c.name,c.id));const addUser=document.createElement('button');addUser.type='button';addUser.className='btn aes-add-user';addUser.textContent='+ Cadastrar novo USER';addUser.style.cssText='display:inline-flex!important;margin-top:5px;padding:5px 8px;font-size:11px';addUser.onclick=()=>window.aesBeginInlineUserCreate?.(select);select.dataset.aesAddUser='1';wrap.append(title,select,addUser);parties.append(wrap)}
   }
   const si=document.querySelector('.aes-trader-si[data-side="shared"]');si.replaceChildren();
   for(const [key,label] of siKeys){const wrap=document.createElement('div'),title=document.createElement('label'),field=key==='instructions'?document.createElement('textarea'):document.createElement('input');title.textContent=label;field.dataset.key=key;if(['etd','eta'].includes(key))field.type='date';if(key==='instructions'){field.rows=3;wrap.className='wide'}wrap.append(title,field);si.append(wrap)}
@@ -11271,6 +11271,9 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
    button.addEventListener('click',()=>choose(state,option));state.menu.append(button);
   }
   if(!options.length){const empty=document.createElement('div');empty.className='aes-search-select-empty';empty.textContent='Nenhum cadastro encontrado';state.menu.append(empty);}
+  if(state.select.matches('.aes-trader-parties select,#trTrader,#trSupplier,#trBuyer,#trPurchaseBroker,#trSaleBroker')&&window.aesBeginInlineUserCreate){
+   const add=document.createElement('button');add.type='button';add.className='aes-search-select-option';add.textContent='+ Cadastrar novo USER';add.style.cssText='color:#166534;font-weight:700;border-top:1px solid #dce5ed';add.addEventListener('mousedown',event=>event.preventDefault());add.onclick=()=>{close(state);window.aesBeginInlineUserCreate(state.select);};state.menu.append(add);
+  }
   state.menu.hidden=false;state.input.setAttribute('aria-expanded','true');position(state);
  }
  function enhance(select){
@@ -11409,9 +11412,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  const gate=document.getElementById('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none'){const view=document.querySelector('#finance.active,#trader.active')?.id;if(view)reloadOrders(view);}}).observe(gate,{attributes:true,attributeFilter:['style']});
 })();
 </script>
-</body>
-</html>
-
 <script id="aesInlineUserCreate">
 (()=>{
  let origin=null;
@@ -11467,8 +11467,9 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   const label=document.createElement('span');label.textContent='Salve o novo USER para voltar e selecioná-lo no campo de origem. ';
   const back=document.createElement('button');back.type='button';back.className='btn';back.textContent='← Voltar sem cadastrar';back.onclick=()=>returnToOrigin();bar.append(label,back);$('user').prepend(bar);$('uCompany').focus();
  }
+ window.aesBeginInlineUserCreate=begin;
  function scan(){
-  document.querySelectorAll('.view.active select,.view.active input[list],#contractImporterSearch,#contractExporterSearch').forEach(field=>{
+  document.querySelectorAll('#trader select,.view.active select,.view.active input[list],#contractImporterSearch,#contractExporterSearch').forEach(field=>{
    if(field.dataset.aesAddUser||!isUserField(field))return;
    field.dataset.aesAddUser='1';const button=document.createElement('button');button.type='button';button.className='btn aes-add-user';button.textContent='+ Cadastrar novo USER';button.style.cssText='margin-top:4px;font-size:11px;padding:4px 7px';button.onclick=()=>begin(field);
    const anchor=field.closest('.aes-search-select')||field;anchor.after(button);
@@ -11479,3 +11480,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
 })();
 </script>
+
+</body>
+</html>
