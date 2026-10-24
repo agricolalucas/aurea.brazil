@@ -9053,9 +9053,10 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     const button=$('aesSaveUser'); button.disabled=true;
     try {
       const request=editId===null ? client.from('companies').insert(record) : client.from('companies').update(record).eq('id',editId);
-      const {error}=await request.select('id').single(); if(error) throw error;
+      const {data:savedUser,error}=await request.select('id').single(); if(error) throw error;
       await loadUsers(); editId=null; window.clearUser(); window.aesBookingAgentCreated?.(name);
       window.notify('USER salvo no Supabase.');
+      await window.aesReturnFromUserCreate?.({...record,id:savedUser.id});
     } catch(error) { window.notify('Falha ao salvar: '+errorText(error)); }
     finally {button.disabled=false;}
   }
@@ -10709,6 +10710,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
 
  function nextNumber(){const nums=[...deals,...deletedDeals].map(d=>/^TR-2026-(\d+)$/i.exec(d.trade_number)).filter(Boolean).map(m=>Number(m[1]));return 'TR-2026-'+String(Math.max(0,...nums)+1).padStart(3,'0')}
  function open(d){broker=d?isBroker(d):listMode==='broker';$('trHasCommission').value=(broker||hasCommission(d))?'yes':'no';brokerUI();editing=d?.id||null;$('aesTraderList').hidden=true;$('aesTraderEditor').hidden=false;$('aesTraderFormTitle').textContent=d?(broker?'Corretor · ':'Operação ')+d.trade_number:(broker?'Nova operação de Corretor · Venda':'Nova operação comercial');ids.forEach((id,i)=>{$(id).value=d?.[keys[i]]??''});if(!d){$('trTradeNumber').value=nextNumber();$('trDate').value=new Date().toLocaleDateString('en-CA');$('trStatus').value='draft';$('trCurrency').value='USD';$('trUnit').value='MT'}initFlows();initTradeModels();fillSide('purchase',{...d?.purchase_flow,parties:d?.purchase_flow?.parties||{exporter:d?.supplier_id,importer:d?.trader_company_id},delivery:d?.purchase_flow?.delivery??d?.delivery_terms,commercial:d?.purchase_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.purchase_unit_price,payment_terms:''}});fillSide('sale',{...d?.sale_flow,parties:d?.sale_flow?.parties||{exporter:d?.trader_company_id,importer:d?.buyer_id},delivery:d?.sale_flow?.delivery??d?.delivery_terms,commercial:d?.sale_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.sale_unit_price,payment_terms:''}});fillSI(d?.purchase_flow?.si||d?.sale_flow?.si||{});if(!d)defaultParties();fillDocs(d?.document_flow);fillTasks(d?.tasks);fillPayments('purchase',d?.purchase_flow?.payments);fillPayments('sale',d?.sale_flow?.payments);fillCommissions(d?.sale_flow?.commissions);aesTraderSetTab('operation');$('trMessage').textContent='';totals();$('trTradeNumber').focus()}
+ window.aesReloadTraderUserOptions=()=>reloadTraderPartyCompanies();
  let partyReload=null,partyLoadedAt=0;
  async function reloadTraderPartyCompanies(){
   if(partyReload)return partyReload;
@@ -11405,3 +11407,71 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 </script>
 </body>
 </html>
+
+<script id="aesInlineUserCreate">
+(()=>{
+ let origin=null;
+ const $=id=>document.getElementById(id);
+ const knownSelector='.aes-trader-parties select,#trTrader,#trSupplier,#trBuyer,#trPurchaseBroker,#trSaleBroker,#bcRows select[data-field="issuer"],#bcRows select[data-field="payer"],#bcRows select[data-field="cobroker"],#contractImporterSearch,#contractExporterSearch,input[list="aesRemessaUserLocations"]';
+ function isUserField(field){
+  if(field.closest('#user')||field.type==='hidden'||field.disabled)return false;
+  if(field.matches(knownSelector))return true;
+  const names=new Set((window.aesContractUserRecords||[]).map(u=>u.name));
+  const options=field.tagName==='SELECT'?[...field.options].filter(o=>o.value):field.list?[...field.list.options].filter(o=>o.value):[];
+  return options.length>0&&options.every(o=>names.has(o.textContent.trim())||names.has(o.value));
+ }
+ function returnToOrigin(user){
+  const saved=origin;if(!saved)return;origin=null;$('aesUserReturnBar')?.remove();
+  window.go(saved.view);
+  if(user&&saved.field.isConnected){
+   const field=saved.field;
+   if(field.tagName==='SELECT'){
+    const value=saved.useName?user.name:String(user.id);
+    if(![...field.options].some(o=>String(o.value)===value))field.add(new Option(user.name,value));
+    field.value=value;
+   }else{
+    field.value=user.name;
+    const contract=field.id==='contractImporterSearch'?['contractImporterId','cImporter']:field.id==='contractExporterSearch'?['contractExporterId','cExporter']:null;
+    if(contract){$(contract[0]).value=user.id;$(contract[1]).value=user.name;}
+    if(field.list&&!Array.from(field.list.options).some(o=>o.value===user.name))field.list.append(new Option(user.name,user.name));
+   }
+   field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  window.scrollTo(0,saved.scroll);
+  const focus=saved.field.closest('.aes-search-select')?.querySelector('.aes-search-select-input')||saved.field;focus.focus({preventScroll:true});
+ }
+ window.aesReturnFromUserCreate=async user=>{
+  if(!origin)return;
+  if(origin.field.closest('#trader,#brokerFinance')){
+   try{await window.aesReloadTraderUserOptions?.();}catch(error){window.notify?.('USER salvo; não foi possível atualizar todas as opções: '+error.message);}
+  }
+  returnToOrigin(user);
+ };
+ function begin(field){
+  const view=field.closest('.view');if(!view)return;
+  const input=field.closest('.aes-search-select')?.querySelector('.aes-search-select-input')||field;
+  const query=input===field&&field.tagName==='SELECT'?'':input.value.trim();
+  const selected=field.tagName==='SELECT'?field.selectedOptions[0]?.textContent.trim():'';
+  origin={field,view:view.id,scroll:window.scrollY,useName:field.tagName==='SELECT'&&Array.from(field.options).some(o=>o.value&&o.value===o.textContent.trim())};
+  document.querySelectorAll('.aes-search-select-menu').forEach(menu=>menu.hidden=true);
+  window.clearUser();window.go('user');document.querySelector('#user .tab[data-tab="userform"]')?.click();
+  const hint=[field.id,field.dataset.key,field.dataset.party,field.getAttribute?.('aria-label'),field.parentElement?.querySelector('label')?.textContent].filter(Boolean).join(' ');
+  const profile=/export|supplier/i.test(hint)?'Exportador':/import|buyer/i.test(hint)?'Importador':/notify/i.test(hint)?'Notify':/consign/i.test(hint)?'Consignee':null;
+  if(profile&&$('uProfile'))$('uProfile').value=profile;
+  if(query&&query!==selected)$('uCompany').value=query;
+  const bar=document.createElement('div');bar.id='aesUserReturnBar';bar.className='card';
+  const label=document.createElement('span');label.textContent='Salve o novo USER para voltar e selecioná-lo no campo de origem. ';
+  const back=document.createElement('button');back.type='button';back.className='btn';back.textContent='← Voltar sem cadastrar';back.onclick=()=>returnToOrigin();bar.append(label,back);$('user').prepend(bar);$('uCompany').focus();
+ }
+ function scan(){
+  document.querySelectorAll('.view.active select,.view.active input[list],#contractImporterSearch,#contractExporterSearch').forEach(field=>{
+   if(field.dataset.aesAddUser||!isUserField(field))return;
+   field.dataset.aesAddUser='1';const button=document.createElement('button');button.type='button';button.className='btn aes-add-user';button.textContent='+ Cadastrar novo USER';button.style.cssText='margin-top:4px;font-size:11px;padding:4px 7px';button.onclick=()=>begin(field);
+   const anchor=field.closest('.aes-search-select')||field;anchor.after(button);
+  });
+ }
+ let pending=false;const schedule=()=>{if(pending)return;pending=true;setTimeout(()=>{pending=false;scan();},0)};
+ document.addEventListener('click',schedule);document.addEventListener('focusin',schedule);
+ new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();
+})();
+</script>
