@@ -3678,6 +3678,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
       <div><label>Tipo de operação</label><select id="finFilterKind" onchange="filterFinance()"><option value="">Todos · Exportação, Compra e Revenda</option><option value="export">Exportação</option><option value="purchase">Compra · a pagar</option><option value="sale">Revenda · a receber</option><option value="receivable">Todos a receber</option></select></div>
       <div><label>Order</label><input id="finFilterOrder" placeholder="Buscar Order"></div>
       <div><label>Importer</label><input id="finFilterImporter" placeholder="Buscar Importer"></div>
+      <div><label for="finFilterExporter">Exportador</label><input id="finFilterExporter" placeholder="Buscar Exportador" oninput="filterFinance()"></div>
       <div>
         <label>Status</label>
         <select id="finFilterStatus" onchange="filterFinance()">
@@ -6222,6 +6223,8 @@ function renderFinanceHistory(){
 function filterFinance(){
   const order=(getVal('finFilterOrder')||'').toLowerCase();
   const importer=(getVal('finFilterImporter')||'').toLowerCase();
+  const normalizeExporter=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+  const exporter=normalizeExporter(getVal('finFilterExporter'));
   const status=getVal('finFilterStatus');
   const fx=getVal('finFilterFx');
   const kind=getVal('finFilterKind');
@@ -6234,12 +6237,13 @@ function filterFinance(){
     const statusOK=status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&balanceCents>0):(!status||row.dataset.status===status);
     const ok=statusOK && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
+      (!exporter||normalizeExporter(row.dataset.exporter).includes(exporter)) &&
       (!fx||(row.dataset.fx||'')===fx);
     row.style.display=ok?'':'none';
   });
 }
 function clearFinanceFilters(){
-  ['finFilterOrder','finFilterImporter','finFilterStatus','finFilterFx','finFilterKind'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['finFilterOrder','finFilterImporter','finFilterExporter','finFilterStatus','finFilterFx','finFilterKind'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   filterFinance();
 }
 refreshFinanceTotals();
@@ -10060,7 +10064,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
      if(!window.financeData[order])window.financeData[order]={invoice,received:0,fxClosed:0,history:[],hedges:[]};
      else window.financeData[order].invoice=invoice;
      const received=amount(d.received),fx=amount(d.fxClosed),pending=Math.max(0,invoice-received),fxPending=Math.max(0,invoice-fx);
-     Object.assign(fr.dataset,{order,importer,status:pending===0&&invoice>0?'Received':received>0?'Partial':'Pending',fx:fxPending===0&&invoice>0?'Closed':fx>0?'Partial':'Open'});
+     Object.assign(fr.dataset,{order,importer,exporter:names?.[c.exporter_id]||'',status:pending===0&&invoice>0?'Received':received>0?'Partial':'Pending',fx:fxPending===0&&invoice>0?'Closed':fx>0?'Partial':'Open'});
      const details=c.details||{},nfe=details.nfe_number||details.nf_number||details.invoice_number||'—',due=details.due_number||details.due||'—',access=details.nfe_access_key||details.access_key||'—',maturity=details.payment_due_date||'—',eta=details.eta||saved.brEta||booking.eta||'—';
      Object.assign(fr.dataset,{nfe,due,access,maturity});
      td(fr,order);td(fr,nfe);td(fr,product);td(fr,importer);td(fr,number);td(fr,window.usd(invoice));
@@ -11094,7 +11098,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
      if(movementsByOrder.has(financeKey))applyMovements(position,movementsByOrder.get(financeKey));else position.received=legacyPaid;
      const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
      const party=names.get(String(id))||'—';
-     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.balance=String(balance);tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
+     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.exporter=names.get(String(parties.exporter||(kind==='purchase'?deal.supplier_id:deal.trader_company_id)))||'';tr.dataset.balance=String(balance);tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
      const first=add(tr,deal.trade_number||'—');const tag=document.createElement('div');tag.className='badge '+(kind==='purchase'?'warn':'info');tag.textContent=kind==='purchase'?'COMPRA · A PAGAR':'REVENDA · A RECEBER';tag.classList.add('aes-fin-mini-kind');first.append(tag);
      add(tr,'—');add(tr,commercial.product||deal.product||'—');add(tr,party);add(tr,'—');
      [total,paid,balance,balance].forEach(v=>add(tr,money(v,deal.currency)));
