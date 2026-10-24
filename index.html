@@ -11076,7 +11076,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
    if(companiesResult.error)throw companiesResult.error;
    const fragment=document.createDocumentFragment();
    for(const deal of result.data||[]){
-    if(deal.sale_flow?.operation_kind==='broker'||deal.status==='cancelled')continue;
+    if(deal.sale_flow?.deleted_at||deal.sale_flow?.operation_kind==='broker'||deal.status==='cancelled')continue;
     for(const [kind,flow,label] of [['purchase',deal.purchase_flow,'COMPRA'],['sale',deal.sale_flow,'REVENDA']]){
      const commercial=flow?.commercial||{},parties=flow?.parties||{};
      const qty=num(commercial.quantity??deal.quantity),price=num(commercial.unit_price??(kind==='purchase'?deal.purchase_unit_price:deal.sale_unit_price));
