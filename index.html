@@ -6231,7 +6231,7 @@ function filterFinance(){
     const balance=Number(row.dataset.balance??String(row.cells[7]?.textContent||'').replace(/[^0-9.-]/g,''));
     const balanceCents=Math.round(balance*100);
     const invoice=Number(String(row.cells[5]?.textContent||'').replace(/[^0-9.-]/g,''));
-    const statusOK=status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&row.dataset.status==='Partial'&&balanceCents>0):(!status||row.dataset.status===status);
+    const statusOK=status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&balanceCents>0):(!status||row.dataset.status===status);
     const ok=statusOK && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
       (!fx||(row.dataset.fx||'')===fx);
@@ -11372,7 +11372,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   }
   window.notify?.('Conexão ainda indisponível. Entre novamente e clique em Atualizar ordens.');
  }
- for(const view of ['finance','trader'])document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>button.addEventListener('click',()=>reloadOrders(view)));
+ for(const view of ['finance','trader'])document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>button.addEventListener('click',()=>{if(view==='finance'){const status=document.getElementById('finFilterStatus');if(status)status.value='Partial';window.filterFinance?.();}reloadOrders(view);}));
  const list=document.getElementById('financeOrderList');
  if(list){const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Atualizar ordens';button.style.marginBottom='10px';button.onclick=async()=>{button.disabled=true;try{await reloadOrders('finance');}finally{button.disabled=false;}};list.querySelector('h2')?.after(button);}
  const gate=document.getElementById('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none'){const view=document.querySelector('#finance.active,#trader.active')?.id;if(view)reloadOrders(view);}}).observe(gate,{attributes:true,attributeFilter:['style']});
