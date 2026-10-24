@@ -3684,7 +3684,8 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <select id="finFilterStatus" onchange="filterFinance()">
           <option value="">Todas as ordens · All orders</option>
           <option value="Pending">Pending</option>
-          <option value="Partial" selected>Parcial · saldo a receber</option>
+          <option value="Outstanding" selected>Parcial · saldo a receber e a pagar</option>
+          <option value="Partial">Parcial · saldo a receber</option>
           <option value="PartialPayable">Parcial · saldo a pagar</option>
           <option value="Received">Pago</option>
         <option value="Financiamento RTS">Financiamento RTS</option></select>
@@ -3705,7 +3706,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
     </div>
   </div>
 
-  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2><p class="sub">Situação: Parcial · saldo a receber mostra exportações e revendas com saldo; Parcial · saldo a pagar mostra compras com saldo; Pago mostra ordens quitadas; Todas as ordens inclui pagas e com saldo.</p>
+  <div class="card" id="financeOrderList"><h2 style="font-size:18px;margin-top:0">Orders · posição financeira</h2><p class="sub">Situação: Parcial · saldo a receber e a pagar mostra todos os saldos pendentes; Parcial · saldo a receber mostra exportações e revendas com saldo; Parcial · saldo a pagar mostra compras com saldo; Pago mostra ordens quitadas; Todas as ordens inclui pagas e com saldo.</p>
     <div class="tablewrap">
       <table id="financeTable"><thead><tr><th>Order / PO</th><th>NF-e</th><th>Produto</th><th>Importer</th><th>Booking</th><th>Valor total</th><th>Recebido</th><th>Saldo atual</th><th>Disponível</th><th>Vencimento</th><th>ETA</th><th>Situação</th><th>Ação</th></tr></thead><tbody></tbody></table>
     </div>
@@ -6235,7 +6236,7 @@ function filterFinance(){
     const balance=Number(row.dataset.balance??String(row.cells[7]?.textContent||'').replace(/[^0-9.-]/g,''));
     const balanceCents=Math.round(balance*100);
     const invoice=Number(String(row.cells[5]?.textContent||'').replace(/[^0-9.-]/g,''));
-    const statusOK=status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&balanceCents>0):status==='PartialPayable'?(rowKind==='purchase'&&balanceCents>0):(!status||row.dataset.status===status);
+    const statusOK=status==='Outstanding'?(balanceCents>0):status==='Received'?(balanceCents<=0&&invoice>0):status==='Partial'?(rowKind!=='purchase'&&balanceCents>0):status==='PartialPayable'?(rowKind==='purchase'&&balanceCents>0):(!status||row.dataset.status===status);
     const ok=statusOK && kindOK && (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
       (!exporter||normalizeExporter(row.dataset.exporter).includes(exporter)) &&
@@ -11416,7 +11417,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   }
   window.notify?.('Conexão ainda indisponível. Entre novamente e clique em Atualizar ordens.');
  }
- for(const view of ['finance','trader'])document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>button.addEventListener('click',()=>{if(view==='finance'){const status=document.getElementById('finFilterStatus');if(status)status.value='Partial';window.filterFinance?.();}reloadOrders(view);}));
+ for(const view of ['finance','trader'])document.querySelectorAll('[data-view="'+view+'"]').forEach(button=>button.addEventListener('click',()=>{if(view==='finance'){const status=document.getElementById('finFilterStatus');if(status)status.value='Outstanding';window.filterFinance?.();}reloadOrders(view);}));
  const list=document.getElementById('financeOrderList');
  if(list){const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='Atualizar ordens';button.style.marginBottom='10px';button.onclick=async()=>{button.disabled=true;try{await reloadOrders('finance');}finally{button.disabled=false;}};list.querySelector('h2')?.after(button);}
  const gate=document.getElementById('aesAuthGate');if(gate)new MutationObserver(()=>{if(gate.style.display==='none'){const view=document.querySelector('#finance.active,#trader.active')?.id;if(view)reloadOrders(view);}}).observe(gate,{attributes:true,attributeFilter:['style']});
