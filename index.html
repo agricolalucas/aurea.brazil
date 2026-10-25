@@ -328,6 +328,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #aesTraderList #aesTraderRows .btn{padding:2px 5px!important;min-height:22px!important;margin:1px 2px!important;font-size:10px!important}
 </style>
 <style id="aesTraderReconciledRows">#aesTraderRows tr.aes-trade-reconciled>td{background:#dff4e9!important}#aesTraderRows tr.aes-trade-reconciled>td:nth-child(8){color:#197a50}</style>
+<link rel="stylesheet" href="css/freight-trade.css?v=20261024-1">
 </head>
 <body><datalist id="aesCarrierList"></datalist><datalist id="aesBookingAgentList"></datalist><datalist id="aesBookingResponsibleList"></datalist>
 <div class="app">
@@ -340,6 +341,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
     <button class="navbtn" data-view="bank"><span class="ico">▰</span>Bank data</button>
     <button class="navbtn" data-view="access"><span class="ico">🔐</span>Access</button>
     <button class="navbtn" data-view="trader"><span class="ico">◇</span>Compra e revenda</button>
+    <button class="navbtn" data-view="freightTrade"><span class="ico">≋</span>Freight Trade</button>
     <div class="group">Operação</div>
     <button class="navbtn" data-view="ordercontainers"><span class="ico">▦</span>Order Containers</button>
     <div class="group">Documentação</div>
@@ -3443,6 +3445,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
   </div>
 </section>
 
+<section id="freightTrade" class="view"><div class="card"><h1>Freight Trade</h1><p>Compra e venda de frete.</p></div></section>
 <section id="freight" class="view">
   <div class="pagehead">
     <div>
@@ -9062,6 +9065,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       const {data:savedUser,error}=await request.select('id').single(); if(error) throw error;
       await loadUsers(); editId=null; window.clearUser(); window.aesBookingAgentCreated?.(name);
       window.notify('USER salvo no Supabase.');
+      document.dispatchEvent(new CustomEvent('aes-user-saved',{detail:{...record,id:savedUser.id}}));
       await window.aesReturnFromUserCreate?.({...record,id:savedUser.id});
     } catch(error) { window.notify('Falha ao salvar: '+errorText(error)); }
     finally {button.disabled=false;}
@@ -11427,7 +11431,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 (()=>{
  let origin=null;
  const $=id=>document.getElementById(id);
- const knownSelector='.aes-trader-parties select,#trTrader,#trSupplier,#trBuyer,#trPurchaseBroker,#trSaleBroker,#bcRows select[data-field="issuer"],#bcRows select[data-field="payer"],#bcRows select[data-field="cobroker"],#contractImporterSearch,#contractExporterSearch,input[list="aesRemessaUserLocations"]';
+ const knownSelector='.freight-trade-user,.aes-trader-parties select,#trTrader,#trSupplier,#trBuyer,#trPurchaseBroker,#trSaleBroker,#bcRows select[data-field="issuer"],#bcRows select[data-field="payer"],#bcRows select[data-field="cobroker"],#contractImporterSearch,#contractExporterSearch,input[list="aesRemessaUserLocations"]';
  function isUserField(field){
   if(field.closest('#user')||field.type==='hidden'||field.disabled)return false;
   if(field.matches(knownSelector))return true;
@@ -11492,5 +11496,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 })();
 </script>
 
+<script src="js/freight-trade.js?v=20261024-1"></script>
 </body>
 </html>
