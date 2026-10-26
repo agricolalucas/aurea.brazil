@@ -10626,6 +10626,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
  function validateCommercial(){for(const pre of (broker?['trSale']:['trPurchase','trSale']))for(const suffix of ['Product','Quantity','UnitPrice']){const input=$(pre+suffix);if(!input.value.trim()){message(broker?'Preencha produto, quantidade e preço da venda.':'Preencha produto, quantidade e preço da compra e da revenda.');input.focus();return false}}if((!broker&&Number($('trPurchaseQuantity').value)<=0)||Number($('trSaleQuantity').value)<=0||Number($('trPurchaseUnitPrice').value)<0||Number($('trSaleUnitPrice').value)<0){message('Confira quantidade e preços da compra e revenda.');return false}return true}
  function defaultParties(){syncTraderParties()}
  window.aesTraderSetTab=function(tab){$('aesBrokerFinancePane').hidden=tab!=='finance';$('aesBrokerFinanceTab').classList.toggle('active',tab==='finance');if(tab==='finance')commissionTotals();$('aesTradeOperationPane').hidden=tab!=='operation';$('aesTradePaymentsPane').hidden=tab!=='payments';$('aesTradeOperationTab').classList.toggle('active',tab==='operation');$('aesTradePaymentsTab').classList.toggle('active',tab==='payments');if(tab==='payments')paymentTotals()};
+ window.aesTraderFinanceContext=()=>({id:editing,currency:$('trCurrency').value,purchase:{total:Number($('trPurchaseQuantity').value)*Number($('trPurchaseUnitPrice').value),party:name(sideNode('purchase','parties','exporter').value)},sale:{total:Number($('trSaleQuantity').value)*Number($('trSaleUnitPrice').value),party:name(sideNode('sale','parties','importer').value)}});
  function paymentTable(side){return $(side==='purchase'?'trPurchasePayments':'trSalePayments')}
  function addPayment(side,p={}){const row=paymentTable(side).insertRow();row.innerHTML=`<td><input type="date" aria-label="Data" value="${escape(p.date||'')}"></td><td><input type="number" min="0.01" step="0.01" aria-label="Valor" value="${escape(p.amount??'')}"></td><td><input aria-label="Contraparte" placeholder="Nome da contraparte" value="${escape(p.counterparty||'')}"></td><td><input aria-label="Banco ou meio" placeholder="Banco / meio" value="${escape(p.bank||'')}"></td><td><input aria-label="Referência" placeholder="Comprovante / referência" value="${escape(p.reference||'')}"></td><td><button type="button" class="btn" aria-label="Remover lançamento">×</button></td>`;row.querySelector('button').onclick=()=>{row.remove();paymentTotals()};row.addEventListener('input',paymentTotals)}
  window.aesTraderAddPayment=side=>addPayment(side);
@@ -11497,5 +11498,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 </script>
 
 <script src="js/freight-trade.js?v=20261024-1"></script>
+<script src="js/trader-finance-payments.js?v=20261026-1"></script>
 </body>
 </html>
