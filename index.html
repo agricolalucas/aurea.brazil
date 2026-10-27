@@ -6035,7 +6035,7 @@ async function aesFinanceLoadSaved(order){
   const {data,error}=await db.from('aes_finance_order_movements').select('*').eq('order_number',order).order('created_at',{ascending:true});
   if(error)throw error;
   const d=window.financeData[order];if(!d)return;
-  const rows=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
+  const rows=(data||[]).map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',currency:x.currency,paymentType:x.payment_type,date:x.movement_date,amount:Number(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));
   // Retain only local, unpersisted entries visibly; never treat them as confirmed.
   const local=[]; /* AES_RECEIPT_HISTORY_DISPLAY_V4: Supabase is authoritative */
   d.history=[...rows,...local];
@@ -11073,7 +11073,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  const money=(v,c)=>String(c||'USD')+' '+num(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
  const add=(tr,v)=>{const td=tr.insertCell();td.textContent=String(v??'—');return td};
  async function loadMovements(client){const data=[];for(let offset=0;;offset+=500){const page=await client.from('aes_finance_order_movements').select('*').order('id').range(offset,offset+499);if(page.error)return {data:[],error:page.error};data.push(...page.data);if(page.data.length<500)return {data,error:null};}}
- function applyMovements(position,movements){const ordered=[...movements].sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));position.history=ordered.map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',paymentType:x.payment_type,date:x.movement_date,amount:num(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));position.received=ordered.filter(x=>x.movement_type==='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;position.fxClosed=ordered.filter(x=>x.movement_type!=='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;}
+ function applyMovements(position,movements){const ordered=[...movements].sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));position.history=ordered.map(x=>({id:x.id,persisted:true,type:x.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',currency:x.currency,paymentType:x.payment_type,date:x.movement_date,amount:num(x.amount),rate:x.exchange_rate||'—',bank:x.bank,ref:x.reference}));position.received=ordered.filter(x=>x.movement_type==='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;position.fxClosed=ordered.filter(x=>x.movement_type!=='receipt').reduce((n,x)=>n+Math.round(num(x.amount)*100),0)/100;}
  async function refresh(){
   const client=window.aesSharedClient,body=$('financeTable')?.tBodies[0];
   if(!client||!body)return;if(busy){queued=true;return;}
@@ -11343,11 +11343,15 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
  let rows=[],busy=false,sequence=0;
  const normalize=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const money=(v,c)=>String(c||'USD')+' '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ let visibleRows=[];
+ window.aesFinanceHistoryReportRows=()=>visibleRows.map(r=>({...r}));
  function render(){
+  visibleRows=[];
   const search=normalize($('financeAllHistorySearch').value),status=$('financeAllHistoryStatus').value,body=$('financeAllHistoryTable').tBodies[0];body.replaceChildren();let count=0;
   for(const row of rows){
    if(status&&status!==(row.reconciled?'yes':'no'))continue;
    if(search&&!normalize([row.order,row.party,row.bank,row.reference,row.payment_type,row.operation].join(' ')).includes(search))continue;
+   visibleRows.push(row);
    const tr=body.insertRow();tr.dataset.movementId=row.id;if(row.reconciled){tr.style.backgroundColor='#dff4e9';tr.style.color='#197a50';}
    const values=[row.movement_date?row.movement_date.slice(0,10).split('-').reverse().join('/'):'—',row.party,row.order,row.operation,row.bank||'—',row.movement_type==='receipt'?'Recebimento':'Fechamento Câmbio',row.payment_type||'—',money(row.amount,row.currency),row.reference||'—',row.reconciled?'Conciliado':'Não conciliado'];
    values.forEach((v,index)=>{const cell=tr.insertCell();if(index===1){const name=document.createElement('span');name.textContent=String(v);name.title=String(v);cell.append(name);}else cell.textContent=String(v)});count++;
@@ -11377,7 +11381,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
     return {...m,order:trader?(deal?.trade_number||'—'):key,party:names.get(String(partyId))||'—',operation:trader?(purchase?'Compra':'Revenda'):'Exportação',reconciled:reconciled.has('receipt-'+m.id)};
    }).sort((a,b)=>String(b.movement_date||b.created_at).localeCompare(String(a.movement_date||a.created_at))||String(b.created_at).localeCompare(String(a.created_at)));
    if(request===sequence){rows=next;render();}
-  }catch(e){rows=[];$('financeAllHistoryTable').tBodies[0].replaceChildren();$('financeAllHistoryMessage').textContent='Não foi possível carregar o histórico: '+e.message;}
+  }catch(e){rows=[];visibleRows=[];$('financeAllHistoryTable').tBodies[0].replaceChildren();$('financeAllHistoryMessage').textContent='Não foi possível carregar o histórico: '+e.message;}
   finally{busy=false;$('financeAllHistoryReload').disabled=false;}
  }
  $('financeAllHistoryReload').onclick=load;$('financeAllHistorySearch').addEventListener('input',render);$('financeAllHistoryStatus').addEventListener('change',render);
@@ -11499,5 +11503,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 
 <script src="js/freight-trade.js?v=20261024-1"></script>
 <script src="js/trader-finance-payments.js?v=20261026-1"></script>
+<script src="js/finance-history-reports.js?v=20261027-1"></script>
 </body>
 </html>
