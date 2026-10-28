@@ -11125,7 +11125,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
      if(movementsByOrder.has(financeKey))applyMovements(position,movementsByOrder.get(financeKey));else position.received=legacyPaid;
      const id=kind==='purchase'?(parties.exporter||deal.supplier_id):(parties.importer||deal.buyer_id);
      const party=names.get(String(id))||'—';
-     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.exporter=names.get(String(parties.exporter||(kind==='purchase'?deal.supplier_id:deal.trader_company_id)))||'';tr.dataset.balance=String(balance);tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
+     const tr=document.createElement('tr');tr.dataset.financeTrader='1';tr.dataset.financeKey=financeKey;tr.dataset.currency=deal.currency||'USD';tr.dataset.exporter=names.get(String(parties.exporter||(kind==='purchase'?deal.supplier_id:deal.trader_company_id)))||'';tr.dataset.balance=String(balance);tr.dataset.kind=kind;tr.dataset.order=deal.trade_number||'';tr.dataset.importer=party;tr.dataset.status=balance<=0&&total>0?'Received':paid>0?'Partial':'Pending';tr.dataset.fx='Open';
      const first=add(tr,deal.trade_number||'—');const tag=document.createElement('div');tag.className='badge '+(kind==='purchase'?'warn':'info');tag.textContent=kind==='purchase'?'COMPRA · A PAGAR':'REVENDA · A RECEBER';tag.classList.add('aes-fin-mini-kind');first.append(tag);
      add(tr,'—');add(tr,commercial.product||deal.product||'—');add(tr,party);add(tr,'—');
      [total,paid,balance,balance].forEach(v=>add(tr,money(v,deal.currency)));
@@ -11549,5 +11549,6 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #trAllDocumentsRows td:nth-child(3)>div{margin-top:2px!important;font-weight:500!important;font-size:10px}
 #trAllDocumentsPane th:first-child,#trAllDocumentsPane td:first-child{min-width:105px!important;max-width:120px!important}
 </style>
+<script src="js/finance-orders-payments-excel.js?v=20261028-1"></script>
 </body>
 </html>
