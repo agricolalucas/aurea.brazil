@@ -10871,19 +10871,26 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
   return {days,text:days>0?'Navio chega em '+days+' dia'+(days===1?'':'s'):days===0?'Navio chega hoje':'ETA passou há '+Math.abs(days)+' dia'+(days===-1?'':'s'),alert:days>=0&&days<=7};
  }
 
+ function tradeDocumentPriority(deal,today=new Date()){
+  const eta=deal.sale_flow?.si?.eta||deal.purchase_flow?.si?.eta||'',arrival=tradeArrivalInfo(eta,today);
+  return typeof arrival.days!=='number'?{group:2,days:Infinity}:arrival.days>=0?{group:0,days:arrival.days}:{group:1,days:Math.abs(arrival.days)};
+ }
+ function sortTradeDocuments(records,today=new Date()){
+  return [...records].sort((a,b)=>{const x=tradeDocumentPriority(a,today),y=tradeDocumentPriority(b,today);return x.group-y.group||x.days-y.days||String(a.trade_number||'').localeCompare(String(b.trade_number||''),undefined,{numeric:true});});
+ }
  window.aesTraderRenderDocuments=function(){
    const body=$('trAllDocumentsRows');if(!body)return;body.replaceChildren();const search=$('trAllDocumentsSearch').value.trim().toLowerCase();
    const columns=[...defaultDocs];for(const deal of deals)for(const doc of deal.document_flow||[])if(doc.name&&!columns.includes(doc.name))columns.push(doc.name);
-   const head=body.closest('table').tHead;head.replaceChildren();const header=head.insertRow();for(const label of ['Trade','Exportador → Importador','ETA',...columns]){const cell=document.createElement('th');cell.textContent=label;header.append(cell)}
-   for(const deal of deals){const completion=$('trDocumentsCompletion')?.value||'active',done=tradeFinalized(deal);if((completion==='active'&&done)||(completion==='finalized'&&!done))continue;const docs=Array.isArray(deal.document_flow)&&deal.document_flow.length?deal.document_flow:defaultDocs.map(name=>({name}));
+   const head=body.closest('table').tHead;head.replaceChildren();const header=head.insertRow();for(const label of ['Trade','Exportador → Importador','ETA · Prioridade',...columns]){const cell=document.createElement('th');cell.textContent=label;header.append(cell)}
+   for(const deal of sortTradeDocuments(deals)){const completion=$('trDocumentsCompletion')?.value||'active',done=tradeFinalized(deal);if((completion==='active'&&done)||(completion==='finalized'&&!done))continue;const docs=Array.isArray(deal.document_flow)&&deal.document_flow.length?deal.document_flow:defaultDocs.map(name=>({name}));
      const parties=name(isBroker(deal)?deal.trader_company_id:deal.supplier_id)+' → '+name(deal.buyer_id);if(search&&![deal.trade_number,parties,...docs.map(d=>d.name)].join(' ').toLowerCase().includes(search))continue;
-     const tradeRow=body.insertRow();for(const value of [deal.trade_number,parties])tradeRow.insertCell().textContent=value||'—';const si=deal.sale_flow?.si||deal.purchase_flow?.si||{},etaCell=tradeRow.insertCell(),eta=si.eta||'',arrival=tradeArrivalInfo(eta);const etaDate=document.createElement('strong'),etaCountdown=document.createElement('div');etaDate.textContent=eta?localDate(eta):'ETA não informada';etaCountdown.textContent=arrival.text;etaCountdown.style.cssText='margin-top:8px;line-height:1.4;font-weight:600';etaCell.append(etaDate,etaCountdown);if(arrival.alert)etaCell.style.cssText='background:#fff1f2;color:#b42318;border-left:3px solid #dc2626';
+     const tradeRow=body.insertRow();for(const value of [deal.trade_number,parties])tradeRow.insertCell().textContent=value||'—';const si=deal.sale_flow?.si||deal.purchase_flow?.si||{},etaCell=tradeRow.insertCell(),eta=deal.sale_flow?.si?.eta||deal.purchase_flow?.si?.eta||'',arrival=tradeArrivalInfo(eta);const etaDate=document.createElement('strong'),etaCountdown=document.createElement('div');etaDate.textContent=eta?localDate(eta):'ETA não informada';etaCountdown.textContent=eta?arrival.text:'';etaCountdown.style.cssText='margin-top:8px;line-height:1.4;font-weight:600';etaCell.append(etaDate,etaCountdown);if(arrival.alert)etaCell.style.cssText='background:#fff1f2;color:#b42318;border-left:3px solid #dc2626';
      columns.forEach(documentName=>{const index=docs.findIndex(d=>d.name===documentName);const documentCell=tradeRow.insertCell();if(index<0){documentCell.textContent='—';return}let doc={...docs[index]};
        const row=document.createElement('div');row.className='tr-document-column';documentCell.append(row);row.insertCell=()=>{const cell=document.createElement('div');row.append(cell);return cell};
        const status=document.createElement('select');for(const [value,label] of [['pending','Pendente'],['correction','Correção solicitada'],['received','Recebido do Exportador'],['forwarded','Encaminhado ao Importador'],['approved','Aprovado'],['finalized','Finalizado']])status.add(new Option(label,value));const finalized=tradeFinalized(deal);status.options[status.options.length-1].disabled=!finalized;status.value=finalized?'finalized':(doc.status==='finalized'?'pending':doc.status||'pending');status.disabled=finalized;status.title=finalized?'Finalizado: integralmente pago e conciliado':'Finalizado automaticamente após pagamento integral e conciliação';row.insertCell().append(status);const paintApproved=()=>{const approved=status.value==='approved'||status.value==='finalized';documentCell.style.background=approved?'#dcfce7':'';documentCell.style.borderLeft=approved?'3px solid #16a34a':'';status.style.background=approved?'#bbf7d0':'';status.style.color=approved?'#166534':'';};status.onchange=paintApproved;paintApproved();
        const attachments=row.insertCell(),filesBox=document.createElement('div'),upload=document.createElement('input');upload.type='file';upload.accept='application/pdf,.pdf';upload.multiple=true;upload.setAttribute('aria-label','Anexar PDFs '+deal.trade_number+' '+doc.name);attachments.append(filesBox,upload);
        const paintFiles=()=>{filesBox.replaceChildren();for(const file of tradeDocFiles(doc)){const button=document.createElement('button');button.type='button';button.className='btn';button.textContent=file.filename||'Abrir PDF';button.style.display='block';button.onclick=async()=>{try{const {data,error}=await client().storage.from('aes-trader-docs').download(file.path);if(error)throw error;const url=URL.createObjectURL(data),link=document.createElement('a');link.href=url;link.download=file.filename||'documento.pdf';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){window.notify?.('PDF indisponível: '+e.message)}};filesBox.append(button)}};paintFiles();
-       const save=document.createElement('button');save.className='btn primary';save.type='button';save.textContent='Salvar';row.insertCell().append(save);appendDocumentTasks(row,deal,documentName);
+       const save=document.createElement('button');save.className='btn primary';save.type='button';save.textContent='Salvar';row.insertCell().append(save);appendDocumentTasks(row,deal,documentName);const taskPanel=row.lastElementChild;taskPanel.classList.add('tr-document-tasks');save.parentElement.classList.add('tr-document-actions');save.parentElement.append(taskPanel.firstElementChild);
        const current=()=>({...doc,status:finalized?(doc.status==='finalized'?'pending':doc.status||'pending'):status.value});
        save.onclick=async()=>{save.disabled=upload.disabled=true;try{doc=await saveTradeListDoc(deal,index,current());window.notify?.('Documento salvo para '+deal.trade_number+'.')}catch(e){window.notify?.('Documento não salvo: '+e.message)}finally{save.disabled=upload.disabled=false}};
        upload.onchange=async()=>{const selected=[...upload.files];if(!selected.length)return;if(selected.some(f=>!f.name.toLowerCase().endsWith('.pdf')||f.size>10485760)){window.notify?.('Selecione PDFs de até 10 MB cada.');upload.value='';return}save.disabled=upload.disabled=true;
@@ -11530,5 +11537,17 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 @media(min-width:1400px){#trOperationFilters{grid-template-columns:repeat(8,minmax(0,1fr))}}
 </style>
 <script src="js/claim-notes.js?v=20261028-1"></script>
+<style id="tradeDocumentsEtaLayout">
+#trAllDocumentsPane>.tablewrap{height:calc(100vh - 215px)!important;min-height:350px}
+#trAllDocumentsPane th,#trAllDocumentsPane td{padding:3px 5px!important;line-height:1.1!important}
+.tr-document-column{gap:2px!important;width:205px!important}
+.tr-document-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.tr-document-actions .btn{max-width:none!important;white-space:nowrap!important}
+.tr-document-tasks>div:empty{display:none}
+.tr-document-tasks form:not([hidden]){padding:5px;background:#f1f5f9;margin:3px 0}
+#trAllDocumentsPane th:nth-child(3),#trAllDocumentsPane td:nth-child(3){min-width:125px!important;max-width:150px!important}
+#trAllDocumentsRows td:nth-child(3)>div{margin-top:2px!important;font-weight:500!important;font-size:10px}
+#trAllDocumentsPane th:first-child,#trAllDocumentsPane td:first-child{min-width:105px!important;max-width:120px!important}
+</style>
 </body>
 </html>
