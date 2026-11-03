@@ -352,15 +352,16 @@ window.brazilDb=parent.aesSharedClient;
 function docEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function notify(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000)}
 window.brazilSalesLedger={load:async()=>{},state:()=>({receipts:[],allocations:[],banks:[]})};
+let cashProfiles=[];
 async function refreshCashProfiles(){
  const db=parent.aesSharedClient||window.brazilDb;if(!db)throw Error('Conexão indisponível para carregar os usuários');
  const people=[];
  for(let offset=0;;offset+=500){
-  const {data,error}=await db.from('companies').select('*').order('id').range(offset,offset+499);
+  const {data,error}=await db.from('companies').select('id,name,profile_type,address,country,tax_id,gst,contact_name,email,phone,status,iec,fssai_number').order('id').range(offset,offset+499);
   if(error)throw error;people.push(...(data||[]));if((data||[]).length<500)break;
  }
- for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k.startsWith('aesBrazilCashProfile:'))localStorage.removeItem(k)}
- for(const p of people)localStorage.setItem('aesBrazilCashProfile:'+p.name,JSON.stringify({...p,company:p.name,taxId:p.tax_id,gstin:p.gst,contact:p.contact_name,type:p.profile_type}));
+ cashProfiles=people.map(p=>({...p,company:p.name,taxId:p.tax_id,gstin:p.gst,contact:p.contact_name,type:p.profile_type}));
+ return cashProfiles;
 }
 async function cashReload(){
  window.brazilDb=parent.aesSharedClient;if(!window.brazilDb)return;
@@ -478,10 +479,7 @@ window.brazilCashRegisterRows=function(sales,expenses){
    const cells=row.cells,company=(cells[0]?.querySelector('b')?.textContent||'').trim();
    if(company)found.set(company.toLowerCase(),{company,address:(cells[0]?.querySelector('.muted')?.textContent||'').trim(),type:(cells[1]?.textContent||'').trim(),country:(cells[2]?.textContent||'').trim(),contact:(cells[3]?.textContent||'').trim(),email:(cells[4]?.childNodes?.[0]?.textContent||'').trim(),phone:(cells[4]?.querySelector('.muted')?.textContent||'').trim(),taxId:(cells[5]?.textContent||'').trim(),gstin:'',place_supply:'',status:(cells[6]?.textContent||'Active').trim()});
  });
- for(let i=0;i<localStorage.length;i++){
-   const key=localStorage.key(i);if(!key||!key.startsWith('aesBrazilCashProfile:'))continue;
-   try{const p=JSON.parse(localStorage.getItem(key)||'{}'),company=String(p.company||'').trim();if(company)found.set(company.toLowerCase(),{...(found.get(company.toLowerCase())||{}),...p,company,taxId:p.taxId||p.taxid||'',gstin:String(p.gstin||'').trim(),place_supply:String(p.place_supply||'').trim()})}catch(_){}
- }
+ for(const p of cashProfiles){const company=String(p.company||p.name||'').trim();if(company)found.set(company.toLowerCase(),{...p,company});}
  expenseSupplierProfiles.clear();found.forEach((v,k)=>expenseSupplierProfiles.set(k,v));
  document.getElementById('expenseSupplierNames').innerHTML=[...found.values()].sort((a,b)=>a.company.localeCompare(b.company)).map(x=>`<option value="${docEsc(x.company)}">${docEsc(x.company)}</option>`).join('');
  sel.value=current;
@@ -493,6 +491,28 @@ function renderExpenseSupplierCompany(){
  document.getElementById('expenseCompanyName').textContent=p.company||'Company details';const status=document.getElementById('expenseCompanyStatus');status.textContent=p.status||'Active';status.className=`status ${p.status==='Inactive'?'red':''}`;
  const fields=[['Address',p.address,true],['Country',p.country],['Tax Office / Vergi Dairesi',p.place_supply],['Tax ID / Registration',p.taxId||p.taxid],['VKN',p.gstin],['MERSİS Number',p.iec],['Food Business Registration',p.fssai],['Owner TCKN',p.pan_owner],['Trade Registry',p.pan_company],['Bank / SWIFT Reference',p.ad_bank],['Contact',p.contact],['Email',p.email],['Phone',p.phone],['Profile Type',p.type]];
  details.innerHTML=fields.map(([label,value,wide])=>`<div class="supplier-company-field ${wide?'wide':''}"><small>${docEsc(label)}</small><b>${docEsc(value||'Not registered')}</b></div>`).join('');
+}
+// Search registered users in a visible list, including Terminal profiles.
+for(const id of ['expenseSupplier','expenseContracting']){
+ const input=document.getElementById(id);if(!input)continue;
+ input.removeAttribute('list');input.setAttribute('aria-expanded','false');
+ const menu=document.createElement('div');menu.id=id+'Results';menu.hidden=true;menu.setAttribute('role','listbox');menu.style.cssText='max-height:220px;overflow:auto;border:1px solid #b8cbd4;border-radius:8px;background:white;margin-top:5px';
+ input.setAttribute('aria-controls',menu.id);input.closest('.field').append(menu);
+ const normalize=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase();
+ function close(){menu.hidden=true;input.setAttribute('aria-expanded','false');}
+ function search(){
+  const query=normalize(input.value.trim());menu.replaceChildren();
+  const records=[...expenseSupplierProfiles.values()].filter(p=>normalize([p.company,p.type,p.taxId].join(' ')).includes(query)).sort((a,b)=>a.company.localeCompare(b.company));
+  for(const p of records.slice(0,100)){
+   const option=document.createElement('button');option.type='button';option.setAttribute('role','option');option.style.cssText='display:block;width:100%;text-align:left;background:white;border:0;border-bottom:1px solid #edf0f1;padding:9px;cursor:pointer';option.textContent=p.company+(p.type?' · '+p.type:'');
+   option.addEventListener('mousedown',e=>e.preventDefault());option.onclick=()=>{input.value=p.company;close();input.dispatchEvent(new Event('change',{bubbles:true}));};menu.append(option);
+  }
+  if(!records.length){const empty=document.createElement('p');empty.textContent='Nenhum usuário encontrado. Atualize os cadastros ou confira o nome em Usuário.';menu.append(empty);}
+  menu.hidden=false;input.setAttribute('aria-expanded','true');
+ }
+ input.addEventListener('focus',search);input.addEventListener('input',search);
+ input.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&!menu.hidden){const options=menu.querySelectorAll('button');if(options.length===1){e.preventDefault();options[0].click();}}});
+ input.addEventListener('blur',()=>setTimeout(close,150));
 }
 document.getElementById('expenseSupplier')?.addEventListener('input',renderExpenseSupplierCompany);
 document.getElementById('expenseSupplier')?.addEventListener('change',()=>{const input=document.getElementById('expenseSupplier'),p=expenseSupplierProfiles.get(input.value.trim().toLowerCase());if(p)input.value=p.company;renderExpenseSupplierCompany();});
