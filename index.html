@@ -3244,12 +3244,13 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <label>Status</label>
         <select id="claimFilterStatus">
           <option value="">Todos</option>
+          <option value="active" selected>Em andamento · não finalizados</option>
           <option>Open</option>
           <option>Under Analysis</option>
           <option>Waiting Importer</option>
           <option>Approved</option>
           <option>Rejected</option>
-          <option>Closed</option>
+          <option value="Closed">Finalizado</option>
         </select>
       </div>
     </div>
@@ -3352,7 +3353,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <option>Waiting Importer</option>
             <option>Approved</option>
             <option>Rejected</option>
-            <option>Closed</option>
+            <option value="Closed">Finalizado</option>
           </select>
         </div>
       </div>
@@ -6565,7 +6566,7 @@ function filterFreight(){
     const ok=(!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!booking||(row.dataset.booking||'').toLowerCase().includes(booking)) &&
       (!line||(row.dataset.line||'').toLowerCase().includes(line)) &&
-      (!status||(row.dataset.status||'')===status);
+      (!status||(status==='active'?!['Closed','Finalizado','Finalized'].includes(row.dataset.status):(row.dataset.status||'')===status));
     row.style.display=ok?'':'none';
   });
 }
@@ -6610,7 +6611,7 @@ function openClaim(id){
   renderClaimHistory();
 }
 function closeClaim(){document.getElementById('claimWorkspace').style.display='none';}
-function saveClaim(){
+async function saveClaim(){
   const id=window.currentClaimId; const d=window.claimData[id]; if(!d)return;
   const get=id2=>getVal(id2);
   d.order=get('claimOrder');d.booking=get('claimBooking');d.importer=get('claimImporter');d.type=get('claimType');
@@ -6618,8 +6619,7 @@ function saveClaim(){
   d.currency=get('claimCurrency');d.status=get('claimStatus');d.description=get('claimDescription');d.team=get('claimTeam');
   d.owner=get('claimOwner');d.rootCause=get('claimRootCause');d.analysis=get('claimAnalysis');d.corrective=get('claimCorrective');
   d.response=get('claimResponse');d.decision=get('claimDecision');d.approvedAmount=Number(get('claimApprovedAmount')||0);d.closeDate=get('claimCloseDate');
-  refreshClaimList();
-  notify('Claim '+id+' salvo.');
+  try{await persistClaim(d);refreshClaimList();notify('Claim '+id+' salvo.');}catch(error){notify('Não foi possível salvar o Claim: '+error.message);}
 }
 function addClaimUpdate(){
   const id=window.currentClaimId,d=window.claimData[id]; if(!d)return;
@@ -6632,7 +6632,7 @@ function addClaimUpdate(){
     status:getVal('claimStatus')||d.status,
     text:text
   });
-  renderClaimHistory();
+  renderClaimHistory();saveClaim();
 }
 function renderClaimHistory(){
   const tbody=document.querySelector('#claimHistoryTable tbody'); if(!tbody)return;
@@ -6664,7 +6664,7 @@ function refreshClaimList(){
       '<td><button class="btn primary" onclick="openClaim(\''+d.id+'\')">Abrir</button></td>';
     tbody.appendChild(tr);
   });
-  refreshClaimSummary();
+  refreshClaimSummary();filterClaims();
 }
 function refreshClaimSummary(){
   const all=Object.values(window.claimData);
@@ -6695,6 +6695,29 @@ function clearClaimFilters(){
   document.querySelectorAll('#claimsTable tbody tr').forEach(row=>row.style.display='');
 }
 refreshClaimList();
+
+let claimRemoteRows=new Map(),claimsLoading=false;
+async function persistClaim(d){
+ const db=window.aesSharedClient;if(!db)throw Error('Entre no sistema para salvar.');
+ const row={claim_number:d.id,order_number:d.order||null,status:d.status||'Open',amount:Number(d.amount||0),currency:d.currency||'USD',payload:{...d},updated_at:new Date().toISOString()};
+ const remoteId=claimRemoteRows.get(d.id);
+ const query=remoteId?db.from('aes_claims').update(row).eq('id',remoteId):db.from('aes_claims').insert(row);
+ const {data,error}=await query.select('id').single();if(error)throw error;if(!data)throw Error('Gravação não confirmada.');
+ claimRemoteRows.set(d.id,data.id);
+}
+async function loadRegisteredClaims(){
+ const db=window.aesSharedClient;if(!db||claimsLoading)return;claimsLoading=true;
+ try{
+  const rows=[];for(let offset=0;;offset+=500){const {data,error}=await db.from('aes_claims').select('*').order('id').range(offset,offset+499);if(error)throw error;rows.push(...(data||[]));if((data||[]).length<500)break;}
+  for(const row of rows){const id=row.claim_number;if(!id)continue;claimRemoteRows.set(id,row.id);if(id!==window.currentClaimId||document.getElementById('claimWorkspace').style.display==='none')window.claimData[id]={...(row.payload||{}),id,order:row.order_number||row.payload?.order||'',status:row.status||'Open',amount:row.amount,currency:row.currency};}
+  refreshClaimList();
+ }catch(error){notify('Não foi possível carregar os Claims: '+error.message);}finally{claimsLoading=false;}
+}
+for(const id of ['claimFilterId','claimFilterOrder','claimFilterImporter'])document.getElementById(id)?.addEventListener('input',filterClaims);
+document.getElementById('claimFilterStatus')?.addEventListener('change',filterClaims);
+document.querySelectorAll('[data-view="claim"]').forEach(button=>button.addEventListener('click',loadRegisteredClaims));
+const claimGate=document.getElementById('aesAuthGate');if(claimGate)new MutationObserver(()=>{if(claimGate.style.display==='none')loadRegisteredClaims();}).observe(claimGate,{attributes:true,attributeFilter:['style']});
+loadRegisteredClaims();
 
 
 let siPartyTarget = '';
