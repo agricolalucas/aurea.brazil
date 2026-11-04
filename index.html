@@ -6686,7 +6686,7 @@ function filterClaims(){
     const ok=(!id||(row.dataset.id||'').toLowerCase().includes(id)) &&
       (!order||(row.dataset.order||'').toLowerCase().includes(order)) &&
       (!importer||(row.dataset.importer||'').toLowerCase().includes(importer)) &&
-      (!status||(row.dataset.status||'')===status);
+      (!status||(status==='active'?!['Closed','Finalizado','Finalized'].includes(row.dataset.status):(row.dataset.status||'')===status));
     row.style.display=ok?'':'none';
   });
 }
