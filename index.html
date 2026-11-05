@@ -783,12 +783,12 @@ input::placeholder,textarea::placeholder{color:#76869a}
     <div id="trExportToolbar" class="toolbar" style="margin-top:14px"><button type="button" class="btn" onclick="aesTradeExport('pdf')">Gerar PDF</button><button type="button" class="btn" onclick="aesTradeExport('excel')">Gerar Excel</button></div><div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>Trade</th><th>Data</th><th>Fornecedor → Comprador</th><th>Produto / Quantidade</th><th>Compra</th><th>Venda</th><th>Margem bruta</th><th>Status</th><th>Ação</th></tr></thead><tbody id="aesTraderRows"><tr><td colspan="9">Carregando…</td></tr></tbody></table></div>
     <div id="trShipmentsPane" hidden>
       <div class="toolbar" style="margin:12px 0">
-        <input id="trShipmentSearch" type="search" aria-label="Buscar embarque" placeholder="Buscar ordem, booking, navio ou DHL" style="max-width:380px" oninput="aesTraderRenderShipments()">
+        <input id="trShipmentSearch" type="search" aria-label="Buscar embarque" placeholder="Buscar ordem, booking, armador, navio ou DHL" style="max-width:380px" oninput="aesTraderRenderShipments()">
         <select id="trShipmentCompletion" aria-label="Situação da operação" data-aes-no-search style="max-width:190px" onchange="aesTraderRenderShipments()">
           <option value="active">Não finalizados</option><option value="finalized">Finalizados</option><option value="all">Todas as ordens</option>
         </select>
       </div>
-      <div class="tablewrap"><table><thead><tr><th>Ordem</th><th>Status do embarque</th><th>Booking</th><th>Navio</th><th>ETA</th><th>ETD</th><th>DHL</th><th>Ação</th></tr></thead><tbody id="trShipmentRows"></tbody></table></div>
+      <div class="tablewrap"><table><thead><tr><th>Ordem</th><th>Status do embarque</th><th>Booking</th><th>Armador</th><th>Navio</th><th>ETA</th><th>ETD</th><th>DHL</th><th>Ação</th></tr></thead><tbody id="trShipmentRows"></tbody></table></div>
     </div>
     <div id="trAllDocumentsPane" hidden>
       <div class="toolbar" style="margin:12px 0"><input id="trAllDocumentsSearch" placeholder="Buscar Trade, empresa ou documento" oninput="aesTraderRenderDocuments()" style="max-width:380px"><select id="trDocumentsCompletion" data-aes-no-search aria-label="Finalização" onchange="aesTraderRenderDocuments()" style="max-width:190px"><option value="active" selected>Não finalizados</option><option value="finalized">Finalizados</option><option value="all">Todas as ordens</option></select><span class="sub">Vários PDFs por documento · até 10 MB por arquivo</span></div>
@@ -10600,7 +10600,7 @@ for(const side of ['Purchase','Sale']){
   });
 }
 const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER'],['importer','Importador'],['consignee','Consignatário'],['notify','Notify']];
- const siKeys=[['booking','Booking'],['vessel','Navio'],['voyage','Viagem'],['bl','BL'],['pol','Port of Loading'],['pod','Port of Discharge'],['etd','ETD'],['eta','ETA'],['shipment_status','Status do embarque'],['dhl','Rastreamento DHL'],['instructions','Instruções adicionais']];
+ const siKeys=[['booking','Booking'],['carrier','Armador'],['vessel','Navio'],['voyage','Viagem'],['bl','BL'],['pol','Port of Loading'],['pod','Port of Discharge'],['etd','ETD'],['eta','ETA'],['shipment_status','Status do embarque'],['dhl','Rastreamento DHL'],['instructions','Instruções adicionais']];
  const defaultDocs=['Commercial Invoice','Packing List','Bill of Lading','Certificate of Origin','Phytosanitary Certificate','Fumigation Certificate','Weight Certificate','Quality Certificate','Insurance Certificate'];
   const tradeModelFields=[['description','Descrição do produto','text'],['hs','NCM / HS Code','text'],['crop','Ano / Safra','text'],['packing','Packing','text'],['pol','Port of Loading','text'],['pod','Port of Discharge','text'],['transport','Transportation',['Ocean Freight','Road','Air']],['incoterm','Incoterm',['FOB','CFR','CIF','FCA','CPT','CIP','DAP','DPU','DDP','EXW']],['shipping_from','Previsão de embarque — mês inicial','month'],['shipping_until','Previsão de embarque — mês final','month'],['container_type','Container Type',["20\u0027 GP","40\u0027 GP","40\u0027 HC"]],['container_qty','Qty Container','number'],['advance_percent','Payment — Advance (%)','number'],['specifications','Specifications','textarea'],['clauses','Cláusulas','textarea']];
  let tradeModelBanks=[];
@@ -10636,7 +10636,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
    for(const [key,label] of partyKeys){const wrap=document.createElement('div'),title=document.createElement('label'),select=document.createElement('select');title.textContent=label;select.dataset.key=key;select.add(new Option('Selecione em USER',''));for(const c of companies)select.add(new Option(c.name,c.id));const addUser=document.createElement('button');addUser.type='button';addUser.className='btn aes-add-user';addUser.textContent='+ Cadastrar novo USER';addUser.style.cssText='display:inline-flex!important;margin-top:5px;padding:5px 8px;font-size:11px';addUser.onclick=()=>window.aesBeginInlineUserCreate?.(select);select.dataset.aesAddUser='1';wrap.append(title,select,addUser);parties.append(wrap)}
   }
   const si=document.querySelector('.aes-trader-si[data-side="shared"]');si.replaceChildren();
-  for(const [key,label] of siKeys){const wrap=document.createElement('div'),title=document.createElement('label'),field=key==='instructions'?document.createElement('textarea'):document.createElement('input');title.textContent=label;field.dataset.key=key;if(['etd','eta'].includes(key))field.type='date';if(key==='instructions'){field.rows=3;wrap.className='wide'}wrap.append(title,field);si.append(wrap)}
+  for(const [key,label] of siKeys){const wrap=document.createElement('div'),title=document.createElement('label'),field=key==='instructions'?document.createElement('textarea'):document.createElement('input');title.textContent=label;field.dataset.key=key;if(key==='carrier')field.setAttribute('list','aesCarrierList');if(['etd','eta'].includes(key))field.type='date';if(key==='instructions'){field.rows=3;wrap.className='wide'}wrap.append(title,field);si.append(wrap)}
  }
  function sharedSI(){return Object.fromEntries(siKeys.map(([k])=>[k,sideNode('shared','si',k).value.trim()]))}
  /* Keep saved purchase and sale parties independent when opening an operation. */
@@ -10737,14 +10737,44 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
    if(completion==='active'&&finalized||completion==='finalized'&&!finalized)continue;
    const sale=deal.sale_flow?.si||{},purchase=deal.purchase_flow?.si||{};
    const field=key=>sale[key]||purchase[key]||'';
-   if(!traderNormalize([deal.trade_number,field('booking'),field('vessel'),field('dhl'),field('shipment_status')].join(' ')).includes(search))continue;
+   if(!traderNormalize([deal.trade_number,field('booking'),field('carrier'),field('vessel'),field('dhl'),field('shipment_status')].join(' ')).includes(search))continue;
    const row=body.insertRow();
-   for(const value of [deal.trade_number,field('shipment_status'),field('booking'),field('vessel'),field('eta')&&localDate(field('eta')),field('etd')&&localDate(field('etd')),field('dhl')])row.insertCell().textContent=value||'—';
+   for(const value of [deal.trade_number,field('shipment_status'),field('booking'),field('carrier'),field('vessel'),field('eta')&&localDate(field('eta')),field('etd')&&localDate(field('etd'))])row.insertCell().textContent=value||'—';
    const button=document.createElement('button');
    button.type='button';button.className='btn';button.textContent='Abrir operação';button.onclick=()=>open(deal);
+   const dhlCell=row.insertCell();
+   const tracking=field('dhl');
+   const trackingNumber=document.createElement('span');
+   trackingNumber.textContent=tracking||'—';
+   const editTracking=document.createElement('button');
+   editTracking.type='button';editTracking.className='btn';
+   editTracking.textContent=tracking?'Editar DHL':'+ Adicionar DHL';
+   editTracking.setAttribute('aria-label',editTracking.textContent+' · '+deal.trade_number);
+   editTracking.onclick=async()=>{
+    const input=window.prompt('Número de rastreamento DHL · '+deal.trade_number,tracking);
+    const number=input?.trim();
+    if(!number||number===tracking)return;
+    editTracking.disabled=true;
+    try{
+     const db=client();
+     const {data:latest,error:readError}=await db.from('aes_trader_deals').select('sale_flow').eq('id',deal.id).single();
+     if(readError)throw readError;
+     const flow={...latest.sale_flow,si:{...latest.sale_flow?.si,dhl:number}};
+     let update=db.from('aes_trader_deals').update({sale_flow:flow}).eq('id',deal.id);
+     update=latest.sale_flow==null?update.is('sale_flow',null):update.eq('sale_flow',JSON.stringify(latest.sale_flow));
+     const {data:saved,error}=await update.select('sale_flow').maybeSingle();
+     if(error)throw error;
+     if(!saved)throw Error('A operação foi atualizada em outra sessão. Atualize a lista e tente novamente.');
+     deal.sale_flow=saved.sale_flow;
+     window.aesTraderRenderShipments();
+     window.notify?.('Rastreamento DHL salvo.');
+    }catch(error){window.notify?.('Não foi possível salvar o DHL: '+error.message);}
+    finally{editTracking.disabled=false;}
+   };
+   dhlCell.append(trackingNumber,document.createElement('br'),editTracking);
    row.insertCell().append(button);
   }
-  if(!body.rows.length){const cell=body.insertRow().insertCell();cell.colSpan=8;cell.textContent='Nenhum embarque para os filtros selecionados.';}
+  if(!body.rows.length){const cell=body.insertRow().insertCell();cell.colSpan=9;cell.textContent='Nenhum embarque para os filtros selecionados.';}
  };
  function tradeMatchesFilters(d){
   const value=id=>$(id)?.value||'',includes=(text,id)=>traderNormalize(text).includes(traderNormalize(value(id)));
@@ -10794,7 +10824,7 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
  };
 
  function nextNumber(){const nums=[...deals,...deletedDeals].map(d=>/^TR-2026-(\d+)$/i.exec(d.trade_number)).filter(Boolean).map(m=>Number(m[1]));return 'TR-2026-'+String(Math.max(0,...nums)+1).padStart(3,'0')}
- function open(d){broker=d?isBroker(d):listMode==='broker';$('trHasCommission').value=(broker||hasCommission(d))?'yes':'no';brokerUI();editing=d?.id||null;$('aesTraderList').hidden=true;$('aesTraderEditor').hidden=false;$('aesTraderFormTitle').textContent=d?(broker?'Corretor · ':'Operação ')+d.trade_number:(broker?'Nova operação de Corretor · Venda':'Nova operação comercial');ids.forEach((id,i)=>{$(id).value=d?.[keys[i]]??''});if(d)$('trStatus').value=operationStatus(d);if(!d){$('trTradeNumber').value=nextNumber();$('trDate').value=new Date().toLocaleDateString('en-CA');$('trStatus').value='draft';$('trCurrency').value='USD';$('trUnit').value='MT'}initFlows();initTradeModels();fillSide('purchase',{...d?.purchase_flow,parties:d?.purchase_flow?.parties||{exporter:d?.supplier_id,importer:d?.trader_company_id},delivery:d?.purchase_flow?.delivery??d?.delivery_terms,commercial:d?.purchase_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.purchase_unit_price,payment_terms:''}});fillSide('sale',{...d?.sale_flow,parties:d?.sale_flow?.parties||{exporter:d?.trader_company_id,importer:d?.buyer_id},delivery:d?.sale_flow?.delivery??d?.delivery_terms,commercial:d?.sale_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.sale_unit_price,payment_terms:''}});fillSI(d?.purchase_flow?.si||d?.sale_flow?.si||{});if(!d)defaultParties();fillDocs(d?.document_flow);fillTasks(d?.tasks);fillPayments('purchase',d?.purchase_flow?.payments);fillPayments('sale',d?.sale_flow?.payments);fillCommissions(d?.sale_flow?.commissions);aesTraderSetTab('operation');$('trMessage').textContent='';totals();$('trTradeNumber').focus()}
+ function open(d){broker=d?isBroker(d):listMode==='broker';$('trHasCommission').value=(broker||hasCommission(d))?'yes':'no';brokerUI();editing=d?.id||null;$('aesTraderList').hidden=true;$('aesTraderEditor').hidden=false;$('aesTraderFormTitle').textContent=d?(broker?'Corretor · ':'Operação ')+d.trade_number:(broker?'Nova operação de Corretor · Venda':'Nova operação comercial');ids.forEach((id,i)=>{$(id).value=d?.[keys[i]]??''});if(d)$('trStatus').value=operationStatus(d);if(!d){$('trTradeNumber').value=nextNumber();$('trDate').value=new Date().toLocaleDateString('en-CA');$('trStatus').value='draft';$('trCurrency').value='USD';$('trUnit').value='MT'}initFlows();initTradeModels();fillSide('purchase',{...d?.purchase_flow,parties:d?.purchase_flow?.parties||{exporter:d?.supplier_id,importer:d?.trader_company_id},delivery:d?.purchase_flow?.delivery??d?.delivery_terms,commercial:d?.purchase_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.purchase_unit_price,payment_terms:''}});fillSide('sale',{...d?.sale_flow,parties:d?.sale_flow?.parties||{exporter:d?.trader_company_id,importer:d?.buyer_id},delivery:d?.sale_flow?.delivery??d?.delivery_terms,commercial:d?.sale_flow?.commercial||{product:d?.product,quantity:d?.quantity,unit:d?.unit,unit_price:d?.sale_unit_price,payment_terms:''}});fillSI({...d?.purchase_flow?.si,...d?.sale_flow?.si});if(!d)defaultParties();fillDocs(d?.document_flow);fillTasks(d?.tasks);fillPayments('purchase',d?.purchase_flow?.payments);fillPayments('sale',d?.sale_flow?.payments);fillCommissions(d?.sale_flow?.commissions);aesTraderSetTab('operation');$('trMessage').textContent='';totals();$('trTradeNumber').focus()}
  window.aesReloadTraderUserOptions=()=>reloadTraderPartyCompanies();
  let partyReload=null,partyLoadedAt=0;
  async function reloadTraderPartyCompanies(){
