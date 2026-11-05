@@ -781,6 +781,13 @@ input::placeholder,textarea::placeholder{color:#76869a}
     <div class="aes-trade-tabs"><button type="button" id="trListOperationsTab" class="active" onclick="aesTraderListTab('operations')">Operações comerciais</button><button type="button" id="trListBrokerTab" onclick="aesTraderListTab('broker')">Operação de Corretor</button><button type="button" id="trListDocumentsTab" onclick="aesTraderListTab('documents')">Documentos do Exportador para o Importador</button><button type="button" id="trListShipmentsTab" onclick="aesTraderListTab('shipments')">Embarques</button></div>
     <div id="trOperationFilters" class="grid4" style="margin-top:14px"><div><label>Order / Trade</label><input id="trFilterNumber" placeholder="Buscar ordem" oninput="aesTraderApplyListFilters()"></div><div><label>Fornecedor / Exportador</label><input id="trFilterSupplier" placeholder="Digite o nome" oninput="aesTraderApplyListFilters()"></div><div><label>Comprador / Importador</label><input id="trFilterBuyer" placeholder="Digite o nome" oninput="aesTraderApplyListFilters()"></div><div><label>Situação</label><select id="trFilterStatus" onchange="aesTraderApplyListFilters()"><option value="active" selected>Não finalizados</option><option value="">Todas</option><option value="finalized">Finalizado</option><option value="draft">Draft</option><option value="confirmed">Confirmado</option><option value="cancelled">Cancelado</option></select></div><div><label>Conciliação bancária</label><select id="trFilterReconciliation" data-aes-no-search onchange="aesTraderApplyListFilters()"><option value="">Todas</option><option value="matched">Conciliado integralmente</option><option value="partial">Parcialmente conciliado</option><option value="unmatched">Sem lançamentos conciliados</option><option value="pending" selected>Conciliação pendente ou parcial</option></select></div><div><label>Produto</label><input id="trFilterProduct" placeholder="Compra ou revenda" oninput="aesTraderApplyListFilters()"></div><div><label>Data · de</label><input id="trFilterFrom" type="date" onchange="aesTraderApplyListFilters()"></div><div><label>Data · até</label><input id="trFilterTo" type="date" onchange="aesTraderApplyListFilters()"></div><div style="align-self:end"><button type="button" class="btn" onclick="aesTraderClearListFilters()">Limpar filtros</button></div></div><p id="trFilterCount" class="sub" role="status"></p>
     <div id="trExportToolbar" class="toolbar" style="margin-top:14px"><button type="button" class="btn" onclick="aesTradeExport('pdf')">Gerar PDF</button><button type="button" class="btn" onclick="aesTradeExport('excel')">Gerar Excel</button></div><div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>Trade</th><th>Data</th><th>Fornecedor → Comprador</th><th>Produto / Quantidade</th><th>Compra</th><th>Venda</th><th>Margem bruta</th><th>Status</th><th>Ação</th></tr></thead><tbody id="aesTraderRows"><tr><td colspan="9">Carregando…</td></tr></tbody></table></div>
+    <style>
+      #trShipmentsPane th, #trShipmentsPane td { padding: 4px 8px; vertical-align: middle; }
+      #trShipmentsPane td .btn { padding: 3px 8px; min-height: 0; line-height: 1.35; }
+      #trShipmentsPane .shipment-transit { white-space: nowrap; font-size: 12px; }
+      #trShipmentsPane .shipment-ship { margin-right: 5px; }
+      #trShipmentsPane .shipment-dhl-number { margin-right: 6px; }
+    </style>
     <div id="trShipmentsPane" hidden>
       <div class="toolbar" style="margin:12px 0">
         <input id="trShipmentSearch" type="search" aria-label="Buscar embarque" placeholder="Buscar ordem, booking, armador, navio ou DHL" style="max-width:380px" oninput="aesTraderRenderShipments()">
@@ -788,7 +795,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <option value="active">Não finalizados</option><option value="finalized">Finalizados</option><option value="all">Todas as ordens</option>
         </select>
       </div>
-      <div class="tablewrap"><table><thead><tr><th>Ordem</th><th>Status do embarque</th><th>Booking</th><th>Armador</th><th>Navio</th><th>ETA</th><th>ETD</th><th>DHL</th><th>Ação</th></tr></thead><tbody id="trShipmentRows"></tbody></table></div>
+      <div class="tablewrap"><table><thead><tr><th>Ordem</th><th>Status do embarque</th><th>Booking</th><th>Armador</th><th>Navio</th><th>ETD</th><th>Chegada prevista</th><th>ETA</th><th>DHL</th><th>Ação</th></tr></thead><tbody id="trShipmentRows"></tbody></table></div>
     </div>
     <div id="trAllDocumentsPane" hidden>
       <div class="toolbar" style="margin:12px 0"><input id="trAllDocumentsSearch" placeholder="Buscar Trade, empresa ou documento" oninput="aesTraderRenderDocuments()" style="max-width:380px"><select id="trDocumentsCompletion" data-aes-no-search aria-label="Finalização" onchange="aesTraderRenderDocuments()" style="max-width:190px"><option value="active" selected>Não finalizados</option><option value="finalized">Finalizados</option><option value="all">Todas as ordens</option></select><span class="sub">Vários PDFs por documento · até 10 MB por arquivo</span></div>
@@ -10739,13 +10746,21 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
    const field=key=>sale[key]||purchase[key]||'';
    if(!traderNormalize([deal.trade_number,field('booking'),field('carrier'),field('vessel'),field('dhl'),field('shipment_status')].join(' ')).includes(search))continue;
    const row=body.insertRow();
-   for(const value of [deal.trade_number,field('shipment_status'),field('booking'),field('carrier'),field('vessel'),field('eta')&&localDate(field('eta')),field('etd')&&localDate(field('etd'))])row.insertCell().textContent=value||'—';
+   for(const value of [deal.trade_number,field('shipment_status'),field('booking'),field('carrier'),field('vessel'),field('etd')&&localDate(field('etd'))])row.insertCell().textContent=value||'—';
+   const eta=field('eta');
+   const arrival=tradeArrivalInfo(eta);
+   const transit=row.insertCell();
+   transit.className='shipment-transit';
+   const ship=document.createElement('span');
+   ship.className='shipment-ship';ship.setAttribute('aria-hidden','true');ship.textContent='🚢';
+   transit.append(ship,Number.isFinite(arrival.days)?arrival.text:'ETA não informada');
+   row.insertCell().textContent=eta?localDate(eta):'—';
    const button=document.createElement('button');
    button.type='button';button.className='btn';button.textContent='Abrir operação';button.onclick=()=>open(deal);
    const dhlCell=row.insertCell();
    const tracking=field('dhl');
    const trackingNumber=document.createElement('span');
-   trackingNumber.textContent=tracking||'—';
+   trackingNumber.className='shipment-dhl-number';trackingNumber.textContent=tracking;
    const editTracking=document.createElement('button');
    editTracking.type='button';editTracking.className='btn';
    editTracking.textContent=tracking?'Editar DHL':'+ Adicionar DHL';
@@ -10771,10 +10786,11 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
     }catch(error){window.notify?.('Não foi possível salvar o DHL: '+error.message);}
     finally{editTracking.disabled=false;}
    };
-   dhlCell.append(trackingNumber,document.createElement('br'),editTracking);
+   if(tracking)dhlCell.append(trackingNumber);
+   dhlCell.append(editTracking);
    row.insertCell().append(button);
   }
-  if(!body.rows.length){const cell=body.insertRow().insertCell();cell.colSpan=9;cell.textContent='Nenhum embarque para os filtros selecionados.';}
+  if(!body.rows.length){const cell=body.insertRow().insertCell();cell.colSpan=10;cell.textContent='Nenhum embarque para os filtros selecionados.';}
  };
  function tradeMatchesFilters(d){
   const value=id=>$(id)?.value||'',includes=(text,id)=>traderNormalize(text).includes(traderNormalize(value(id)));
