@@ -318,7 +318,7 @@ body{background:linear-gradient(145deg,#f5f8f5 0%,#edf3ef 100%);letter-spacing:-
 <div class="field"><label>Supplier</label><select id="expenseFilterSupplier"><option value="">All suppliers</option></select></div>
 <div class="field"><label>Shipment / Order</label><select id="expenseFilterShipment"><option value="">All shipments</option></select></div>
 <div class="field"><label>Category</label><select id="expenseFilterCategory"><option value="">All categories</option></select></div>
-<div class="field"><label>Status</label><select id="expenseFilterStatus"><option value="">All status</option><option>Paid</option><option>Payable</option><option>Conciliado</option></select></div>
+<div class="field"><label>Status</label><select id="expenseFilterStatus"><option value="unreconciled" selected>Não conciliado</option><option value="">All status</option><option>Paid</option><option>Payable</option><option>Conciliado</option></select></div>
 <div class="field"><label>From</label><input type="date" id="expenseFilterFrom"></div>
 <div class="field"><label>To</label><input type="date" id="expenseFilterTo"></div>
 <button type="button" class="secondary" id="expenseClearFilters">Clear Filters</button>
@@ -363,7 +363,13 @@ async function refreshCashProfiles(){
  cashProfiles=people.map(p=>({...p,company:p.name,taxId:p.tax_id,gstin:p.gst,contact:p.contact_name,type:p.profile_type}));
  return cashProfiles;
 }
-async function cashReload(){
+function resetExpenseStatusFilter(){
+ const status=document.getElementById('expenseFilterStatus');
+ status.value='unreconciled';
+ status.dispatchEvent(new Event('change'));
+}
+async function cashReload(resetExpenseStatus=false){
+ if(resetExpenseStatus)resetExpenseStatusFilter();
  window.brazilDb=parent.aesSharedClient;if(!window.brazilDb)return;
  const [,banks,orders]=await Promise.all([refreshCashProfiles(),window.brazilDb.from('bank_accounts').select('*'),window.brazilDb.from('contracts').select('order_number')]);
  for(const r of [banks,orders])if(r.error)throw r.error;
@@ -560,8 +566,8 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  function filteredExpenses(){
  const rows=get(),v=id=>document.getElementById(id)?.value||'';
  return rows.map((x,i)=>({...x,_i:i})).filter(x=>{
-  const st=window.brazilExpenseStatus(x),ships=x.shipments||String(x.shipment||'').split(', ').filter(Boolean);
-  return (!v('expenseFilterCurrency')||x.currency===v('expenseFilterCurrency'))&&(!v('expenseFilterKDV')||x.gst_type===v('expenseFilterKDV'))&&(!v('expenseFilterSupplier')||x.supplier===v('expenseFilterSupplier'))&&(!v('expenseFilterShipment')||ships.includes(v('expenseFilterShipment')))&&(!v('expenseFilterCategory')||x.category===v('expenseFilterCategory'))&&(!v('expenseFilterStatus')||st===v('expenseFilterStatus'))&&(!v('expenseFilterFrom')||x.date>=v('expenseFilterFrom'))&&(!v('expenseFilterTo')||x.date<=v('expenseFilterTo'));
+  const st=window.brazilExpenseStatus(x),statusFilter=v('expenseFilterStatus'),ships=x.shipments||String(x.shipment||'').split(', ').filter(Boolean);
+  return (!v('expenseFilterCurrency')||x.currency===v('expenseFilterCurrency'))&&(!v('expenseFilterKDV')||x.gst_type===v('expenseFilterKDV'))&&(!v('expenseFilterSupplier')||x.supplier===v('expenseFilterSupplier'))&&(!v('expenseFilterShipment')||ships.includes(v('expenseFilterShipment')))&&(!v('expenseFilterCategory')||x.category===v('expenseFilterCategory'))&&(!statusFilter||(statusFilter==='unreconciled'?st!=='Conciliado':st===statusFilter))&&(!v('expenseFilterFrom')||x.date>=v('expenseFilterFrom'))&&(!v('expenseFilterTo')||x.date<=v('expenseFilterTo'));
  });
  }
  function sumCurrencies(rows,type){
@@ -581,7 +587,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
 
  window.addEventListener('brazil-expense-reconciliation',render);
  ['expenseFilterCurrency','expenseFilterKDV','expenseFilterSupplier','expenseFilterShipment','expenseFilterCategory','expenseFilterStatus','expenseFilterFrom','expenseFilterTo'].forEach(id=>document.getElementById(id)?.addEventListener('change',render));
- document.getElementById('expenseClearFilters')?.addEventListener('click',()=>{['expenseFilterCurrency','expenseFilterSupplier','expenseFilterShipment','expenseFilterCategory','expenseFilterStatus','expenseFilterFrom','expenseFilterTo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});render()});
+ document.getElementById('expenseClearFilters')?.addEventListener('click',()=>{['expenseFilterCurrency','expenseFilterSupplier','expenseFilterShipment','expenseFilterCategory','expenseFilterFrom','expenseFilterTo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});resetExpenseStatusFilter()});
  document.getElementById('expensePdfBtn')?.addEventListener('click',()=>{
   const rows=filteredExpenses(),w=window.open('','_blank');if(!w){notify('Allow pop-ups to generate PDF.');return}
   const sum=t=>{const a={};rows.forEach(x=>{const c=x.currency||'TRY',am=+x.amount||0,p=+x.paid||0,n=t==='total'?am:t==='paid'?p:Math.max(0,am-p);a[c]=(a[c]||0)+n});return Object.entries(a).map(([c,n])=>`${c} ${n.toFixed(2)}`).join(' | ')||'—'};
@@ -822,7 +828,7 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
  $('cashLoadExpenses').onclick=refresh;
  $('bankStatementFiles').onclick=async e=>{const entry=e.target.closest('[data-statement-entries]');if(entry){const x=statements.find(s=>s.id===entry.dataset.statementEntries);if(!x)return;$('cashCurrency').value=x.currency;$('bankMatchFilter').value='all';for(const side of ['Bank','System']){const prefix='reconcile'+side;$(prefix+'Search').value='';$(prefix+'From').value='';$(prefix+'To').value='';$(prefix+'Type').value='all';}await refresh();$('bankTransactionRows').scrollIntoView({block:'start'});return;}const b=e.target.closest('[data-statement-open]');if(!b)return;const x=statements.find(s=>s.id===b.dataset.statementOpen);try{if(previewMode){const url=URL.createObjectURL(x.file),a=document.createElement('a');a.href=url;a.download=x.file_name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}const {data,error}=await window.brazilDb.storage.from('aes_cash-bank-statements').createSignedUrl(x.storage_path,120);if(error)throw error;const a=document.createElement('a');a.href=data.signedUrl;a.download=x.file_name;a.target='_blank';a.rel='noopener';a.click();}catch(err){notify('Could not open original statement: '+err.message);}};
  function openReconciliation(e){const btn=e.target.closest('[data-match-open]');if(!btn)return;const group=[...$('bankMatchedGroups').querySelectorAll('[data-reconciled-group]')].find(x=>x.dataset.reconciledGroup===btn.dataset.matchOpen);$('bankMatchDetail').innerHTML=group?group.innerHTML:'Reconciliation unavailable';$('bankMatchDetailModal').classList.add('open');} $('bankMatchHistory').onclick=openReconciliation;$('bankTransactionRows').onclick=openReconciliation;$('cashRegisteredInvoiceRows').addEventListener('click',openReconciliation);$('bankMatchDetailClose').onclick=()=>$('bankMatchDetailModal').classList.remove('open');
- document.querySelectorAll('.expense-subtab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.expense-subtab').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.expense-subpanel').forEach(x=>x.classList.remove('active'));$(btn.dataset.expenseTab==='cash'?'expensePanelCash':'expensePanelExpenses').classList.add('active');if(btn.dataset.expenseTab==='cash')refresh();}));
+ document.querySelectorAll('.expense-subtab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.expense-subtab').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.expense-subpanel').forEach(x=>x.classList.remove('active'));$(btn.dataset.expenseTab==='cash'?'expensePanelCash':'expensePanelExpenses').classList.add('active');if(btn.dataset.expenseTab==='cash')refresh();else resetExpenseStatusFilter();}));
  ['reconcileBank','reconcileSystem'].forEach(prefix=>{['Search','From','To','Type'].forEach(k=>$(prefix+k).addEventListener(k==='Search'?'input':'change',render));$(prefix+'Clear').onclick=()=>{['Search','From','To'].forEach(k=>$(prefix+k).value='');$(prefix+'Type').value='all';if(prefix==='reconcileSystem')$('reconcileSystemOrder').value='';render();};});
  document.addEventListener('brazil-order-payments-updated',()=>{if($('expensePanelCash').classList.contains('active'))refresh();});
  document.querySelector('[data-view=despesas]')?.addEventListener('click',refresh);
