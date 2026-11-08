@@ -842,20 +842,105 @@ document.getElementById('expenseAddBank')?.addEventListener('click',()=>{
 (function(){
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const date=v=>String(v||'').replace(/^(\d{4})-(\d{2})-(\d{2})$/,'$3/$2/$1');
- const cents=v=>Math.round((Number(v)||0)*100),sum=(rows,k)=>rows.reduce((n,i)=>n+cents(i.snapshot[k]),0)/100;
+ const cents=v=>Math.round((Number(v)||0)*100);
+ const sum=(rows,key)=>rows.reduce((total,row)=>total+cents(row.snapshot[key]),0);
+ const net=rows=>sum(rows,'credit')-sum(rows,'debit');
+ const amountFormatter=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const amount=value=>amountFormatter.format(value/100);
+ const adjustment=item=>String(item?.system_key||item?.snapshot?.id||'').startsWith('adjustment-')
+  ||String(item?.snapshot?.id||'').startsWith('adjustment-');
+
  document.getElementById('cashAllReconciliationsPdf').onclick=()=>{
- const r=window.brazilCash.reportData();if(!r.groups.length){alert('Nenhuma conciliação registrada para este banco e moeda.');return;}
- const money=n=>esc(r.currency)+' '+Number(n||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
- const months=new Map();for(const g of r.groups){const key=g.date.slice(0,7);if(!months.has(key))months.set(key,[]);months.get(key).push(g);}
- const adjustment=i=>String(i.system_key||'').startsWith('adjustment-')||String(i.snapshot?.id||'').startsWith('adjustment-');
- const subtotal=(label,rows)=>`<tr><td colspan="3">${label}</td><td>${money(sum(rows,'debit'))}</td><td>${money(sum(rows,'credit'))}</td></tr>`;
- const pane=(g,side)=>{const rows=g.items.filter(i=>i.side===side).slice().sort((a,b)=>Number(adjustment(a))-Number(adjustment(b)));return `<section><h3>${side==='bank'?'Bank Statement':'System Entries · Expenses & KDV / Sales Invoices / Register Order Payment'}</h3><table><thead><tr><th>Date</th><th>Party / Description</th><th>Invoice / Order / Reference</th><th>Debit</th><th>Credit</th></tr></thead><tbody>${rows.map(i=>{const x=i.snapshot;return `<tr class="${adjustment(i)?'bank-adjustment':''}"><td>${esc(date(x.transaction_date||x.date))}</td><td>${esc(x.party||x.description)}${x.party&&x.description?'<br>'+esc(x.description):''}${x.gstin?'<br>VKN: '+esc(x.gstin):''}</td><td>${esc(x.invoice||x.reference)}</td><td>${money(x.debit)}</td><td>${money(x.credit)}</td></tr>`}).join('')}</tbody><tfoot>${side==='system'?subtotal('Total before adjustment',rows.filter(i=>!adjustment(i)))+subtotal('Adjustment total',rows.filter(adjustment)):''}<tr><td colspan="3">Total after adjustment</td><td>${money(sum(rows,'debit'))}</td><td>${money(sum(rows,'credit'))}</td></tr></tfoot></table></section>`;};
- const content=[...months.entries()].map(([month,groups])=>`<article><h2>Statement month · ${esc(month)}</h2>${groups.map((g,index)=>{const b=g.items.filter(i=>i.side==='bank'),ss=g.items.filter(i=>i.side==='system'),diff=sum(b,'credit')-sum(b,'debit')-sum(ss,'credit')+sum(ss,'debit');return `<div class="group"><h4>Conciliado · ${esc(date(g.date))} · ${index+1}</h4><small>Reconciliation saved: ${esc(new Date(g.created_at).toLocaleString())}</small><div class="columns">${pane(g,'bank')}${pane(g,'system')}</div><p><b>Description / Adjustment:</b> ${esc(g.notes||'—')}</p><p class="zero">Final difference: ${money(Math.round(diff*100)/100)}</p></div>`}).join('')}</article>`).join('');
- const bankItems=r.groups.flatMap(g=>g.items.filter(i=>i.side==='bank')),systemItems=r.groups.flatMap(g=>g.items.filter(i=>i.side==='system'));
- const popup=window.open('','_blank');if(!popup){alert('Permita abrir a janela para gerar o PDF.');return;}
- popup.document.open();popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>AUREA LOGISTICS_BRAZIL · All Bank Reconciliations</title><style>@page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{font:11px Arial;color:#17313b;margin:20px}header{border-bottom:3px solid #176664;padding-bottom:12px;margin-bottom:15px}h1{font-size:20px}h2{font-size:16px;padding:10px;background:#eaf4ed}h3{font-size:12px;min-height:30px}h4{font-size:13px;margin:8px 0}.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}section{min-width:0;border:1px solid #b9d2c3;padding:8px}table{width:100%;border-collapse:collapse;table-layout:fixed}td,th{border:1px solid #d3e2d9;padding:6px;overflow-wrap:anywhere;font-size:9px;text-align:left}th,tfoot{background:#eaf4ed}th:first-child{width:15%}th:nth-child(2){width:29%}th:nth-child(3){width:22%}th:nth-child(4),th:nth-child(5){width:17%}.bank-adjustment td{background:#fff3b0!important;color:#674b00!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}.group{margin:18px 0;border-bottom:2px solid #d3e2d9;padding-bottom:10px}.group p{overflow-wrap:anywhere}.zero{font-weight:bold;color:#166534}.controls{padding:12px 0}.controls button{padding:10px 15px;background:#176664;color:white;border:0;border-radius:6px}@media print{body{margin:0}.controls{display:none}thead{display:table-header-group}article+article{break-before:page}h2,h4{break-after:avoid}}</style></head><body><header><h1>AAUREA LOGISTICS_BRAZIL · BANK RECONCILIATION</h1><p>${esc(r.bank)} · ${esc(r.currency)}</p><p>Statement begins: ${esc(date(r.statementStart))} · ${r.groups.length} reconciliations · Chronological order by bank transaction date</p></header><div class="controls"><button id="printPdf">Print / Save as PDF</button></div>${content}<h2>Total · All reconciliations</h2><p>Bank · Credit ${money(sum(bankItems,'credit'))} / Debit ${money(sum(bankItems,'debit'))}</p><p>Total before adjustment · Credit ${money(sum(systemItems.filter(i=>!adjustment(i)),'credit'))} / Debit ${money(sum(systemItems.filter(i=>!adjustment(i)),'debit'))}</p><p>Adjustment total · Credit ${money(sum(systemItems.filter(adjustment),'credit'))} / Debit ${money(sum(systemItems.filter(adjustment),'debit'))}</p><p>System including adjustments · Credit ${money(sum(systemItems,'credit'))} / Debit ${money(sum(systemItems,'debit'))}</p></body>
-</html>`);popup.document.close();
-};
+  const report=window.brazilCash.reportData();
+  if(!report.groups.length){alert('Nenhuma conciliação registrada para este banco e moeda.');return;}
+  const months=new Map();
+  for(const group of report.groups){
+   const month=group.date.slice(0,7);
+   if(!months.has(month))months.set(month,[]);
+   months.get(month).push(group);
+  }
+  const currency=esc(report.currency);
+  const sides=items=>[items.filter(item=>item.side==='bank'),items.filter(item=>item.side==='system')];
+  const cell=(text,style='')=>'<td'+(style?' class="'+style+'"':'')+'>'+text+'</td>';
+  const amounts=(debit,credit)=>cell(amount(debit),'amount')+cell(amount(credit),'amount');
+  const totalCells=(label,items)=>'<th colspan="3" scope="row">'+label+'</th>'+amounts(sum(items,'debit'),sum(items,'credit'));
+  const totals=(label,bank,system,style='total')=>'<tr class="'+style+'">'+totalCells(label,bank)+totalCells('System total · '+currency,system)+'</tr>';
+  const entry=(item,side)=>{
+   if(!item)return '<td colspan="5"></td>';
+   const x=item.snapshot;
+   const description=[x.party,x.description,x.gstin?'VKN '+x.gstin:''].filter(Boolean);
+   return cell(esc(date(x.transaction_date||x.date)),'date')
+    +cell(esc([...new Set(description)].join(' · ')))
+    +cell(esc((side==='bank'?x.reference:x.invoice||x.reference)||''))
+    +amounts(cents(x.debit),cents(x.credit));
+  };
+  const groupsHtml=[...months].map(([month,groups])=>{
+   const [monthBank,monthSystem]=sides(groups.flatMap(group=>group.items));
+   const reconciliations=groups.map(group=>{
+    const [bank,system]=sides(group.items);
+    const adjustments=system.filter(adjustment);
+    const entries=Array.from({length:Math.max(bank.length,system.length)},(_,i)=>
+     '<tr'+(adjustment(bank[i])||adjustment(system[i])?' class="adjustment"':'')+'>'+entry(bank[i],'bank')+entry(system[i],'system')+'</tr>'
+    ).join('');
+    const saved=group.created_at?new Date(group.created_at).toLocaleString('pt-BR'):'';
+    const reference=[date(group.date),group.id,saved?'Saved '+saved:''].filter(Boolean).join(' · ');
+    const detail=group.notes?' · '+esc(group.notes):'';
+    const adjustmentSummary=adjustments.length
+     ?'<tr class="summary"><td colspan="5"></td><td colspan="5">Before adjustment · Debit '+amount(sum(system,'debit')-sum(adjustments,'debit'))+' / Credit '+amount(sum(system,'credit')-sum(adjustments,'credit'))+' · Adjustments · Debit '+amount(sum(adjustments,'debit'))+' / Credit '+amount(sum(adjustments,'credit'))+'</td></tr>'
+     :'';
+    return '<tbody><tr class="reconciliation"><th colspan="10">'+esc(reference)+detail+'</th></tr>'+entries
+     +totals('Total reconciliation · '+currency,bank,system)
+     +'<tr class="summary"><td colspan="5">Bank net · '+currency+' '+amount(net(bank))+'</td><td colspan="5">Final difference · '+currency+' '+amount(net(bank)-net(system))+'</td></tr>'
+     +adjustmentSummary+'</tbody>';
+   }).join('');
+   const monthStart=/^\d{4}-\d{2}$/.test(month)?' · From '+date(month+'-01'):'';
+   return '<tbody><tr class="month"><th colspan="10">Statement month · '+esc((month||'—')+monthStart)+'</th></tr></tbody>'
+    +reconciliations+'<tbody>'+totals('Month total · '+esc(month),monthBank,monthSystem)+'</tbody>';
+  }).join('');
+  const [bankItems,systemItems]=sides(report.groups.flatMap(group=>group.items));
+  const popup=window.open('','_blank');
+  if(!popup){alert('Permita abrir a janela para gerar o PDF.');return;}
+  popup.document.open();
+  popup.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>AUREA LOGISTICS BRAZIL · Reconciliation history</title>
+<style>
+ @page{size:A4 landscape;margin:8mm}
+ *{box-sizing:border-box;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ body{margin:12px;color:#142e3c;font:9px/1.22 Arial,sans-serif}
+ h1{margin:0 0 3px;font-size:16px}
+ p{margin:0 0 4px}
+ table{width:100%;border-collapse:collapse;table-layout:fixed}
+ th,td{border:1px solid #b9cec5;padding:2px 4px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+ thead{display:table-header-group}
+ thead,.total,.summary{background:#dceee5}
+ .month,.grand{background:#b8d9c8}
+ .month th{padding-block:4px}
+ .reconciliation{background:#edf4ef}
+ .amount{text-align:right;font-variant-numeric:tabular-nums}
+ .date{white-space:nowrap}
+ .adjustment td{background:#fff3bd;color:#674b00}
+ .total,.grand,.summary{font-weight:bold}
+ .system-start{border-left:2px solid #548273}
+ tr{break-inside:avoid}
+ .month,.reconciliation,.total{break-after:avoid}
+ .controls{margin:6px 0}
+ .controls button{border:0;background:#176664;color:white;padding:6px 10px;border-radius:4px;cursor:pointer}
+ @media print{body{margin:0}.controls{display:none}}
+</style></head><body>
+<h1>AUREA LOGISTICS BRAZIL · Reconciliation history · Statement dates</h1>
+<p>${esc(report.bank)} · ${currency}${report.statementStart?' · Statement begins '+esc(date(report.statementStart)):''}</p>
+<p>Ordered by bank statement date. Entries share a reconciliation group. Their positions do not imply individual allocation.</p>
+<div class="controls"><button id="printPdf" type="button">Print / Save as PDF</button></div>
+<table>
+<colgroup><col style="width:7%"><col style="width:20%"><col style="width:9%"><col style="width:7%"><col style="width:7%"></colgroup>
+<colgroup><col class="system-start" style="width:7%"><col style="width:20%"><col style="width:9%"><col style="width:7%"><col style="width:7%"></colgroup>
+<thead><tr><th colspan="5" scope="colgroup">BANK STATEMENT</th><th colspan="5" scope="colgroup">SYSTEM ENTRIES</th></tr>
+<tr><th>Date</th><th>Description</th><th>Reference</th><th>Debit</th><th>Credit</th><th>Date</th><th>Supplier / Buyer · Description</th><th>Invoice / Order</th><th>Debit</th><th>Credit</th></tr></thead>
+${groupsHtml}<tbody>${totals('Grand total · '+currency,bankItems,systemItems,'grand')}</tbody>
+</table></body></html>`);
+  popup.document.close();
+  popup.document.getElementById('printPdf').onclick=()=>popup.print();
+ };
 })();
 </script><script>
 document.getElementById('cashCurrency').value='BRL';
