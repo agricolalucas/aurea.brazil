@@ -32,6 +32,7 @@
       #financeDrePanel .dre-result{font-weight:700;color:#17603e}
       #financeDrePanel .dre-loss{font-weight:700;color:#a12d2d}
       #financeDrePanel .dre-dates{min-width:135px}
+      #financeDrePanel tr.dre-linked td{background:#fff0c9}
     </style>
     <h2>DRE gerencial</h2>
     <p class="sub">Resultado por moeda. O período usa a data da nota, operação ou despesa. Comissões conciliadas usam a primeira data do extrato do grupo.</p>
@@ -40,6 +41,7 @@
       <label>Até <input type="date" data-dre="to"></label>
       <label>Moeda <select data-dre="currency"><option value="">Todas</option></select></label>
       <button class="btn" type="button" data-dre="reload">Atualizar dados</button>
+      <button class="btn" type="button" data-dre="pdf" disabled>Gerar PDF</button>
     </div>
     <p data-dre="status" role="status" aria-live="polite"></p>
     <div data-dre="results"></div>`;
@@ -151,6 +153,7 @@
       const trade = linked.length === 1 ? linked[0] : null;
       const orders = trade ? ['TRADER:' + trade.id + ':sale'] : [number];
       const row = {
+        linkId: 'invoice-' + invoice.id, tradeId: trade?.id,
         date: date(invoice.invoice_date), document: invoice.invoice_number, order: trade?.trade_number || '',
         party: invoice.buyer_company, currency: normalized(invoice.currency),
         amount: cents(invoice.amount_try), payments: paymentsFor(['sales-' + invoice.id], orders)
@@ -172,6 +175,7 @@
         const orders = ['TRADER:' + trade.id + ':' + side];
         if (buy && (tradeByNumber.get(normalized(trade.trade_number)) || []).length === 1) orders.push('PAGAMENTO:' + trade.trade_number);
         const row = {
+          linkId: side + '-' + trade.id, tradeId: trade.id,
           date: date(trade.trade_date), document: doc, order: trade.trade_number,
           party: companies.get(String(buy ? trade.supplier_id : trade.buyer_id))?.name,
           currency: normalized(trade.currency), amount, payments: paymentsFor([], orders)
@@ -215,7 +219,7 @@
     preserveLines: true
   });
 
-  function table(title, columns, rows, emptyText = 'Nenhum registro no filtro selecionado.') {
+  function table(title, columns, rows, emptyText = 'Nenhum registro no filtro selecionado.', records = []) {
     const section = document.createElement('section');
     section.className = 'dre-section';
     const heading = document.createElement('h3');
@@ -238,8 +242,9 @@
       header.append(cell);
     }
     const body = grid.createTBody();
-    for (const row of rows) {
+    for (const [index, row] of rows.entries()) {
       const tr = body.insertRow();
+      if (records[index]?.linkId) tr.id = 'dre-' + records[index].linkId;
       for (const value of row) {
         const cell = tr.insertCell();
         cell.textContent = (value?.value ?? value) || '—';
@@ -252,16 +257,10 @@
     return section;
   }
 
-  function render() {
+  function filteredReport() {
     if (!report) return;
-    const result = el('results');
     const from = el('from').value, to = el('to').value, currency = el('currency').value;
-    result.replaceChildren();
-    if (from && to && from > to) {
-      el('status').textContent = 'A data inicial deve ser anterior ou igual à data final.';
-      return;
-    }
-    el('status').textContent = '';
+    if (from && to && from > to) return;
     const visible = rows => rows.filter(row =>
       (!currency || row.currency === currency) && (!from || row.date >= from) && (!to || (row.date && row.date <= to))
     ).sort(sortByDate);
@@ -277,31 +276,154 @@
     purchases.filter(included).forEach(row => { bucket(row.currency).purchases += row.amount; });
     expenses.forEach(row => { bucket(row.currency).expenses += row.amount; });
     commissions.filter(row => !row.expense).forEach(row => { bucket(row.currency).commissions += row.amount; });
-    const summary = [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([key, values]) => {
+    const closing = [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([key, values]) => {
       const gross = values.sales - values.purchases;
       const profit = gross - values.expenses + values.commissions;
-      return [key || 'Moeda não informada', amountCell(values.sales), amountCell(values.purchases), amountCell(gross),
-        amountCell(values.expenses), amountCell(values.commissions),
-        { value: money(profit), className: 'dre-money ' + (profit < 0 ? 'dre-loss' : 'dre-result') }];
+      return { currency: key || 'Moeda não informada', ...values, gross, profit };
     });
-    result.append(table('Resumo do resultado', ['Moeda', 'Vendas', 'Compras', 'Lucro bruto', 'Despesas', 'Comissões líquidas conciliadas', 'Lucro / Prejuízo'], summary));
-    const note = document.createElement('p');
-    note.className = 'sub';
-    note.textContent = 'O resultado usa os registros incluídos de venda e compra, deduz despesas e incorpora comissões conciliadas. Corretagem de terceiros, lançamentos avulsos e ajustes ficam separados. Comissão paga via nota de despesa já está no total de despesas.';
-    result.append(note);
+    return { from, to, currency, purchases, sales, expenses, commissions, manual, closing };
+  }
 
-    const documentHeaders = ['Data', 'Nota / Documento', 'Ordem', 'Empresa', 'Moeda', 'Valor', 'Situação na DRE', 'Pagamento conciliado · data do extrato / banco / valor vinculado'];
-    const documentRow = row => [formatDate(row.date), row.document, row.order, row.party, row.currency, amountCell(row.amount), row.status, paymentDates(row)];
-    result.append(
-      table('Compras', documentHeaders, purchases.map(documentRow)),
-      table('Vendas', documentHeaders, sales.map(documentRow)),
+  const accountingNote = 'O resultado usa os registros incluídos de venda e compra, deduz despesas e incorpora comissões conciliadas. Corretagem de terceiros, lançamentos avulsos e ajustes são demonstrados separadamente. Comissão paga via nota de despesa já está no total de despesas.';
+  const periodNote = 'O período usa a data da nota, operação ou despesa. Comissões conciliadas usam a primeira data do extrato do grupo.';
+
+  function supportingTables({ commissions, expenses, manual }) {
+    return [
       table('Comissões pagas e conciliadas', ['Data do extrato', 'Documento', 'Empresa', 'Descrição', 'Moeda', 'Pago', 'Recebido', 'Datas e valores vinculados'],
         commissions.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.debit), amountCell(row.credit), paymentDates(row)])),
       table('Despesas', ['Data', 'Nota fiscal', 'Fornecedor', 'Categoria / Descrição', 'Moeda', 'Valor', 'Pagamento conciliado · data do extrato / banco / valor vinculado'],
         expenses.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.amount), paymentDates(row)])),
       table('Lançamentos avulsos · Bank Statement', ['Data', 'Banco', 'Referência', 'Descrição', 'Moeda', 'Débito', 'Crédito', 'Tipo', 'Conciliação · datas e valores vinculados'],
         manual.map(row => [formatDate(row.date), row.party, row.document, row.description, row.currency, amountCell(row.debit), amountCell(row.credit), row.status, paymentDates(row)]))
+    ];
+  }
+
+  function render() {
+    if (!report) return;
+    const result = el('results');
+    const view = filteredReport();
+    result.replaceChildren();
+    el('pdf').disabled = !view;
+    el('status').textContent = view ? '' : 'A data inicial deve ser anterior ou igual à data final.';
+    if (!view) return;
+
+    const documentHeaders = ['Data', 'Nota / Documento', 'Ordem', 'Empresa', 'Moeda', 'Valor', 'Situação na DRE', 'Pagamento conciliado · data do extrato / banco / valor vinculado'];
+    const documentRow = row => [formatDate(row.date), row.document, row.order, row.party, row.currency, amountCell(row.amount), row.status, paymentDates(row)];
+    const summary = view.closing.map(row => [row.currency, amountCell(row.sales), amountCell(row.purchases), amountCell(row.gross),
+      amountCell(row.expenses), amountCell(row.commissions), { value: money(row.profit), className: 'dre-money ' + (row.profit < 0 ? 'dre-loss' : 'dre-result') }]);
+    const note = document.createElement('p');
+    note.className = 'sub';
+    note.textContent = accountingNote;
+    result.append(
+      table('Compras', documentHeaders, view.purchases.map(documentRow), undefined, view.purchases),
+      table('Vendas', documentHeaders, view.sales.map(documentRow), undefined, view.sales),
+      ...supportingTables(view), note,
+      table('Resumo do resultado', ['Moeda', 'Vendas', 'Compras', 'Lucro bruto', 'Despesas', 'Comissões líquidas conciliadas', 'Lucro / Prejuízo'], summary)
     );
+  }
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
+  function documentPairs({ purchases, sales }) {
+    const groups = new Map();
+    for (const [side, records] of [['purchases', purchases], ['sales', sales]]) {
+      for (const row of records) {
+        const key = row.tradeId ? 'trade-' + row.tradeId : row.linkId;
+        if (!groups.has(key)) groups.set(key, { order: row.order, purchases: [], sales: [], date: row.date });
+        const group = groups.get(key);
+        group[side].push(row);
+        if (row.date > group.date) group.date = row.date;
+      }
+    }
+    return [...groups.values()].sort(sortByDate).flatMap(group =>
+      Array.from({ length: Math.max(group.purchases.length, group.sales.length) }, (_, index) =>
+        [group.order, group.purchases[index], group.sales[index]]));
+  }
+
+  function printDocument(row) {
+    if (!row) return '<span class="muted">—</span>';
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.hash = 'dre-' + row.linkId;
+    return `<div class="document-heading"><a href="${escapeHtml(url.href)}" target="_blank" rel="noopener">${escapeHtml(row.document || 'Abrir registro')}</a>
+      <strong>${escapeHtml(row.currency || 'S/ moeda')} ${money(row.amount)}</strong></div>
+      <div>${escapeHtml([formatDate(row.date), row.party, row.status].filter(Boolean).join(' · '))}</div>
+      <div class="payment">${escapeHtml(paymentDates(row).value)}</div>`;
+  }
+
+  function printClosing(closing) {
+    const lines = [
+      ['(+) Receita de vendas', 'sales', 1], ['(−) Custo das compras', 'purchases', -1],
+      ['(=) Resultado bruto', 'gross', 1, 'subtotal'], ['(−) Despesas', 'expenses', -1],
+      ['(+/−) Comissões líquidas conciliadas', 'commissions', 1], ['(=) Lucro / Prejuízo', 'profit', 1, 'closing']
+    ];
+    if (!closing.length) return '<p>Sem valores para apurar no filtro selecionado.</p>';
+    return closing.map(row => `<table class="statement">
+      <thead><tr><th scope="col">Apuração do resultado</th><th scope="col" class="dre-money">${escapeHtml(row.currency)}</th></tr></thead>
+      <tbody>${lines.map(([label, key, sign, style = '']) => {
+        const value = row[key] * sign;
+        const resultClass = key === 'profit' && value < 0 ? ' loss' : '';
+        return `<tr class="${style}${resultClass}"><th scope="row">${label}</th><td class="dre-money">${value < 0 ? '(' + money(-value) + ')' : money(value || 0)}</td></tr>`;
+      }).join('')}</tbody></table>`).join('');
+  }
+
+  function printReport() {
+    const view = filteredReport();
+    if (!view) return;
+    const popup = window.open('', '_blank');
+    if (!popup) {
+      el('status').textContent = 'Permita pop-ups para gerar o PDF da DRE.';
+      return;
+    }
+    const pairs = documentPairs(view);
+    const period = view.from || view.to ? (view.from ? formatDate(view.from) : 'Início dos registros') + ' a ' + (view.to ? formatDate(view.to) : 'Último registro') : 'Todos os períodos';
+    const issued = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Cuiaba' }).format(new Date());
+    popup.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>DRE Gerencial - Áurea Brasil</title><style>
+      @page { size: A4 landscape; margin: 11mm 12mm 14mm; @bottom-left { content: 'ÁUREA BRASIL  /  FINANCEIRO'; color:#526576; font: 8pt Arial } @bottom-right { content: 'Página ' counter(page) ' de ' counter(pages); color:#526576; font: 8pt Arial } }
+      *{box-sizing:border-box}body{margin:0;color:#192d40;font:9pt/1.3 Arial,sans-serif;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+      header{border-top:3px solid #18384e;border-bottom:1px solid #b9c9d4;padding:10px 0;margin-bottom:14px}
+      header p{margin:3px 0}.brand{color:#16624b;font-weight:bold;letter-spacing:.12em}
+      h1{font-size:19pt;line-height:1.15;margin:3px 0 5px}h2,h3{font-size:11pt;margin:14px 0 4px;break-after:avoid}
+      .muted,.payment,.note{color:#475d6e}.note{font-size:8pt;margin:5px 0 7px}.payment{font-size:8pt;white-space:pre-line;margin-top:2px}
+      table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt}thead{display:table-header-group}
+      th,td{padding:4px 6px;border:1px solid #c9d5de;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+      thead th{background:#18384e;color:#fff}tr{break-inside:avoid}tbody tr:nth-child(even){background:#f3f7fa}
+      a{color:#125a7d;text-decoration:underline}.document-heading{display:flex;justify-content:space-between;gap:6px}
+      .document-heading strong,.dre-money{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+      .statement{width:68%;margin:7px 0;break-inside:avoid}.statement th:first-child{width:65%}
+      .subtotal{font-weight:bold}.statement .closing{background:#dcefe5;color:#164f3d;font-size:10pt;font-weight:bold}
+      .statement .loss{background:#f9e6e4;color:#842e26}.print-button{margin-top:14px;padding:7px 12px}
+      @media screen{body{margin:24px auto;padding:0 18px;max-width:1100px}}@media print{.print-button{display:none}}
+    </style></head><body>
+    <header><p class="brand">ÁUREA BRASIL · FINANCEIRO</p><h1>Demonstração do Resultado do Exercício</h1>
+      <p>DRE gerencial · ${escapeHtml(period)} · ${escapeHtml(view.currency || 'Todas as moedas')} · Emitido em ${issued}</p></header>
+    <h2>01 · Documentos de compra e venda</h2>
+    <p class="note">Compra e venda são alinhadas pela operação vinculada. Clique no documento para consultar seu lançamento na DRE do sistema.</p>
+    <table><colgroup><col style="width:12%"><col style="width:44%"><col style="width:44%"></colgroup>
+      <thead><tr><th scope="col">Operação</th><th scope="col">Compra · Fornecedor</th><th scope="col">Venda · Cliente</th></tr></thead>
+      <tbody>${pairs.length ? pairs.map(([order, buy, sale]) => `<tr><th scope="row">${escapeHtml(order || '—')}</th><td>${printDocument(buy)}</td><td>${printDocument(sale)}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum documento no filtro selecionado.</td></tr>'}</tbody></table>
+    ${supportingTables(view).map((section, index) => {
+      const heading = section.querySelector('h3');
+      heading.textContent = '0' + (index + 2) + ' · ' + heading.textContent;
+      return section.outerHTML;
+    }).join('')}
+    <h2>05 · Resultado do período por moeda</h2><p class="note">${periodNote} ${accountingNote}</p>
+    ${printClosing(view.closing)}<button class="print-button" onclick="window.print()">Imprimir / Salvar PDF</button></body></html>`);
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  }
+
+  function showLinkedDocument() {
+    const id = window.location.hash.slice(1);
+    if (!/^dre-(invoice|purchase|sale)-[\w-]+$/.test(id)) return;
+    const row = document.getElementById(id);
+    if (!row) {
+      el('status').textContent = 'O documento vinculado não está disponível nesta DRE.';
+      return;
+    }
+    row.classList.add('dre-linked');
+    row.scrollIntoView({ block: 'center' });
   }
 
   async function load() {
@@ -310,6 +432,7 @@
     el('results').replaceChildren();
     el('status').textContent = 'Carregando os dados da DRE…';
     el('reload').disabled = true;
+    el('pdf').disabled = true;
     try {
       const client = window.aesSharedClient;
       if (!client) throw new Error('Entre no sistema para consultar a DRE.');
@@ -323,6 +446,7 @@
       select.replaceChildren(new Option('Todas', ''), ...currencies.map(value => new Option(value, value)));
       select.value = currencies.includes(previous) ? previous : '';
       render();
+      showLinkedDocument();
     } catch (error) {
       if (current === request) el('status').textContent = 'Não foi possível carregar a DRE. ' + error.message;
     } finally {
@@ -332,6 +456,7 @@
 
   for (const name of ['from', 'to', 'currency']) el(name).addEventListener('change', render);
   el('reload').onclick = load;
+  el('pdf').onclick = printReport;
   button.onclick = () => window.switchFinanceTab('dre');
 
   const original = window.switchFinanceTab;
@@ -348,4 +473,19 @@
     window.financeActiveTab = 'dre';
     load();
   };
+
+  const authGate = document.getElementById('aesAuthGate');
+  function openLinkedDre() {
+    if (!/^#dre-(invoice|purchase|sale)-[\w-]+$/.test(window.location.hash) ||
+        !window.aesSharedClient || (authGate && authGate.style.display !== 'none')) return;
+    const financeButton = document.querySelector('[data-view="finance"]');
+    if (financeButton && !document.getElementById('finance')?.classList.contains('active')) financeButton.click();
+    el('from').value = el('to').value = el('currency').value = '';
+    window.switchFinanceTab('dre');
+  }
+  window.addEventListener('hashchange', openLinkedDre);
+  if (authGate && window.location.hash.startsWith('#dre-')) {
+    new MutationObserver(openLinkedDre).observe(authGate, { attributes: true, attributeFilter: ['style'] });
+  }
+  openLinkedDre();
 })();
