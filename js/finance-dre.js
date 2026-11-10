@@ -208,6 +208,7 @@
 
   let report = null, request = 0;
   const sortByDate = (a, b) => b.date.localeCompare(a.date);
+  const included = row => row.status.startsWith('Incluído');
   const amountCell = value => ({ value: money(value), className: 'dre-money' });
   const paymentDates = row => ({
     value: row.payments.map(payment => {
@@ -271,7 +272,6 @@
       if (!totals.has(key)) totals.set(key, { sales: 0, purchases: 0, expenses: 0, commissions: 0 });
       return totals.get(key);
     };
-    const included = row => row.status.startsWith('Incluído');
     sales.filter(included).forEach(row => { bucket(row.currency).sales += row.amount; });
     purchases.filter(included).forEach(row => { bucket(row.currency).purchases += row.amount; });
     expenses.forEach(row => { bucket(row.currency).expenses += row.amount; });
@@ -325,7 +325,7 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
-  function documentPairs({ purchases, sales }) {
+  function documentGroups({ purchases, sales }) {
     const groups = new Map();
     for (const [side, records] of [['purchases', purchases], ['sales', sales]]) {
       for (const row of records) {
@@ -336,9 +336,24 @@
         if (row.date > group.date) group.date = row.date;
       }
     }
-    return [...groups.values()].sort(sortByDate).flatMap(group =>
-      Array.from({ length: Math.max(group.purchases.length, group.sales.length) }, (_, index) =>
-        [group.order, group.purchases[index], group.sales[index]]));
+    return [...groups.values()].sort(sortByDate);
+  }
+
+  function printOrderResult({ purchases, sales }) {
+    const totals = new Map();
+    for (const [side, records] of [['purchase', purchases], ['sale', sales]]) {
+      for (const row of records.filter(included)) {
+        if (!row.currency) continue;
+        if (!totals.has(row.currency)) totals.set(row.currency, {});
+        const values = totals.get(row.currency);
+        values[side] = (values[side] ?? 0) + row.amount;
+      }
+    }
+    return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([currency, { purchase, sale }]) => {
+      if (purchase === undefined || sale === undefined) return '';
+      const result = sale - purchase;
+      return `<div class="order-result${result < 0 ? ' negative' : ''}">${escapeHtml(currency)} ${result < 0 ? '(' + money(-result) + ')' : money(result)}</div>`;
+    }).join('') || '<span class="muted">—</span>';
   }
 
   function printDocument(row) {
@@ -375,7 +390,7 @@
       el('status').textContent = 'Permita pop-ups para gerar o PDF da DRE.';
       return;
     }
-    const pairs = documentPairs(view);
+    const groups = documentGroups(view);
     const period = view.from || view.to ? (view.from ? formatDate(view.from) : 'Início dos registros') + ' a ' + (view.to ? formatDate(view.to) : 'Último registro') : 'Todos os períodos';
     const issued = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Cuiaba' }).format(new Date());
     popup.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>DRE Gerencial - Áurea Brasil</title><style>
@@ -390,6 +405,7 @@
       thead th{background:#18384e;color:#fff}tr{break-inside:avoid}tbody tr:nth-child(even){background:#f3f7fa}
       a{color:#125a7d;text-decoration:underline}.document-heading{display:flex;justify-content:space-between;gap:6px}
       .document-heading strong,.dre-money{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+      .order-result{font-weight:bold;color:#164f3d}.order-result.negative{color:#842e26}
       .statement{width:68%;margin:7px 0;break-inside:avoid}.statement th:first-child{width:65%}
       .subtotal{font-weight:bold}.statement .closing{background:#dcefe5;color:#164f3d;font-size:10pt;font-weight:bold}
       .statement .loss{background:#f9e6e4;color:#842e26}.print-button{margin-top:14px;padding:7px 12px}
@@ -399,9 +415,14 @@
       <p>DRE gerencial · ${escapeHtml(period)} · ${escapeHtml(view.currency || 'Todas as moedas')} · Emitido em ${issued}</p></header>
     <h2>01 · Documentos de compra e venda</h2>
     <p class="note">Compra e venda são alinhadas pela operação vinculada. Clique no documento para consultar seu lançamento na DRE do sistema.</p>
-    <table><colgroup><col style="width:12%"><col style="width:44%"><col style="width:44%"></colgroup>
-      <thead><tr><th scope="col">Operação</th><th scope="col">Compra · Fornecedor</th><th scope="col">Venda · Cliente</th></tr></thead>
-      <tbody>${pairs.length ? pairs.map(([order, buy, sale]) => `<tr><th scope="row">${escapeHtml(order || '—')}</th><td>${printDocument(buy)}</td><td>${printDocument(sale)}</td></tr>`).join('') : '<tr><td colspan="3">Nenhum documento no filtro selecionado.</td></tr>'}</tbody></table>
+    <p class="note">Resultado da ordem = total das vendas menos total das compras incluídas, por moeda, no filtro selecionado. O traço indica que falta compra ou venda na mesma moeda.</p>
+    <table><colgroup><col style="width:12%"><col style="width:36%"><col style="width:36%"><col style="width:16%"></colgroup>
+      <thead><tr><th scope="col">Operação</th><th scope="col">Compra · Fornecedor</th><th scope="col">Venda · Cliente</th><th scope="col" class="dre-money">Resultado da ordem</th></tr></thead>
+      <tbody>${groups.length ? groups.map(group => {
+        const result = printOrderResult(group);
+        return Array.from({ length: Math.max(group.purchases.length, group.sales.length) }, (_, index) =>
+          `<tr><th scope="row">${escapeHtml(group.order || '—')}</th><td>${printDocument(group.purchases[index])}</td><td>${printDocument(group.sales[index])}</td><td class="dre-money">${index === 0 ? result : ''}</td></tr>`).join('');
+      }).join('') : '<tr><td colspan="4">Nenhum documento no filtro selecionado.</td></tr>'}</tbody></table>
     ${supportingTables(view).map((section, index) => {
       const heading = section.querySelector('h3');
       heading.textContent = '0' + (index + 2) + ' · ' + heading.textContent;
