@@ -57,6 +57,8 @@
   const unique = values => [...new Set(values.filter(Boolean))];
   const cancelled = value => ['CANCELLED', 'CANCELED', 'CANCELADO', 'VOID'].includes(normalized(value));
   const brokerage = value => ['BROKER', 'BROKERAGE', 'CORRETAGEM'].includes(normalized(value));
+  const brokerTrade = trade => brokerage(trade?.operation_kind) || brokerage(trade?.operation_type);
+  const brokerageStatus = 'Corretagem · valor de terceiros';
   const commissionExpense = value => /broker|comiss|commission|corret/i.test(value || '');
   const byId = rows => new Map(rows.map(row => [String(row.id), row]));
   const append = (map, key, value) => {
@@ -158,12 +160,12 @@
         party: invoice.buyer_company, currency: normalized(invoice.currency),
         amount: cents(invoice.amount_try), payments: paymentsFor(['sales-' + invoice.id], orders)
       };
-      row.status = brokerage(invoice.operation_kind || trade?.operation_kind) ? 'Corretagem · valor de terceiros' : status(invoice, row, 'credit');
+      row.status = brokerage(invoice.operation_kind) || brokerTrade(trade) ? brokerageStatus : status(invoice, row, 'credit');
       sales.push(row);
     }
 
     for (const trade of activeTrades) {
-      const broker = brokerage(trade.operation_kind) || brokerage(trade.operation_type);
+      const broker = brokerTrade(trade);
       for (const side of ['purchase', 'sale']) {
         if (side === 'purchase' && broker) continue;
         const buy = side === 'purchase';
@@ -180,7 +182,7 @@
           party: companies.get(String(buy ? trade.supplier_id : trade.buyer_id))?.name,
           currency: normalized(trade.currency), amount, payments: paymentsFor([], orders)
         };
-        row.status = broker ? 'Corretagem · valor de terceiros' : status(trade, row, buy ? 'debit' : 'credit');
+        row.status = broker ? brokerageStatus : status(trade, row, buy ? 'debit' : 'credit');
         (buy ? purchases : sales).push(row);
       }
     }
@@ -284,12 +286,12 @@
     return { from, to, currency, purchases, sales, expenses, commissions, manual, closing };
   }
 
-  const accountingNote = 'O resultado usa os registros incluídos de venda e compra, deduz despesas e incorpora comissões conciliadas. Corretagem de terceiros, lançamentos avulsos e ajustes são demonstrados separadamente. Comissão paga via nota de despesa já está no total de despesas.';
+  const accountingNote = 'O resultado usa os registros incluídos de venda e compra, deduz despesas e incorpora comissões conciliadas. A receita das operações de corretor entra como comissão recebida e conciliada. Lançamentos avulsos e ajustes são demonstrados separadamente. Comissão paga via nota de despesa já está no total de despesas.';
   const periodNote = 'O período usa a data da nota, operação ou despesa. Comissões conciliadas usam a primeira data do extrato do grupo.';
 
   function supportingTables({ commissions, expenses, manual }) {
     return [
-      table('Comissões pagas e conciliadas', ['Data do extrato', 'Documento', 'Empresa', 'Descrição', 'Moeda', 'Pago', 'Recebido', 'Datas e valores vinculados'],
+      table('Comissões recebidas e pagas · conciliadas', ['Data do extrato', 'Documento', 'Empresa', 'Descrição', 'Moeda', 'Pago', 'Recebido', 'Datas e valores vinculados'],
         commissions.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.debit), amountCell(row.credit), paymentDates(row)])),
       table('Despesas', ['Data', 'Nota fiscal', 'Fornecedor', 'Categoria / Descrição', 'Moeda', 'Valor', 'Pagamento conciliado · data do extrato / banco / valor vinculado'],
         expenses.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.amount), paymentDates(row)])),
@@ -329,6 +331,7 @@
     const groups = new Map();
     for (const [side, records] of [['purchases', purchases], ['sales', sales]]) {
       for (const row of records) {
+        if (row.status === brokerageStatus) continue;
         const key = row.tradeId ? 'trade-' + row.tradeId : row.linkId;
         if (!groups.has(key)) groups.set(key, { order: row.order, purchases: [], sales: [], date: row.date });
         const group = groups.get(key);
