@@ -389,7 +389,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <div class="tabs"><button class="tab active" data-tab="userform">Cadastro</button><button class="tab" data-tab="userlist">Lista de USER</button></div>
           <div id="userform" class="tabpane active">
             <div class="grid2">
-              <div><label>Perfil</label><select id="uProfile"><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option>Porto / Terminal / Local</option><option>Empresa de Fumigação</option><option>Agente de Carga</option><option>Armador</option></select></div>
+              <div><label>Perfil</label><select id="uProfile"><option>Administrador</option><option>Exportador</option><option>Importador</option><option>Notify</option><option>Consignee</option><option value="Porto / Terminal / Local" data-no-translate>Terminal / Depot</option><option>Empresa de Fumigação</option><option>Agente de Carga</option><option>Armador</option></select></div>
               <div><label>Nome da Empresa / Pessoal</label><input id="uCompany" placeholder="Nome da Empresa / Pessoal"></div>
               <div class="wide"><label>Endereço</label><input id="uAddress" placeholder="Full Address"></div>
               <div><label>País</label><input id="uCountry" placeholder="Country"></div><div><label>Tax ID / Registro</label><input id="uTaxId" placeholder="Tax ID / Registration"></div>
@@ -414,7 +414,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
             <div class="tablewrap"><table id="userRegistryTable"><thead><tr><th>Perfil</th><th>Nome da Empresa / Pessoal</th><th>Endereço</th><th>País</th><th>Tax ID / Registro</th><th>Email</th><th>Nome de Contato</th><th>Status</th><th>Ação</th></tr></thead><tbody>
               <tr data-profile="Exportador"><td><span class="badge info">Exportador</span></td><td>Aurea Export</td><td>Brazil - Registered Address</td><td>Brazil</td><td>BR-001</td><td>export@aurea.example</td><td>Export Department</td><td><span class="badge ok">Active</span></td></tr>
               <tr data-profile="Importador"><td><span class="badge ok">Importador</span></td><td>Global Agro Foods</td><td>Registered Importer Address</td><td>India</td><td>GST-001</td><td>commercial@globalagro.example</td><td>Purchase Manager</td><td><span class="badge ok">Active</span></td></tr>
-              <tr data-profile="Porto / Terminal / Local"><td><span class="badge purple">Porto / Local</span></td><td>Paranaguá Port</td><td>Paranaguá Port Area</td><td>Brazil</td><td>-</td><td>-</td><td>-</td><td><span class="badge ok">Active</span></td></tr>
+              <tr data-profile="Terminal / Depot"><td><span class="badge purple">Terminal / Depot</span></td><td>Paranaguá Port</td><td>Paranaguá Port Area</td><td>Brazil</td><td>-</td><td>-</td><td>-</td><td><span class="badge ok">Active</span></td></tr>
             </tbody></table></div>
           </div>
         </div>
@@ -3996,8 +3996,8 @@ input::placeholder,textarea::placeholder{color:#76869a}
     <div id="userLookupResults">
       <div class="listitem user-lookup-item" data-search="aurea export exportador brazil" onclick="pickLookup('Aurea Export')"><b>Aurea Export</b><div class="sub">Exportador · Brazil</div></div>
       <div class="listitem user-lookup-item" data-search="global agro foods importador india" onclick="pickLookup('Global Agro Foods')"><b>Global Agro Foods</b><div class="sub">Importador · India</div></div>
-      <div class="listitem user-lookup-item" data-search="paranagua port porto local brazil" onclick="pickLookup('Paranaguá Port')"><b>Paranaguá Port</b><div class="sub">Porto / Local · Brazil</div></div>
-      <div class="listitem user-lookup-item" data-search="nhava sheva port porto local india" onclick="pickLookup('Nhava Sheva Port')"><b>Nhava Sheva Port</b><div class="sub">Porto / Local · India</div></div>
+      <div class="listitem user-lookup-item" data-search="paranagua port terminal depot brazil" onclick="pickLookup('Paranaguá Port')"><b>Paranaguá Port</b><div class="sub">Terminal / Depot · Brazil</div></div>
+      <div class="listitem user-lookup-item" data-search="nhava sheva port terminal depot india" onclick="pickLookup('Nhava Sheva Port')"><b>Nhava Sheva Port</b><div class="sub">Terminal / Depot · India</div></div>
       <div class="listitem user-lookup-item" data-search="fumigadora brasil ltda empresa fumigacao brazil" onclick="pickLookup('Fumigadora Brasil Ltda')"><b>Fumigadora Brasil Ltda</b><div class="sub">Empresa de Fumigação · Brazil</div></div>
     </div>
     <div id="userLookupEmpty" class="sub" style="display:none;padding:10px 0">Nenhum cadastro encontrado.</div>
@@ -9039,9 +9039,11 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     const body = document.querySelector('#userRegistryTable tbody');
     const lookup = $('userLookupResults');
     body.replaceChildren(); lookup.replaceChildren();
+    const profileLabel = $('uProfile').querySelector('option[value="Porto / Terminal / Local"]');
     for (const u of data) {
-      const row = body.insertRow(); row.dataset.profile = u.profile_type || ''; row.dataset.companyId = String(u.id);
-      for (const value of [u.profile_type,u.name,u.address,u.country,u.tax_id,u.email,u.contact_name,u.status]) {
+      const profile = u.profile_type === profileLabel.value ? profileLabel.textContent : u.profile_type || '';
+      const row = body.insertRow(); row.dataset.profile = profile; row.dataset.companyId = String(u.id);
+      for (const value of [profile,u.name,u.address,u.country,u.tax_id,u.email,u.contact_name,u.status]) {
         const cell = row.insertCell(); cell.textContent = value || '—';
       }
       const contactsCell=row.cells[6];
@@ -9074,9 +9076,9 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
         }finally{del.disabled=false}};
       cell.append(del);
       const item=document.createElement('div'); item.className='listitem user-lookup-item';
-      item.dataset.search=[u.name,u.profile_type,u.country,u.tax_id].join(' ').toLowerCase();
+      item.dataset.search=[u.name,profile,u.country,u.tax_id].join(' ').toLowerCase();
       const title=document.createElement('b'); title.textContent=u.name||'—';
-      const detail=document.createElement('div'); detail.className='sub'; detail.textContent=`${u.profile_type||''} · ${u.country||''}`;
+      const detail=document.createElement('div'); detail.className='sub'; detail.textContent=`${profile} · ${u.country||''}`;
       item.append(title,detail); item.addEventListener('click',()=>window.pickLookup(u.name||'')); lookup.append(item);
     }
     window.renderSIPartyLookup?.();
