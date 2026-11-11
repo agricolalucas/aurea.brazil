@@ -371,7 +371,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
           <div class="kpi"><div class="label">Documentos críticos</div><div class="num">9</div><span class="badge bad">Pendentes</span></div>
         </div>
         <div class="card" id="aesDashboardArrivals" style="margin-top:14px">
-          <div class="pagehead" style="margin-bottom:12px"><div><h3 style="margin:0">🚢 Upcoming vessels a chegar</h3><div class="sub">Até 8 operações com ETA mais próxima, conforme Booking e Scheduling.</div></div><button type="button" class="btn" onclick="aesRefreshArrivals()">↻ Refresh</button></div>
+          <div class="pagehead" style="margin-bottom:12px"><div><h3 style="margin:0">🚢 Upcoming vessels a chegar</h3><div class="sub">Até 8 operações com ETA mais próxima, de Booking, Scheduling, Compra e revenda e Operação de Corretor.</div></div><button type="button" class="btn" onclick="aesRefreshArrivals()">↻ Refresh</button></div>
           <div class="tablewrap"><table class="aes-arrivals-table"><thead><tr><th>Navio / Order</th><th>Booking</th><th>ETD<small>Porto de origem</small></th><th>ETA<small>Porto de destino</small></th><th>Dias restantes</th><th>Courier Docs<small>originais</small></th><th>Ação</th></tr></thead><tbody id="aesArrivalsBody"><tr><td colspan="7" class="sub">Carregando chegadas…</td></tr></tbody></table></div>
           <div id="aesArrivalsInfo" class="sub" style="margin-top:10px"></div>
         </div>
@@ -10450,7 +10450,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
 #aesDashboardArrivals{border:1px solid #dbe6f2;border-radius:14px;background:#fff}#aesDashboardArrivals .aes-arrivals-table{min-width:1190px}#aesDashboardArrivals .aes-arrivals-table th{padding:15px 13px;background:#eef4fa;color:#436184;font-size:11px}#aesDashboardArrivals .aes-arrivals-table th small{display:block;text-transform:none;font-weight:400;font-size:10px;letter-spacing:0;margin-top:4px}#aesDashboardArrivals .aes-arrivals-table td{padding:17px 13px}#aesDashboardArrivals .aes-vessel-row td:first-child{width:17%;max-width:200px}#aesDashboardArrivals .aes-vessel-row td:first-child strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#aesDashboardArrivals .aes-vessel-row td:nth-child(2){width:10%}#aesDashboardArrivals .aes-vessel-row td:nth-child(3),#aesDashboardArrivals .aes-vessel-row td:nth-child(4){width:17%}#aesDashboardArrivals .aes-vessel-row td:nth-child(5){width:10%}#aesDashboardArrivals .aes-vessel-row td:nth-child(6){width:17%}#aesDashboardArrivals .aes-vessel-row td:nth-child(7){width:12%}#aesDashboardArrivals .aes-arrival-route{display:block;color:#277add;white-space:nowrap;font-size:12px;letter-spacing:1px;margin-top:7px}#aesDashboardArrivals .aes-vessel-count{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:84px;background:#eaf3ff;border-radius:10px;padding:9px;color:#0863cc}#aesDashboardArrivals .aes-vessel-count strong{font-size:22px;line-height:1.1;color:#123b66}#aesDashboardArrivals .aes-vessel-count small{font-size:10px;color:#0863cc;text-align:center}#aesDashboardArrivals .aes-vessel-count.urgent{background:#fff2df}#aesDashboardArrivals .aes-vessel-courier{border-radius:9px;background:#fff3e4;padding:9px 10px}#aesDashboardArrivals .aes-vessel-courier strong{color:#985b0c}#aesDashboardArrivals .aes-vessel-courier.sent{background:#eaf9f0}#aesDashboardArrivals .aes-vessel-courier.sent strong{color:#078341}#aesDashboardArrivals .aes-vessel-courier small{overflow-wrap:anywhere}#aesDashboardArrivals .aes-vessel-row button{white-space:nowrap;color:#0e68c9;border-color:#b5d0ed}
 </style>
 <script>
-/* Executive Dashboard: nearest real vessel arrivals from Booking and Scheduling. */
+/* Executive Dashboard: upcoming vessels from Booking, Scheduling and Trade. */
 (()=>{
  const $=id=>document.getElementById(id),KEY='aes_booking_request_v86';let serial=0;
  const local=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}};
@@ -10459,27 +10459,29 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
  const br=d=>valid(d)?iso(d).slice(8,10)+'/'+iso(d).slice(5,7)+'/'+iso(d).slice(0,4):'—';
  const nowCuiaba=()=>{const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Cuiaba',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).filter(x=>x.type!=='literal').map(x=>[x.type,x.value]));return p.year+'-'+p.month+'-'+p.day};
  const days=(eta,today)=>Math.round((Date.parse(iso(eta)+'T00:00:00Z')-Date.parse(today+'T00:00:00Z'))/86400000);
- function render(rows,today){const body=$('aesArrivalsBody');body.replaceChildren();if(!rows.length){const tr=body.insertRow(),td=tr.insertCell();td.colSpan=7;td.textContent='Nenhum navio com nome e ETA futura cadastrados no Booking ou na Scheduling.';return}
+ function render(rows,today){const body=$('aesArrivalsBody');body.replaceChildren();if(!rows.length){const tr=body.insertRow(),td=tr.insertCell();td.colSpan=7;td.textContent='Nenhum navio com nome e ETA a partir de hoje nas operações consultadas.';return}
   const detail=(cell,main,secondary)=>{const b=document.createElement('strong'),s=document.createElement('small');b.textContent=main||'—';s.textContent=secondary||'—';cell.append(b,s)};
-  for(const r of rows){const tr=body.insertRow();tr.className='aes-vessel-row';let td=tr.insertCell();detail(td,'🚢 '+r.vessel,'Order '+r.order);if(r.bl){const bl=document.createElement('small');bl.textContent='BL: '+r.bl;td.append(bl)}
+  for(const r of rows){const tr=body.insertRow();tr.className='aes-vessel-row';let td=tr.insertCell();detail(td,'🚢 '+r.vessel,'Ordem '+r.order+(r.tradeId?' · '+(r.broker?'Operação de Corretor':'Compra e revenda'):''));if(r.bl){const bl=document.createElement('small');bl.textContent='BL: '+r.bl;td.append(bl)}
    td=tr.insertCell();const book=document.createElement('strong');book.textContent=r.booking||'—';td.append(book);
    td=tr.insertCell();detail(td,'▦  '+br(r.etd),r.pol||'Porto de origem não informado');const route=document.createElement('span');route.className='aes-arrival-route';route.setAttribute('aria-hidden','true');route.textContent='● ── 🚢 ── ●';td.append(route);
    td=tr.insertCell();detail(td,'▦  '+br(r.eta),r.pod||'Porto de destino não informado');
    td=tr.insertCell();const left=days(r.eta,today),count=document.createElement('div'),number=document.createElement('strong'),label=document.createElement('small');count.className='aes-vessel-count'+(left<=3?' urgent':'');number.textContent=left===0?'Hoje':String(left);label.textContent=left===0?'Chega hoje':left===1?'dia para chegar':'dias para chegar';count.append(number,label);td.append(count);
-   td=tr.insertCell();const track=window.docsTrackingData?.[r.order]||{},box=document.createElement('div'),state=document.createElement('strong');box.className='aes-vessel-courier'+(track.awb?' sent':'');state.textContent=track.awb?'● Enviado':'● Pendente';box.append(state);for(const detailText of [track.courier||'',track.awb?'Tracking: '+track.awb:'AWB ainda não informado',track.arrival?'Chegada docs: '+br(track.arrival):''])if(detailText){const line=document.createElement('small');line.textContent=detailText;box.append(line)}td.append(box);
-   td=tr.insertCell();const action=document.createElement('button');action.className='btn';action.type='button';action.textContent='⌖  Rastrear';action.onclick=()=>window.openDocsTracking?.(r.order);td.append(action);
+   td=tr.insertCell();const savedTracking=window.docsTrackingData?.[r.order]||{},track=r.dhl?{...savedTracking,awb:r.dhl,courier:'DHL'}:savedTracking,box=document.createElement('div'),state=document.createElement('strong');box.className='aes-vessel-courier'+(track.awb?' sent':'');state.textContent=track.awb?'● Enviado':'● Pendente';box.append(state);for(const detailText of [track.courier||'',track.awb?'Tracking: '+track.awb:'AWB ainda não informado',track.arrival?'Chegada docs: '+br(track.arrival):''])if(detailText){const line=document.createElement('small');line.textContent=detailText;box.append(line)}td.append(box);
+   td=tr.insertCell();const action=document.createElement('button');action.className='btn';action.type='button';action.textContent=r.tradeId?'Abrir operação':'⌖  Rastrear';action.onclick=()=>r.tradeId?window.aesOpenTraderArrival(r.tradeId,action):window.openDocsTracking?.(r.order);td.append(action);
   }
  }
  let latestArrivals=[];
  function renderPendingOriginals(today){
   const body=$('aesPendingOriginalsBody');if(!body)return;
-  const pending=[];
+  const pending=[], seenFiles=new Set();
   for(const arrival of latestArrivals){
    const panel=$('docContract-'+arrival.order);if(!panel)continue;
    for(const row of panel.querySelectorAll('tr[data-doc]')){
     const file=row.querySelector('input[id^="docFile-"]');if(!file)continue;
     const id=file.id.slice('docFile-'.length),req=$('docReq-'+id),status=$('docStatus-'+id);
     if(req?.value==='not_required'||status?.value==='Not applicable'||window.documentPdfUrls?.[id]||file.files?.length)continue;
+    if(seenFiles.has(file.id))continue;
+    seenFiles.add(file.id);
     pending.push({arrival,document:row.dataset.doc||id,fileId:file.id,daysLeft:days(arrival.eta,today)});
    }
   }
@@ -10494,18 +10496,48 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   if(!pending.length){const td=body.insertRow().insertCell();td.colSpan=4;td.textContent='Nenhum documento original pendente para navios com ETA futura e checklist disponível.'}
   $('aesPendingOriginalsInfo').textContent=pending.length?'Exibindo '+Math.min(8,pending.length)+' de '+pending.length+' documento(s) original(is) pendente(s).':'Os dados vêm do checklist de Documentos e das ETAs do Booking/Programação.';
  }
+ async function loadTradeArrivals(client){
+  const trades=[];
+  const pageSize=500;
+  for(let offset=0;;offset+=pageSize){
+   const {data,error}=await client.from('aes_trader_deals')
+    .select('id,trade_number,status,kind:sale_flow->>operation_kind,completion:sale_flow->>operation_status,deleted_at:sale_flow->>deleted_at,sale_si:sale_flow->si,purchase_si:purchase_flow->si')
+    .order('id').range(offset,offset+pageSize-1);
+   if(error)return {error};
+   trades.push(...data);
+   if(data.length<pageSize)return {data:trades};
+  }
+ }
  async function refresh(){const body=$('aesArrivalsBody');if(!body||$('aesAuthGate')?.style.display!=='none')return;const n=++serial;body.innerHTML='<tr><td colspan="7">Atualizando navios…</td></tr>';let errors=[];
-  const records=new Map(),merge=(order,data,priority)=>{if(!order)return;const old=records.get(order)||{};const obj={order,booking:data.booking||old.booking||'',vessel:data.vessel||old.vessel||'',etd:data.etd||old.etd||'',eta:data.eta||old.eta||'',pol:data.pol||old.pol||'',pod:data.pod||old.pod||'',bl:data.bl||old.bl||'',priority};records.set(order,obj)};
-  const schedules=local('aesShippingPrograms',[]);for(const p of Array.isArray(schedules)?schedules:[]){merge(p.order,{vessel:p.vessel,etd:p.etd||p.date,eta:p.eta,pol:p.portOfLoading||p.origin,pod:p.portOfDischarge||p.destination},0)}
-  const bookings=local(KEY,{});for(const [order,b] of Object.entries(bookings||{}))merge(order,{booking:b.brBookingNo,vessel:b.brVessel,etd:b.brETD,eta:b.brETA,pol:b.brPOL,pod:b.brPOD,bl:b.brBLNo||b.blNumber},1);
+  const records=new Map();
+  function merge(order,data){
+   const orderKey=String(order||'').trim().toUpperCase();
+   if(!orderKey)return;
+   const existing=records.get(orderKey);
+   const separate=data.tradeId&&(existing?.tradeId||(existing?.booking&&data.booking&&existing.booking!==data.booking));
+   const key=separate?'trade:'+data.tradeId:orderKey;
+   const record={...records.get(key),order};
+   for(const [field,value] of Object.entries(data))if(value!==''&&value!=null)record[field]=value;
+   records.set(key,record);
+  }
+  const schedules=local('aesShippingPrograms',[]);for(const p of Array.isArray(schedules)?schedules:[]){merge(p.order,{vessel:p.vessel,etd:p.etd||p.date,eta:p.eta,pol:p.portOfLoading||p.origin,pod:p.portOfDischarge||p.destination})}
+  const bookings=local(KEY,{});for(const [order,b] of Object.entries(bookings||{}))merge(order,{booking:b.brBookingNo,vessel:b.brVessel,etd:b.brETD,eta:b.brETA,pol:b.brPOL,pod:b.brPOD,bl:b.brBLNo||b.blNumber});
   const client=window.aesSharedClient;
-  if(client){const responses=await Promise.all([client.from('aes_shipping_programs').select('order_number,shipping_date,vessel,payload'),client.from('aes_booking_requests').select('order_number,booking_number,payload'),client.from('contracts').select('order_number,port_of_loading,port_of_discharge')]);if(n!==serial)return;
-   if(responses[0].error)errors.push('Programação indisponível');else for(const p of responses[0].data||[]){const d=p.payload||{};merge(p.order_number,{vessel:p.vessel||d.vessel,etd:d.etd||p.shipping_date||d.date,eta:d.eta||d.arrivalDate,pol:d.portOfLoading||d.origin,pod:d.portOfDischarge||d.destination},2)}
-   if(responses[1].error)errors.push('Booking indisponível');else for(const b of responses[1].data||[]){const d=b.payload||{};merge(b.order_number,{booking:b.booking_number||d.brBookingNo,vessel:d.brVessel||d.vessel,etd:d.brETD||d.etd,eta:d.brETA||d.eta,pol:d.brPOL||d.pol,pod:d.brPOD||d.pod,bl:d.brBLNo||d.blNumber},3)}
-   if(responses[2].error)errors.push('Portos do contrato indisponíveis');else for(const c of responses[2].data||[])merge(c.order_number,{pol:c.port_of_loading,pod:c.port_of_discharge},1);
+  if(client){const responses=await Promise.all([client.from('aes_shipping_programs').select('order_number,shipping_date,vessel,payload'),client.from('aes_booking_requests').select('order_number,booking_number,payload'),client.from('contracts').select('order_number,port_of_loading,port_of_discharge'),loadTradeArrivals(client)]);if(n!==serial)return;
+   if(responses[0].error)errors.push('Programação indisponível');else for(const p of responses[0].data||[]){const d=p.payload||{};merge(p.order_number,{vessel:p.vessel||d.vessel,etd:d.etd||p.shipping_date||d.date,eta:d.eta||d.arrivalDate,pol:d.portOfLoading||d.origin,pod:d.portOfDischarge||d.destination})}
+   if(responses[1].error)errors.push('Booking indisponível');else for(const b of responses[1].data||[]){const d=b.payload||{};merge(b.order_number,{booking:b.booking_number||d.brBookingNo,vessel:d.brVessel||d.vessel,etd:d.brETD||d.etd,eta:d.brETA||d.eta,pol:d.brPOL||d.pol,pod:d.brPOD||d.pod,bl:d.brBLNo||d.blNumber})}
+   if(responses[2].error)errors.push('Portos do contrato indisponíveis');else for(const c of responses[2].data||[])merge(c.order_number,{pol:c.port_of_loading,pod:c.port_of_discharge});
+   if(responses[3].error)errors.push('Embarques de Trade indisponíveis');
+   else for(const trade of responses[3].data){
+    if(trade.deleted_at||[trade.status,trade.completion].some(status=>['finalized','cancelled','canceled'].includes(String(status||'').toLowerCase())))continue;
+    const field=key=>String(trade.sale_si?.[key]||trade.purchase_si?.[key]||'').trim();
+    const booking=field('booking'),vessel=field('vessel'),eta=field('eta');
+    if(!booking&&!vessel&&!eta)continue;
+    merge(trade.trade_number,{tradeId:trade.id,broker:trade.kind==='broker',booking,vessel,eta,etd:field('etd'),pol:field('pol'),pod:field('pod'),bl:field('bl'),dhl:field('dhl')});
+   }
   }
   const today=nowCuiaba(),sorted=[...records.values()].filter(r=>r.vessel&&valid(r.eta)&&iso(r.eta)>=today).sort((a,b)=>iso(a.eta).localeCompare(iso(b.eta))||rOrder(a,b)),top=sorted.slice(0,8);if(n!==serial)return;
-  latestArrivals=sorted;render(top,today);renderPendingOriginals(today);$('aesArrivalsInfo').textContent=sorted.length?'Exibindo '+top.length+' de '+sorted.length+' navio(s) com ETA a partir de hoje.'+(errors.length?' · '+errors.join(' / '):''):(errors.length?errors.join(' / '):'Informe Vessel e ETA no Booking para acompanhar chegadas.');
+  latestArrivals=sorted;render(top,today);renderPendingOriginals(today);$('aesArrivalsInfo').textContent=sorted.length?'Exibindo '+top.length+' de '+sorted.length+' navio(s) com ETA a partir de hoje.'+(errors.length?' · '+errors.join(' / '):''):(errors.length?errors.join(' / '):'Informe o navio e a ETA no cadastro do embarque para acompanhar chegadas.');
  }
  function rOrder(a,b){return a.order.localeCompare(b.order)}
  window.aesRefreshArrivals=refresh;
@@ -10861,6 +10893,25 @@ const partyKeys=[['exporter','Exportador'],['on_behalf','ON BEHALF OF / SELLER']
  window.aesTraderNew=async()=>{try{await reloadTraderPartyCompanies();open(null);}catch(error){message('Não foi possível carregar empresas: '+error.message);}};
  window.aesTraderBack=()=>{$('aesTraderEditor').hidden=true;$('aesTraderList').hidden=false;editing=null;$('trFilterStatus').value='active';render();refresh();};
  window.aesTraderRefresh=refresh;
+ window.aesOpenTraderArrival=async(id,button)=>{
+  button.disabled=true;
+  try{
+   const db=client();
+   if(!db)throw Error('Entre no sistema para abrir a operação.');
+   const [{data,error}]=await Promise.all([
+    db.from('aes_trader_deals').select('*').eq('id',id).single(),
+    reloadTraderPartyCompanies()
+   ]);
+   if(error)throw error;
+   if(!data||data.sale_flow?.deleted_at)throw Error('Operação indisponível.');
+   const index=deals.findIndex(deal=>String(deal.id)===String(id));
+   if(index<0)deals.push(data);
+   else deals[index]=data;
+   window.go('trader');
+   open(data);
+  }catch(error){window.notify?.('Não foi possível abrir a operação: '+error.message);}
+  finally{button.disabled=false;}
+ };
  window.aesTraderListTab=function(tab){if(listMode!==tab){$('trFilterStatus').value='active';if(tab==='operations'||tab==='broker')$('trFilterReconciliation').value='pending';}listMode=tab;$('aesTraderList').classList.toggle('aes-broker-compact',tab==='broker');const docs=tab==='documents',shipments=tab==='shipments',showOperations=!docs&&!shipments;if(shipments)$('trShipmentCompletion').value='active';$('trOperationFilters').hidden=!showOperations;$('trFilterCount').hidden=!showOperations;$('trExportToolbar').hidden=!showOperations;$('aesTraderList').querySelector(':scope > .tablewrap').hidden=!showOperations;$('trAllDocumentsPane').hidden=!docs;$('trShipmentsPane').hidden=!shipments;for(const [id,key] of [['trListOperationsTab','operations'],['trListBrokerTab','broker'],['trListDocumentsTab','documents'],['trListShipmentsTab','shipments']])$(id).classList.toggle('active',tab===key);render();const table=$('aesTraderRows').closest('table');for(const row of table.rows)for(const i of [4,6])if(row.cells[i])row.cells[i].hidden=tab==='broker';table.tHead.rows[0].cells[2].textContent=tab==='broker'?'Exportador → Importador':'Fornecedor → Comprador';refresh();};
 
  const commissionAmount=c=>c.method==='percent'?Number(c.base)*Number(c.rate)/100:Number(c.rate);
