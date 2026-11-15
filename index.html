@@ -9295,9 +9295,27 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
     catch(e){window.notify('Falha ao liberar: '+e.message)}
   }
   async function deleteContract(c){
-    if(!confirm('Excluir permanentemente contrato '+c.order_number+'?'))return;
-    try{const {data,error}=await client.from('contracts').delete().eq('id',c.id).select('id');if(error)throw error;if(!data?.length)throw Error('Sem permissão para excluir; execute o SQL e entre como administradora.');await load();window.notify('Contrato excluído.')}
-    catch(e){window.notify('Falha ao excluir contrato: '+e.message)}
+    try{
+      const {data:session,error:authError}=await client.auth.getUser();
+      if(authError||!session?.user)throw Error('Sessão indisponível. Entre novamente para excluir o contrato.');
+      const {data:member,error:memberError}=await client.from('app_members').select('role,active').eq('user_id',session.user.id).maybeSingle();
+      if(memberError)throw Error('Não foi possível verificar seu perfil: '+memberError.message);
+      if(!member?.active||member.role!=='admin')throw Error('A exclusão exige uma conta ativa com perfil Administrador. Login atual: '+session.user.email+'.');
+      if(!confirm('Excluir permanentemente contrato '+c.order_number+'?'))return;
+      const {data,error}=await client.from('contracts').delete().eq('id',c.id).select('id');
+      if(error?.code==='23503')throw Error('O contrato está vinculado a outros registros do sistema.');
+      if(error)throw error;
+      if(!data?.length){
+        const check=await client.from('contracts').select('id').eq('id',c.id).maybeSingle();
+        if(check.error)throw check.error;
+        if(check.data)throw Error('O banco bloqueou a exclusão. Informe o número do contrato para investigação.');
+        await load();
+        window.notify('Contrato não encontrado. A lista foi atualizada.');
+        return;
+      }
+      await load();
+      window.notify('Contrato excluído.');
+    }catch(e){window.notify('Falha ao excluir contrato: '+e.message)}
   }
   window.confirmCancelContract=async function(){
     const order=val('cancelContractOrder'),reason=val('cancelContractReason'),date=val('cancelContractDate');
