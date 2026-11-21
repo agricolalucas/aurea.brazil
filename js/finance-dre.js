@@ -35,10 +35,11 @@
       #financeDrePanel tr.dre-linked td{background:#fff0c9}
     </style>
     <h2>DRE gerencial</h2>
-    <p class="sub">Resultado por moeda. O período usa a data da nota, operação ou despesa. Comissões conciliadas usam a primeira data do extrato do grupo.</p>
+    <p class="sub">Resultado por moeda. O período usa a data da nota, operação ou despesa. Comissões usam a emissão e contratos usam a criação. A opção Data da conciliação filtra pelas datas do extrato.</p>
     <div class="dre-filters">
       <label>De <input type="date" data-dre="from"></label>
       <label>Até <input type="date" data-dre="to"></label>
+      <label>Filtrar por <select data-dre="dateBasis"><option value="document">Data do documento / operação</option><option value="reconciliation">Data da conciliação</option></select></label>
       <label>Moeda <select data-dre="currency"><option value="">Todas</option></select></label>
       <button class="btn" type="button" data-dre="reload">Atualizar dados</button>
       <button class="btn" type="button" data-dre="pdf" disabled>Gerar PDF</button>
@@ -71,7 +72,8 @@
   const sources = {
     sales: ['aes_cash_sales_invoices', 'id,invoice_number,buyer_company,invoice_date,amount_try,status,currency,operation_kind:details->>operation_kind,operation_status:details->>operation_status'],
     expenses: ['aes_cash_gst_expenses', 'id,supplier_company,tax_invoice_number,expense_date,currency,total_amount,category:details->>category,description:details->>description'],
-    trades: ['aes_trader_deals', 'id,trade_number,status,trade_date,supplier_id,buyer_id,product,quantity,currency,purchase_unit_price,sale_unit_price,purchase_contract_number,sale_proforma_number,purchase_commercial:purchase_flow->commercial,sale_commercial:sale_flow->commercial,operation_type,operation_kind:sale_flow->>operation_kind,operation_status:sale_flow->>operation_status,deleted_at:sale_flow->>deleted_at'],
+    trades: ['aes_trader_deals', 'id,trade_number,status,trade_date,created_at,trader_company_id,commissions:sale_flow->commissions,purchase_parties:purchase_flow->parties,sale_parties:sale_flow->parties,supplier_id,buyer_id,product,quantity,currency,purchase_unit_price,sale_unit_price,purchase_contract_number,sale_proforma_number,purchase_commercial:purchase_flow->commercial,sale_commercial:sale_flow->commercial,operation_type,operation_kind:sale_flow->>operation_kind,operation_status:sale_flow->>operation_status,deleted_at:sale_flow->>deleted_at'],
+    contracts: ['contracts', 'id,order_number,contract_number,importer_id,exporter_id,product,quantity_mt,unit_price,currency,status,created_at,details'],
     companies: ['companies', 'id,name'],
     movements: ['aes_finance_order_movements', 'id,order_number,movement_type'],
     orderPayments: ['aes_cash_order_payments', 'id,shipment_reference,deleted_at:details->>deletedAt'],
@@ -121,7 +123,7 @@
       const dates = unique(bankDates.get(matchId) || []).sort();
       if (item.side !== 'system' || !match || !dates.length || !item.system_key) continue;
       const debit = cents(item.debit), credit = cents(item.credit);
-      const payment = { matchId, key: item.system_key, dates, debit, credit, currency: normalized(item.currency || match.currency), bank: banks.get(String(match.bank_id))?.bank_name || '' };
+      const payment = { matchId, key: item.system_key, invoice: item.invoice, dates, debit, credit, currency: normalized(item.currency || match.currency), bank: banks.get(String(match.bank_id))?.bank_name || '' };
       append(paymentsByKey, item.system_key, payment);
       const movement = item.system_key.startsWith('receipt-') ? movementById.get(item.system_key.slice(8)) : null;
       if (movement?.movement_type === 'receipt') append(paymentsByOrder, normalized(movement.order_number), payment);
@@ -146,14 +148,25 @@
       if (isActual(row, side)) return 'Incluído · conciliado';
       return normalized(record.status) === 'DRAFT' ? 'Rascunho' : 'Incluído';
     };
-    const purchases = [], sales = [];
-    const ledgerNumbers = new Set();
+    const purchases = [], sales = [], contracts = [];
+    const contractByNumber = new Map();
+    for (const contract of data.contracts) {
+      for (const reference of unique([contract.order_number, contract.contract_number])) {
+        append(contractByNumber, normalized(reference), contract);
+      }
+    }
+    const contractInvoices = new Map();
+    const tradeInvoices = new Map();
     for (const invoice of data.sales) {
       const number = normalized(invoice.invoice_number);
-      if (number) ledgerNumbers.add(number);
+
       const linked = unique([...(tradeByNumber.get(number) || []), ...(tradeBySaleDocument.get(number) || [])]);
       const trade = linked.length === 1 ? linked[0] : null;
-      const orders = trade ? ['TRADER:' + trade.id + ':sale'] : [number];
+      const linkedContracts = contractByNumber.get(number) || [];
+      const contract = !trade && linkedContracts.length === 1 ? linkedContracts[0] : null;
+      if (trade) { append(tradeInvoices, String(trade.id), invoice); continue; }
+      if (contract) { append(contractInvoices, String(contract.id), invoice); continue; }
+      const orders = [number];
       const row = {
         linkId: 'invoice-' + invoice.id, tradeId: trade?.id,
         date: date(invoice.invoice_date), document: invoice.invoice_number, order: trade?.trade_number || '',
@@ -166,27 +179,64 @@
 
     for (const trade of activeTrades) {
       const broker = brokerTrade(trade);
+      for (const commission of trade.commissions || []) {
+        const reference = [commission.number, trade.trade_number].filter(Boolean).join(' / ');
+        const linkedPayments = [...paymentsByKey.values()].flat().filter(payment =>
+          payment.key.startsWith('commission-' + trade.id + '-') && normalized(payment.invoice) === normalized(reference));
+        for (const row of commissions.filter(row => row.payments.some(payment => linkedPayments.includes(payment)))) {
+          commissions.splice(commissions.indexOf(row), 1);
+        }
+        const commercial = trade.sale_commercial || {};
+        const currentBase = Number(commercial.quantity ?? trade.quantity) * Number(commercial.unit_price ?? trade.sale_unit_price);
+        const base = commission.invoice_status === 'paid' || linkedPayments.length ? Number(commission.base) : currentBase;
+        const amount = cents(commission.method === 'percent' ? base * Number(commission.rate) / 100 : commission.rate);
+        commissions.push({
+          date: date(commission.issue_date || trade.trade_date || trade.created_at), document: commission.number,
+          order: trade.trade_number, party: companies.get(String(commission.payer))?.name || '',
+          description: 'Comissão da operação ' + trade.trade_number,
+          currency: normalized(trade.currency), amount, status: cancelled(trade.status) ? 'Cancelado' : commission.invoice_status,
+          debit: linkedPayments.reduce((sum, payment) => sum + payment.debit, 0),
+          credit: linkedPayments.reduce((sum, payment) => sum + payment.credit, 0), payments: linkedPayments
+        });
+      }
+      if (broker) continue;
       for (const side of ['purchase', 'sale']) {
-        if (side === 'purchase' && broker) continue;
+
         const buy = side === 'purchase';
         const doc = buy ? trade.purchase_contract_number : trade.sale_proforma_number;
-        if (!buy && (ledgerNumbers.has(normalized(trade.trade_number)) || (doc && ledgerNumbers.has(normalized(doc))))) continue;
+        const invoices = buy ? [] : tradeInvoices.get(String(trade.id)) || [];
         const commercial = (buy ? trade.purchase_commercial : trade.sale_commercial) || {};
         const amount = cents(Number(commercial.quantity ?? trade.quantity) * Number(commercial.unit_price ?? (buy ? trade.purchase_unit_price : trade.sale_unit_price)));
-        if (!amount && !doc) continue;
+
         const orders = ['TRADER:' + trade.id + ':' + side];
         if (buy && (tradeByNumber.get(normalized(trade.trade_number)) || []).length === 1) orders.push('PAGAMENTO:' + trade.trade_number);
         const row = {
           linkId: side + '-' + trade.id, tradeId: trade.id,
-          date: date(trade.trade_date), document: doc, order: trade.trade_number,
-          party: companies.get(String(buy ? trade.supplier_id : trade.buyer_id))?.name,
-          currency: normalized(trade.currency), amount, payments: paymentsFor([], orders)
+          date: date(trade.trade_date || trade.created_at), document: unique([doc, ...invoices.map(invoice => invoice.invoice_number)]).join(' / '), order: trade.trade_number,
+          party: companies.get(String(buy ? trade.purchase_parties?.exporter || trade.supplier_id : trade.sale_parties?.importer || trade.buyer_id))?.name,
+          currency: normalized(trade.currency), amount, payments: paymentsFor(invoices.map(invoice => 'sales-' + invoice.id), orders)
         };
         row.status = broker ? brokerageStatus : status(trade, row, buy ? 'debit' : 'credit');
         (buy ? purchases : sales).push(row);
       }
     }
 
+    for (const contract of data.contracts) {
+      const details = contract.details || {};
+      const invoices = contractInvoices.get(String(contract.id)) || [];
+      const row = {
+        linkId: 'contract-' + contract.id, order: contract.order_number,
+        document: contract.contract_number || contract.order_number,
+        date: date(details.contractDate || details.contractIssueDate || contract.created_at),
+        party: companies.get(String(contract.importer_id))?.name || details.cImporter || '',
+        description: contract.product, currency: normalized(contract.currency),
+        amount: cents(Number(contract.quantity_mt) * Number(contract.unit_price)),
+        payments: paymentsFor(invoices.map(invoice => 'sales-' + invoice.id),
+          [contract.order_number, 'PAGAMENTO:' + contract.order_number])
+      };
+      row.status = status(contract, row, 'credit');
+      contracts.push(row);
+    }
     const expenses = data.expenses.map(expense => {
       const row = {
         date: date(expense.expense_date), document: expense.tax_invoice_number, party: expense.supplier_company,
@@ -205,7 +255,7 @@
       status: entry.kind === 'adjustment' ? 'Ajuste de conciliação' : 'Lançamento manual',
       payments: paymentsFor([entry.kind === 'adjustment' ? 'adjustment-' + entry.id : 'financial-' + entry.id])
     }));
-    return { purchases, sales, commissions, expenses, manual };
+    return { purchases, sales, contracts, commissions, expenses, manual };
   }
 
   let report = null, request = 0;
@@ -264,35 +314,41 @@
     if (!report) return;
     const from = el('from').value, to = el('to').value, currency = el('currency').value;
     if (from && to && from > to) return;
+    const dateBasis = el('dateBasis').value;
+    const inPeriod = value => (!from || value >= from) && (!to || (value && value <= to));
     const visible = rows => rows.filter(row =>
-      (!currency || row.currency === currency) && (!from || row.date >= from) && (!to || (row.date && row.date <= to))
-    ).sort(sortByDate);
-    const purchases = visible(report.purchases), sales = visible(report.sales), expenses = visible(report.expenses);
+      (!currency || row.currency === currency) &&
+      (dateBasis === 'reconciliation' ? row.payments.some(payment => payment.dates.some(inPeriod)) : inPeriod(row.date))
+    ).map(row => ({ ...row, payments: dateBasis === 'reconciliation'
+      ? row.payments.map(payment => ({ ...payment, dates: payment.dates.filter(inPeriod) })).filter(payment => payment.dates.length)
+      : row.payments })).sort(sortByDate);
+    const purchases = visible(report.purchases), sales = visible(report.sales.filter(row => row.status !== brokerageStatus)), expenses = visible(report.expenses);
+    const contracts = visible(report.contracts);
     const commissions = visible(report.commissions), manual = visible(report.manual);
     const totals = new Map();
     const bucket = key => {
       if (!totals.has(key)) totals.set(key, { sales: 0, purchases: 0, expenses: 0, commissions: 0 });
       return totals.get(key);
     };
-    sales.filter(included).forEach(row => { bucket(row.currency).sales += row.amount; });
+    [...sales, ...contracts].filter(included).forEach(row => { bucket(row.currency).sales += row.amount; });
     purchases.filter(included).forEach(row => { bucket(row.currency).purchases += row.amount; });
     expenses.forEach(row => { bucket(row.currency).expenses += row.amount; });
-    commissions.filter(row => !row.expense).forEach(row => { bucket(row.currency).commissions += row.amount; });
+    commissions.filter(row => !row.expense && !cancelled(row.status)).forEach(row => { bucket(row.currency).commissions += row.credit - row.debit; });
     const closing = [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([key, values]) => {
       const gross = values.sales - values.purchases;
       const profit = gross - values.expenses + values.commissions;
       return { currency: key || 'Moeda não informada', ...values, gross, profit };
     });
-    return { from, to, currency, purchases, sales, expenses, commissions, manual, closing };
+    return { from, to, currency, dateBasis, purchases, sales, contracts, expenses, commissions, manual, closing };
   }
 
   const accountingNote = 'O resultado usa os registros incluídos de venda e compra, deduz despesas e incorpora comissões conciliadas. A receita das operações de corretor entra como comissão recebida e conciliada. Lançamentos avulsos e ajustes são demonstrados separadamente. Comissão paga via nota de despesa já está no total de despesas.';
-  const periodNote = 'O período usa a data da nota, operação ou despesa. Comissões conciliadas usam a primeira data do extrato do grupo.';
+  const periodNote = 'O período usa a data da nota, operação ou despesa. Comissões usam a emissão e contratos usam a criação. A opção Data da conciliação filtra pelas datas do extrato.';
 
   function supportingTables({ commissions, expenses, manual }) {
     return [
-      table('Comissões recebidas e pagas · conciliadas', ['Data do extrato', 'Documento', 'Empresa', 'Descrição', 'Moeda', 'Pago', 'Recebido', 'Datas e valores vinculados'],
-        commissions.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.debit), amountCell(row.credit), paymentDates(row)])),
+      table('Financeiro · Comissões', ['Emissão', 'Ordem', 'Comissão / Documento', 'Empresa', 'Moeda', 'Valor da comissão', 'Pago conciliado', 'Recebido conciliado', 'Conciliações · datas / banco / valor'],
+        commissions.map(row => [formatDate(row.date), row.order, row.document, row.party, row.currency, amountCell(row.amount), amountCell(row.debit), amountCell(row.credit), paymentDates(row)])),
       table('Despesas', ['Data', 'Nota fiscal', 'Fornecedor', 'Categoria / Descrição', 'Moeda', 'Valor', 'Pagamento conciliado · data do extrato / banco / valor vinculado'],
         expenses.map(row => [formatDate(row.date), row.document, row.party, row.description, row.currency, amountCell(row.amount), paymentDates(row)])),
       table('Lançamentos avulsos · Bank Statement', ['Data', 'Banco', 'Referência', 'Descrição', 'Moeda', 'Débito', 'Crédito', 'Tipo', 'Conciliação · datas e valores vinculados'],
@@ -317,8 +373,9 @@
     note.className = 'sub';
     note.textContent = accountingNote;
     result.append(
-      table('Compras', documentHeaders, view.purchases.map(documentRow), undefined, view.purchases),
-      table('Vendas', documentHeaders, view.sales.map(documentRow), undefined, view.sales),
+      table('Operações comerciais · Compras', documentHeaders, view.purchases.map(documentRow), undefined, view.purchases),
+      table('Operações comerciais · Vendas e outras invoices', documentHeaders, view.sales.map(documentRow), undefined, view.sales),
+      table('Contratos', documentHeaders, view.contracts.map(documentRow), undefined, view.contracts),
       ...supportingTables(view), note,
       table('Resumo do resultado', ['Moeda', 'Vendas', 'Compras', 'Lucro bruto', 'Despesas', 'Comissões líquidas conciliadas', 'Lucro / Prejuízo'], summary)
     );
@@ -415,8 +472,8 @@
       @media screen{body{margin:24px auto;padding:0 18px;max-width:1100px}}@media print{.print-button{display:none}}
     </style></head><body>
     <header><p class="brand">ÁUREA BRASIL · FINANCEIRO</p><h1>Demonstração do Resultado do Exercício</h1>
-      <p>DRE gerencial · ${escapeHtml(period)} · ${escapeHtml(view.currency || 'Todas as moedas')} · Emitido em ${issued}</p></header>
-    <h2>01 · Documentos de compra e venda</h2>
+      <p>DRE gerencial · ${escapeHtml(period)} · ${view.dateBasis === 'reconciliation' ? 'Data da conciliação' : 'Data do documento / operação'} · ${escapeHtml(view.currency || 'Todas as moedas')} · Emitido em ${issued}</p></header>
+    <h2>01 · Operações comerciais · Compra e venda</h2>
     <p class="note">Compra e venda são alinhadas pela operação vinculada. Clique no documento para consultar seu lançamento na DRE do sistema.</p>
     <p class="note">Resultado da ordem = total das vendas menos total das compras incluídas, por moeda, no filtro selecionado. O traço indica que falta compra ou venda na mesma moeda.</p>
     <table><colgroup><col style="width:12%"><col style="width:36%"><col style="width:36%"><col style="width:16%"></colgroup>
@@ -426,12 +483,15 @@
         return Array.from({ length: Math.max(group.purchases.length, group.sales.length) }, (_, index) =>
           `<tr><th scope="row">${escapeHtml(group.order || '—')}</th><td>${printDocument(group.purchases[index])}</td><td>${printDocument(group.sales[index])}</td><td class="dre-money">${index === 0 ? result : ''}</td></tr>`).join('');
       }).join('') : '<tr><td colspan="4">Nenhum documento no filtro selecionado.</td></tr>'}</tbody></table>
+    <h2>02 · Contratos</h2>
+    ${table('Lista de contratos e conciliações', ['Data', 'Contrato', 'Ordem', 'Importador', 'Moeda', 'Valor', 'Situação', 'Conciliações'],
+      view.contracts.map(row => [formatDate(row.date), row.document, row.order, row.party, row.currency, amountCell(row.amount), row.status, paymentDates(row)])).outerHTML}
     ${supportingTables(view).map((section, index) => {
       const heading = section.querySelector('h3');
-      heading.textContent = '0' + (index + 2) + ' · ' + heading.textContent;
+      heading.textContent = '0' + (index + 3) + ' · ' + heading.textContent;
       return section.outerHTML;
     }).join('')}
-    <h2>05 · Resultado do período por moeda</h2><p class="note">${periodNote} ${accountingNote}</p>
+    <h2>06 · Resultado do período por moeda</h2><p class="note">${periodNote} ${accountingNote}</p>
     ${printClosing(view.closing)}<button class="print-button" onclick="window.print()">Imprimir / Salvar PDF</button></body></html>`);
     popup.document.close();
     popup.focus();
@@ -440,7 +500,7 @@
 
   function showLinkedDocument() {
     const id = window.location.hash.slice(1);
-    if (!/^dre-(invoice|purchase|sale)-[\w-]+$/.test(id)) return;
+    if (!/^dre-(invoice|purchase|sale|contract)-[\w-]+$/.test(id)) return;
     const row = document.getElementById(id);
     if (!row) {
       el('status').textContent = 'O documento vinculado não está disponível nesta DRE.';
@@ -478,7 +538,7 @@
     }
   }
 
-  for (const name of ['from', 'to', 'currency']) el(name).addEventListener('change', render);
+  for (const name of ['from', 'to', 'currency', 'dateBasis']) el(name).addEventListener('change', render);
   el('reload').onclick = load;
   el('pdf').onclick = printReport;
   button.onclick = () => window.switchFinanceTab('dre');
@@ -500,7 +560,7 @@
 
   const authGate = document.getElementById('aesAuthGate');
   function openLinkedDre() {
-    if (!/^#dre-(invoice|purchase|sale)-[\w-]+$/.test(window.location.hash) ||
+    if (!/^#dre-(invoice|purchase|sale|contract)-[\w-]+$/.test(window.location.hash) ||
         !window.aesSharedClient || (authGate && authGate.style.display !== 'none')) return;
     const financeButton = document.querySelector('[data-view="finance"]');
     if (financeButton && !document.getElementById('finance')?.classList.contains('active')) financeButton.click();
