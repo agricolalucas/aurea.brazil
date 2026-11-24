@@ -5349,7 +5349,8 @@ function generateLoadingOrderPDF(){
   </div>
   <div class="sign"><div class="line">Responsável pelo Carregamento</div><div class="line">Motorista</div></div>
   <div style="margin-top:35px;text-align:right"><button onclick="window.print()" style="padding:10px 16px">Imprimir / Salvar como PDF</button></div>
-  </body></html>`);
+  <script src="js/claim-evidence.js?v=20261124-1"></script>
+</body></html>`);
   w.document.close();
 }
 
@@ -6635,7 +6636,7 @@ async function saveClaim(){
   d.currency=get('claimCurrency');d.status=get('claimStatus');d.description=get('claimDescription');d.team=get('claimTeam');
   d.owner=get('claimOwner');d.rootCause=get('claimRootCause');d.analysis=get('claimAnalysis');d.corrective=get('claimCorrective');
   d.response=get('claimResponse');d.decision=get('claimDecision');d.approvedAmount=Number(get('claimApprovedAmount')||0);d.closeDate=get('claimCloseDate');
-  try{await persistClaim(d);refreshClaimList();notify('Claim '+id+' salvo.');}catch(error){notify('Não foi possível salvar o Claim: '+error.message);}
+  try{await persistClaim(d);window.__claimSaveConfirmed=true;refreshClaimList();notify('Claim '+id+' salvo.');}catch(error){notify('Não foi possível salvar o Claim: '+error.message);}
 }
 function addClaimUpdate(){
   const id=window.currentClaimId,d=window.claimData[id]; if(!d)return;
