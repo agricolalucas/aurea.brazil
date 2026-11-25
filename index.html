@@ -283,6 +283,12 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #financeTable td .btn{min-height:27px;padding:4px 7px;font-size:10px;margin:0}
 </style>
 <link rel="stylesheet" href="css/brokerage-table-fix.css">
+<style>
+tr.aes-booking-pending > td { background-color:#fff1f2; }
+tr.aes-booking-pending > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:#991b1b; font-weight:700; }
+.aes-booking-alert { display:block; width:max-content; margin-top:3px; }
+#aesBookingPendingCount.has-pending { color:#991b1b; }
+</style>
 <style id="aesSidebarCollapseStyle">
 .app.aes-sidebar-collapsed{grid-template-columns:minmax(0,1fr)}
 .app.aes-sidebar-collapsed>.sidebar{display:none}
@@ -366,7 +372,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
         <div class="pagehead"><div><h1>Dashboard Executivo</h1><div class="sub">Controle geral das exportações e pendências críticas.</div></div><button class="btn primary" onclick="go('contract')">+ Novo Contrato</button></div>
         <div class="kpis">
           <div class="kpi"><div class="label">Pedidos ativos</div><div class="num">24</div><div class="mini">+4 este mês</div></div>
-          <div class="kpi"><div class="label">Booking pendente</div><div class="num">6</div><span class="badge warn">Ação necessária</span></div>
+          <div class="kpi"><div class="label">Booking pendente</div><div class="num" id="aesBookingPendingCount" aria-live="polite">—</div></div>
           <div class="kpi"><div class="label">Em loading</div><div class="num">5</div><span class="badge info">Em andamento</span></div>
           <div class="kpi"><div class="label">Documentos críticos</div><div class="num">9</div><span class="badge bad">Pendentes</span></div>
         </div>
@@ -7640,6 +7646,10 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
   window.refreshCriticalPendencies=function(){
     const body=document.getElementById('criticalPendenciesBody'); if(!body)return;
     const rows=[], clients=orderClientMap();
+    document.querySelectorAll('#bookingRequestOrdersTable tbody tr.aes-booking-pending').forEach(row=>{
+      const order=row.dataset.orderNumber;
+      add(rows,{order,client:clients[order],pendency:'Booking Pending'+btn('bookingrequest','Booking')});
+    });
     // Booking Pendency: use exactly the detailed pendencies shown in the Booking table.
     document.querySelectorAll('#bookingPendencyTable tbody tr').forEach(r=>{
       const c=r.cells;if(!c||c.length<10)return; const order=clean(c[0].textContent), client=clean(c[1].textContent);
@@ -7688,7 +7698,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
  const esc=t=>String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  function loadAll(){try{let x=localStorage.getItem(BRKEY);if(!x){x=localStorage.getItem(OLDKEY);if(x)localStorage.setItem(BRKEY,x)}return JSON.parse(x||'{}')}catch(e){return {}}}
  function saveAll(x){localStorage.setItem(BRKEY,JSON.stringify(x))}
- function contractRows(){const logistics=typeof getContractLogistics==='function'?getContractLogistics():{},toBR=v=>{const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:v||''},formOrder=clean(document.getElementById('contractOrderNumber')?.value);return [...document.querySelectorAll('#contractsTable tbody tr')].filter(r=>r.cells&&r.cells.length>=15).map(r=>{const order=clean(r.cells[0].textContent),saved=logistics[order]||{},isOpen=formOrder===order,pol=clean(saved.pol||(isOpen?document.getElementById('contractPortOrigin')?.value:'')),pod=clean(saved.pod||(isOpen?document.getElementById('contractPortDestiny')?.value:'')),forecastStart=clean(toBR(saved.forecastStart)||r.cells[13].textContent),forecastEnd=clean(toBR(saved.forecastEnd)||r.cells[14].textContent);return {order,contract:clean(r.cells[1].textContent),importer:clean(r.cells[2].textContent),exporter:clean(r.cells[3].textContent),packing:clean(r.cells[4].textContent),cntrType:clean(saved.containerType||(isOpen?document.getElementById('contractContainerType')?.value:'')||r.cells[5].textContent),cntrAmount:clean(saved.containerAmount||(isOpen?document.getElementById('contractQtyContainer')?.value:'')||r.cells[6].textContent),pol,pod,qty:clean(r.cells[8].textContent),product:clean(r.cells[9].textContent),forecastStart,forecastEnd,destination:pod,shipment:forecastStart+(forecastEnd?' → '+forecastEnd:'')}})}
+ function contractRows(){const logistics=typeof getContractLogistics==='function'?getContractLogistics():{},toBR=v=>{const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:v||''},formOrder=clean(document.getElementById('contractOrderNumber')?.value);return [...document.querySelectorAll('#contractsTable tbody tr')].filter(r=>r.cells&&r.cells.length>=15).map(r=>{const order=clean(r.cells[0].textContent),saved=logistics[order]||{},isOpen=formOrder===order,pol=clean(saved.pol||(isOpen?document.getElementById('contractPortOrigin')?.value:'')),pod=clean(saved.pod||(isOpen?document.getElementById('contractPortDestiny')?.value:'')),forecastStart=clean(toBR(saved.forecastStart)||r.cells[13].textContent),forecastEnd=clean(toBR(saved.forecastEnd)||r.cells[14].textContent);return {order,cancelled:r.dataset.cancelled==='yes',bookingNumber:r.dataset.bookingNumber,bookingStatus:r.dataset.bookingStatus,contract:clean(r.cells[1].textContent),importer:clean(r.cells[2].textContent),exporter:clean(r.cells[3].textContent),packing:clean(r.cells[4].textContent),cntrType:clean(saved.containerType||(isOpen?document.getElementById('contractContainerType')?.value:'')||r.cells[5].textContent),cntrAmount:clean(saved.containerAmount||(isOpen?document.getElementById('contractQtyContainer')?.value:'')||r.cells[6].textContent),pol,pod,qty:clean(r.cells[8].textContent),product:clean(r.cells[9].textContent),forecastStart,forecastEnd,destination:pod,shipment:forecastStart+(forecastEnd?' → '+forecastEnd:'')}})}
  function cntrCount(order){const c=contractRows().find(x=>x.order===order);const n=parseFloat(String(c?.cntrAmount||'').replace(',','.').replace(/[^0-9.]/g,''));return n||1}
  function num(v){return parseFloat(v)||0}
  function calcQuote(q,order){const n=cntrCount(order);const ocean=num(q.ocean),thc=num(q.thc),seal=num(q.seal),otherCntr=num(q.otherCntr),bl=num(q.blFee),doc=num(q.docFee),otherBL=num(q.otherBL);const perCntr=ocean+thc+seal+otherCntr;const totalCntr=perCntr*n;const totalBL=bl+doc+otherBL;return {n,perCntr,totalCntr,totalBL,grand:totalCntr+totalBL}}
@@ -7699,14 +7709,32 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
      return `<option value="${esc(q.id)}" ${String(q.id)===String(selected)?'selected':''}>${esc(title)}</option>`;
    }).join('');
  }
+ const pendingStatuses=new Set(['Pending Quotation','Quoting','Freight Negotiation','Booking Requested','Booking Pending']);
+ let pendingBookingOrders=new Set();
+ window.aesRefreshBookingAlerts=function(){
+   document.querySelectorAll('#contractsTable > tbody > tr, #bookingPendencyTable > tbody > tr, #releasedContractsTable > tbody > tr, #orderContainersTable > tbody > tr, #loading tbody > tr[data-order], #releasing tbody > tr[data-order]').forEach(row=>{
+     const order=row.dataset.order||clean(row.cells[0]?.textContent);
+     row.classList.toggle('aes-booking-pending',pendingBookingOrders.has(order));
+   });
+ };
  window.refreshBookingRequestOrders=function(){
    const tb=document.querySelector('#bookingRequestOrdersTable tbody');if(!tb)return;
    const all=loadAll(),proposals=centralProposals(),statuses=['Pending Quotation','Quoting','Freight Negotiation','Booking Requested','Booking Pending','Booking Confirmed'];
+   pendingBookingOrders=new Set();
    tb.innerHTML=contractRows().map(c=>{
-     const d=all[c.order]||{},st=d.status||'Pending Quotation';
-     return `<tr data-order="${esc(c.order.toLowerCase())}" data-order-number="${esc(c.order)}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}</td><td><select class="br-inline-proposal" aria-label="Proposta de frete da Order ${esc(c.order)}">${quoteOptions(d,proposals)}</select><small class="br-quote-hint">${proposals.length} proposta${proposals.length===1?'':'s'} disponível${proposals.length===1?'':'eis'}</small></td><td><select class="br-inline-status" aria-label="Situação da Order ${esc(c.order)}">${statuses.map(x=>`<option value="${esc(x)}" ${x===st?'selected':''}>${esc(x)}</option>`).join('')}</select><input class="br-inline-responsible" list="aesBookingResponsibleList" placeholder="Responsável pela tarefa" aria-label="Responsável da Order ${esc(c.order)}" value="${esc(d.brResponsible||'')}"></td><td><b>${esc(d.brBookingNo||'—')}</b></td><td><div class="br-inline-actions"><button class="btn primary" type="button" onclick="aesOpenConfirmedBookingFromList(this)">Lançar booking confirmado</button><button class="btn" type="button" onclick="aesSaveBookingFromList(this)">Salvar seleção</button></div></td></tr>`;
+     const d=all[c.order]||{},savedStatus=d.status||d.brStatus||c.bookingStatus;
+     const bookingNumber=[d.brBookingNo,c.bookingNumber].map(value=>String(value??'').trim()).find(value=>value&&value!=='—'&&value!=='-')||'';
+     const st=d.status||'Pending Quotation';
+     const pending=Boolean(c.order&&!c.cancelled&&(!bookingNumber||pendingStatuses.has(savedStatus)));
+     if(pending)pendingBookingOrders.add(c.order);
+     return `<tr class="${pending?'aes-booking-pending':''}" data-order="${esc(c.order.toLowerCase())}" data-order-number="${esc(c.order)}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}</td><td><select class="br-inline-proposal" aria-label="Proposta de frete da Order ${esc(c.order)}">${quoteOptions(d,proposals)}</select><small class="br-quote-hint">${proposals.length} proposta${proposals.length===1?'':'s'} disponível${proposals.length===1?'':'eis'}</small></td><td><select class="br-inline-status" aria-label="Situação da Order ${esc(c.order)}">${statuses.map(x=>`<option value="${esc(x)}" ${x===st?'selected':''}>${esc(x)}</option>`).join('')}</select><input class="br-inline-responsible" list="aesBookingResponsibleList" placeholder="Responsável pela tarefa" aria-label="Responsável da Order ${esc(c.order)}" value="${esc(d.brResponsible||'')}"></td><td><b>${esc(bookingNumber||'—')}</b>${pending?'<span class="badge bad aes-booking-alert">Booking Pending</span>':''}</td><td><div class="br-inline-actions"><button class="btn primary" type="button" onclick="aesOpenConfirmedBookingFromList(this)">Lançar booking confirmado</button><button class="btn" type="button" onclick="aesSaveBookingFromList(this)">Salvar seleção</button></div></td></tr>`;
    }).join('')||'<tr><td colspan="14" class="sub">Nenhum contrato encontrado.</td></tr>';
    filterBookingRequestOrders();renderAcceptedQuotes();
+   window.aesRefreshBookingAlerts();
+   const count=document.getElementById('aesBookingPendingCount');
+   count.textContent=String(pendingBookingOrders.size);
+   count.classList.toggle('has-pending',pendingBookingOrders.size>0);
+   window.refreshCriticalPendencies?.();
  }
  window.aesSaveBookingFromList=async function(button){
    const tr=button.closest('tr'),order=tr?.dataset.orderNumber,status=tr?.querySelector('.br-inline-status')?.value,proposalId=tr?.querySelector('.br-inline-proposal')?.value,responsible=tr?.querySelector('.br-inline-responsible')?.value.trim()||'';
@@ -9245,6 +9273,9 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       const d=c.details||{}, row=body.insertRow();
       row.dataset.date=(c.created_at||'').slice(0,10);
       row.dataset.cancelled=String(c.status).toLowerCase()==='cancelled'?'yes':'no';
+      const booking=d.booking_request||{};
+      row.dataset.bookingNumber=booking.brBookingNo||booking.booking_number||d.booking_number||'';
+      row.dataset.bookingStatus=booking.status||booking.brStatus||'';
       row.dataset.cancelReason=d.cancel_reason||'';row.dataset.cancelDate=d.cancel_date||'';
       row.dataset.exporter=names.get(Number(c.exporter_id))||'';
       row.dataset.importer=names.get(Number(c.importer_id))||'';
@@ -9581,6 +9612,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   window.refreshBookingPendencySummaries?.();
   window.applyBookingFilters?.();
+  window.aesRefreshBookingAlerts?.();
  };
  const oldOpen=window.openBookingPendencyDetail;
  window.openBookingPendencyDetail=function(order){
@@ -9947,6 +9979,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    const body=$('loading')?.querySelector('.card table tbody');if(!body)return;body.replaceChildren();
    for(const c of active()){
      const order=c.order_number,d=c.details||{},p=schedule(order),tr=body.insertRow(),qtyKg=Math.round(num(c.quantity_mt)*1000);
+     tr.dataset.order=order;
      cell(tr,order);cell(tr,c.product||'—');cell(tr,d.contractContainerType||booking(order,c).brCntrType||'—');
      const total=cell(tr,qtyKg.toLocaleString('en-US')+' kg');total.id='loadingTotal-'+order;total.dataset.totalKg=str(qtyKg);
      const shipped=cell(tr,'0 kg');shipped.id='loadingShipped-'+order;
@@ -9965,6 +9998,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    const body=$('releasing')?.querySelector('.card .tablewrap table tbody');if(!body)return;body.replaceChildren();
    for(const c of active()){
      const order=c.order_number,b=booking(order,c),d=c.details||{},p=schedule(order),tr=body.insertRow();
+     tr.dataset.order=order;
      cell(tr,order);cell(tr,b.number||'Aguardando booking');cell(tr,b.brCntrType||d.contractContainerType||'—');
      cell(tr,b.brCntrAmount||d.contractQtyContainer||'—');
      cell(tr,b.brConfirmedFreeTime?b.brConfirmedFreeTime+' days':'—');cell(tr,p.pickupDepot||p.containerPickupDepot||c.port_of_loading||'—');
@@ -10027,7 +10061,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
      const total=Number(tr.cells[6]?.textContent)||0;window.updateOrderContainerRow?.(order,total);
    }
  };
- function renderAll(){renderContainers();renderLoading();renderReleasing();renderAfter()}
+ function renderAll(){renderContainers();renderLoading();renderReleasing();renderAfter();window.aesRefreshBookingAlerts?.()}
  async function refresh(){
    const client=window.aesSharedClient,request=++busy;if(!client||$('aesAuthGate')?.style.display!=='none')return;
    const [c,n]=await Promise.all([
@@ -10085,7 +10119,10 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    new MutationObserver(()=>{if(gate.style.display==='none')refresh().then(restoreCloudBookings)}).observe(gate,{attributes:true,attributeFilter:['style']});
    if(gate.style.display==='none')refresh().then(restoreCloudBookings);
  });
- window.addEventListener('storage',e=>{if([bookingKey,'aesShippingPrograms'].includes(e.key))renderAll()});
+ window.addEventListener('storage',e=>{
+   if(e.key===bookingKey)window.refreshBookingRequestOrders?.();
+   if([bookingKey,'aesShippingPrograms'].includes(e.key))renderAll();
+ });
 })();
 </script>
 
