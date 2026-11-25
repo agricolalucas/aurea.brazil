@@ -288,6 +288,14 @@ tr.aes-booking-pending > td { background-color:#fff1f2; }
 tr.aes-booking-pending > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:#991b1b; font-weight:700; }
 .aes-booking-alert { display:block; width:max-content; margin-top:3px; }
 #aesBookingPendingCount.has-pending { color:#991b1b; }
+#aesBookingForecastPanel { padding:10px 12px; }
+#aesBookingForecastPanel .pagehead { margin-bottom:6px; }
+#aesBookingForecastPanel .tablewrap { max-height:330px; overflow:auto; }
+#aesBookingForecastPanel th { position:sticky; top:0; z-index:1; background:#eef4fa; }
+#aesBookingForecastPanel th,#aesBookingForecastPanel td { padding:5px 7px; }
+#aesBookingForecastPanel .btn { padding:3px 7px; margin:0; }
+tr.aes-booking-overdue > td { background-color:#fee2e2; }
+tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:#991b1b; font-weight:700; }
 </style>
 <style id="aesSidebarCollapseStyle">
 .app.aes-sidebar-collapsed{grid-template-columns:minmax(0,1fr)}
@@ -375,6 +383,10 @@ tr.aes-booking-pending > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
           <div class="kpi"><div class="label">Booking pendente</div><div class="num" id="aesBookingPendingCount" aria-live="polite">—</div></div>
           <div class="kpi"><div class="label">Em loading</div><div class="num">5</div><span class="badge info">Em andamento</span></div>
           <div class="kpi"><div class="label">Documentos críticos</div><div class="num">9</div><span class="badge bad">Pendentes</span></div>
+        </div>
+        <div class="card" id="aesBookingForecastPanel" aria-labelledby="aesBookingForecastTitle" style="margin-top:14px">
+          <div class="pagehead"><h3 id="aesBookingForecastTitle" style="margin:0">Booking Pendency</h3></div>
+          <div class="tablewrap"><table><thead><tr><th>Order</th><th>Importer</th><th>Product</th><th>Shipping Forecast</th><th>Forecast Deadline</th><th>Deadline Status</th><th>Action</th></tr></thead><tbody id="aesBookingForecastBody"><tr><td colspan="7" class="sub">Loading booking pendencies…</td></tr></tbody></table></div>
         </div>
         <div class="card" id="aesDashboardArrivals" style="margin-top:14px">
           <div class="pagehead" style="margin-bottom:12px"><div><h3 style="margin:0">🚢 Upcoming vessels a chegar</h3><div class="sub">Até 8 operações com ETA mais próxima, de Booking, Scheduling, Compra e revenda e Operação de Corretor.</div></div><button type="button" class="btn" onclick="aesRefreshArrivals()">↻ Refresh</button></div>
@@ -7648,7 +7660,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
     const rows=[], clients=orderClientMap();
     document.querySelectorAll('#bookingRequestOrdersTable tbody tr.aes-booking-pending').forEach(row=>{
       const order=row.dataset.orderNumber;
-      add(rows,{order,client:clients[order],pendency:'Booking Pending'+btn('bookingrequest','Booking')});
+      add(rows,{order,client:clients[order],pendency:(row.classList.contains('aes-booking-overdue')?'Overdue without booking':'Booking Pending')+btn('bookingrequest','Booking')});
     });
     // Booking Pendency: use exactly the detailed pendencies shown in the Booking table.
     document.querySelectorAll('#bookingPendencyTable tbody tr').forEach(r=>{
@@ -7698,7 +7710,7 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
  const esc=t=>String(t??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  function loadAll(){try{let x=localStorage.getItem(BRKEY);if(!x){x=localStorage.getItem(OLDKEY);if(x)localStorage.setItem(BRKEY,x)}return JSON.parse(x||'{}')}catch(e){return {}}}
  function saveAll(x){localStorage.setItem(BRKEY,JSON.stringify(x))}
- function contractRows(){const logistics=typeof getContractLogistics==='function'?getContractLogistics():{},toBR=v=>{const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:v||''},formOrder=clean(document.getElementById('contractOrderNumber')?.value);return [...document.querySelectorAll('#contractsTable tbody tr')].filter(r=>r.cells&&r.cells.length>=15).map(r=>{const order=clean(r.cells[0].textContent),saved=logistics[order]||{},isOpen=formOrder===order,pol=clean(saved.pol||(isOpen?document.getElementById('contractPortOrigin')?.value:'')),pod=clean(saved.pod||(isOpen?document.getElementById('contractPortDestiny')?.value:'')),forecastStart=clean(toBR(saved.forecastStart)||r.cells[13].textContent),forecastEnd=clean(toBR(saved.forecastEnd)||r.cells[14].textContent);return {order,cancelled:r.dataset.cancelled==='yes',bookingNumber:r.dataset.bookingNumber,bookingStatus:r.dataset.bookingStatus,contract:clean(r.cells[1].textContent),importer:clean(r.cells[2].textContent),exporter:clean(r.cells[3].textContent),packing:clean(r.cells[4].textContent),cntrType:clean(saved.containerType||(isOpen?document.getElementById('contractContainerType')?.value:'')||r.cells[5].textContent),cntrAmount:clean(saved.containerAmount||(isOpen?document.getElementById('contractQtyContainer')?.value:'')||r.cells[6].textContent),pol,pod,qty:clean(r.cells[8].textContent),product:clean(r.cells[9].textContent),forecastStart,forecastEnd,destination:pod,shipment:forecastStart+(forecastEnd?' → '+forecastEnd:'')}})}
+ function contractRows(){const logistics=typeof getContractLogistics==='function'?getContractLogistics():{},toBR=v=>{const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:v||''},formOrder=clean(document.getElementById('contractOrderNumber')?.value);return [...document.querySelectorAll('#contractsTable tbody tr')].filter(r=>r.cells&&r.cells.length>=15).map(r=>{const order=clean(r.cells[0].textContent),saved=logistics[order]||{},isOpen=formOrder===order,pol=clean(saved.pol||(isOpen?document.getElementById('contractPortOrigin')?.value:'')),pod=clean(saved.pod||(isOpen?document.getElementById('contractPortDestiny')?.value:'')),forecastStart=clean(toBR(saved.forecastStart)||r.cells[13].textContent),forecastEnd=clean(toBR(saved.forecastEnd)||r.cells[14].textContent);return {order,forecastStartDate:r.dataset.forecastStart??(saved.forecastStart||forecastStart),forecastEndDate:r.dataset.forecastEnd??(saved.forecastEnd||forecastEnd),cancelled:r.dataset.cancelled==='yes',bookingNumber:r.dataset.bookingNumber,bookingStatus:r.dataset.bookingStatus,contract:clean(r.cells[1].textContent),importer:clean(r.cells[2].textContent),exporter:clean(r.cells[3].textContent),packing:clean(r.cells[4].textContent),cntrType:clean(saved.containerType||(isOpen?document.getElementById('contractContainerType')?.value:'')||r.cells[5].textContent),cntrAmount:clean(saved.containerAmount||(isOpen?document.getElementById('contractQtyContainer')?.value:'')||r.cells[6].textContent),pol,pod,qty:clean(r.cells[8].textContent),product:clean(r.cells[9].textContent),forecastStart,forecastEnd,destination:pod,shipment:forecastStart+(forecastEnd?' → '+forecastEnd:'')}})}
  function cntrCount(order){const c=contractRows().find(x=>x.order===order);const n=parseFloat(String(c?.cntrAmount||'').replace(',','.').replace(/[^0-9.]/g,''));return n||1}
  function num(v){return parseFloat(v)||0}
  function calcQuote(q,order){const n=cntrCount(order);const ocean=num(q.ocean),thc=num(q.thc),seal=num(q.seal),otherCntr=num(q.otherCntr),bl=num(q.blFee),doc=num(q.docFee),otherBL=num(q.otherBL);const perCntr=ocean+thc+seal+otherCntr;const totalCntr=perCntr*n;const totalBL=bl+doc+otherBL;return {n,perCntr,totalCntr,totalBL,grand:totalCntr+totalBL}}
@@ -7710,27 +7722,67 @@ document.addEventListener('DOMContentLoaded',()=>setTimeout(ensureDocumentHistor
    }).join('');
  }
  const pendingStatuses=new Set(['Pending Quotation','Quoting','Freight Negotiation','Booking Requested','Booking Pending']);
- let pendingBookingOrders=new Set();
+
+ const forecastToday=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Cuiaba",year:"numeric",month:"2-digit",day:"2-digit"});
+ function parseShippingForecast(value){
+   const text=String(value??"").trim();
+   const iso=/^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(text);
+   const br=/^(?:(\d{2})\/)?(\d{2})\/(\d{4})$/.exec(text);
+   if(!iso&&!br)return null;
+   const [year,month,day]=iso?iso.slice(1):[br[3],br[2],br[1]];
+   if(Number(year)<1000||Number(month)<1||Number(month)>12)return null;
+   const lastDay=new Date(Date.UTC(Number(year),Number(month),0)).getUTCDate();
+   if(day&&(Number(day)<1||Number(day)>lastDay))return null;
+   const endDay=day||String(lastDay).padStart(2,"0");
+   return {label:day?day+"/"+month+"/"+year:month+"/"+year,deadline:year+"-"+month+"-"+endDay,dateLabel:endDay+"/"+month+"/"+year};
+ }
+ function renderBookingForecastPanel(orders){
+   const body=document.getElementById("aesBookingForecastBody");
+   const sorted=[...orders.values()].sort((a,b)=>(a.deadline?.deadline||"9999-99-99").localeCompare(b.deadline?.deadline||"9999-99-99")||a.order.localeCompare(b.order,"pt-BR",{numeric:true}));
+   body.innerHTML=sorted.map(row=>{
+     const status=row.overdue?"Overdue without booking":row.deadline?"Within forecast":"No forecast";
+     const badge=row.overdue?"bad":row.deadline?"info":"warn";
+     return `<tr class="${row.overdue?"aes-booking-overdue":""}"><td><strong>${esc(row.order)}</strong></td><td>${esc(row.importer||"—")}</td><td>${esc(row.product||"—")}</td><td>${esc(row.forecast||"—")}</td><td>${esc(row.deadline?.dateLabel||"—")}</td><td><span class="badge ${badge}">${status}</span></td><td><button class="btn" type="button" data-booking-forecast-order="${esc(row.order)}">View booking request</button></td></tr>`;
+   }).join("")||'<tr><td colspan="7" class="sub">No booking pendencies.</td></tr>';
+ }
+ document.getElementById("aesBookingForecastPanel").addEventListener("click",event=>{
+   const button=event.target.closest("[data-booking-forecast-order]");
+   if(!button)return;
+   go("bookingrequest");
+   document.getElementById("brFilterOrder").value=button.dataset.bookingForecastOrder;
+   for(const id of ["brFilterImporter","brFilterDestiny","brFilterStatus"])document.getElementById(id).value="";
+   window.closeBookingRequestWorkspace();
+ });
+ let pendingBookingOrders=new Map();
  window.aesRefreshBookingAlerts=function(){
    document.querySelectorAll('#contractsTable > tbody > tr, #bookingPendencyTable > tbody > tr, #releasedContractsTable > tbody > tr, #orderContainersTable > tbody > tr, #loading tbody > tr[data-order], #releasing tbody > tr[data-order]').forEach(row=>{
      const order=row.dataset.order||clean(row.cells[0]?.textContent);
      row.classList.toggle('aes-booking-pending',pendingBookingOrders.has(order));
+     row.classList.toggle('aes-booking-overdue',Boolean(pendingBookingOrders.get(order)?.overdue));
    });
  };
  window.refreshBookingRequestOrders=function(){
    const tb=document.querySelector('#bookingRequestOrdersTable tbody');if(!tb)return;
    const all=loadAll(),proposals=centralProposals(),statuses=['Pending Quotation','Quoting','Freight Negotiation','Booking Requested','Booking Pending','Booking Confirmed'];
-   pendingBookingOrders=new Set();
+   const today=forecastToday.format(new Date());
+   pendingBookingOrders=new Map();
    tb.innerHTML=contractRows().map(c=>{
      const d=all[c.order]||{},savedStatus=d.status||d.brStatus||c.bookingStatus;
      const bookingNumber=[d.brBookingNo,c.bookingNumber].map(value=>String(value??'').trim()).find(value=>value&&value!=='—'&&value!=='-')||'';
      const st=d.status||'Pending Quotation';
      const pending=Boolean(c.order&&!c.cancelled&&(!bookingNumber||pendingStatuses.has(savedStatus)));
-     if(pending)pendingBookingOrders.add(c.order);
-     return `<tr class="${pending?'aes-booking-pending':''}" data-order="${esc(c.order.toLowerCase())}" data-order-number="${esc(c.order)}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}</td><td><select class="br-inline-proposal" aria-label="Proposta de frete da Order ${esc(c.order)}">${quoteOptions(d,proposals)}</select><small class="br-quote-hint">${proposals.length} proposta${proposals.length===1?'':'s'} disponível${proposals.length===1?'':'eis'}</small></td><td><select class="br-inline-status" aria-label="Situação da Order ${esc(c.order)}">${statuses.map(x=>`<option value="${esc(x)}" ${x===st?'selected':''}>${esc(x)}</option>`).join('')}</select><input class="br-inline-responsible" list="aesBookingResponsibleList" placeholder="Responsável pela tarefa" aria-label="Responsável da Order ${esc(c.order)}" value="${esc(d.brResponsible||'')}"></td><td><b>${esc(bookingNumber||'—')}</b>${pending?'<span class="badge bad aes-booking-alert">Booking Pending</span>':''}</td><td><div class="br-inline-actions"><button class="btn primary" type="button" onclick="aesOpenConfirmedBookingFromList(this)">Lançar booking confirmado</button><button class="btn" type="button" onclick="aesSaveBookingFromList(this)">Salvar seleção</button></div></td></tr>`;
+     const start=parseShippingForecast(c.forecastStartDate),end=parseShippingForecast(c.forecastEndDate);
+     const deadline=end||start;
+     const overdue=pending&&Boolean(deadline&&deadline.deadline<today);
+     if(pending){
+       const forecast=[...new Set([start?.label,end?.label].filter(Boolean))].join(" → ");
+       pendingBookingOrders.set(c.order,{order:c.order,importer:c.importer,product:c.product,forecast,deadline,overdue});
+     }
+     return `<tr class="${pending?'aes-booking-pending':''}${overdue?' aes-booking-overdue':''}" data-order="${esc(c.order.toLowerCase())}" data-order-number="${esc(c.order)}" data-importer="${esc(c.importer.toLowerCase())}" data-destiny="${esc(c.destination.toLowerCase())}" data-status="${esc(st)}"><td><b>${esc(c.order)}</b></td><td>${esc(c.contract)}</td><td>${esc(c.importer)}</td><td>${esc(c.product)}</td><td>${esc(c.qty)}</td><td>${esc(d.brCntrAmount||c.cntrAmount)} × ${esc(d.brCntrType||c.cntrType)}</td><td>${esc(d.brPOL||c.pol||'—')}</td><td>${esc(d.brPOD||c.pod||'—')}</td><td>${esc(c.destination)}</td><td>${esc(c.shipment)}${overdue?'<span class="badge bad aes-booking-alert">Overdue without booking</span>':''}</td><td><select class="br-inline-proposal" aria-label="Proposta de frete da Order ${esc(c.order)}">${quoteOptions(d,proposals)}</select><small class="br-quote-hint">${proposals.length} proposta${proposals.length===1?'':'s'} disponível${proposals.length===1?'':'eis'}</small></td><td><select class="br-inline-status" aria-label="Situação da Order ${esc(c.order)}">${statuses.map(x=>`<option value="${esc(x)}" ${x===st?'selected':''}>${esc(x)}</option>`).join('')}</select><input class="br-inline-responsible" list="aesBookingResponsibleList" placeholder="Responsável pela tarefa" aria-label="Responsável da Order ${esc(c.order)}" value="${esc(d.brResponsible||'')}"></td><td><b>${esc(bookingNumber||'—')}</b>${pending?'<span class="badge bad aes-booking-alert">Booking Pending</span>':''}</td><td><div class="br-inline-actions"><button class="btn primary" type="button" onclick="aesOpenConfirmedBookingFromList(this)">Lançar booking confirmado</button><button class="btn" type="button" onclick="aesSaveBookingFromList(this)">Salvar seleção</button></div></td></tr>`;
    }).join('')||'<tr><td colspan="14" class="sub">Nenhum contrato encontrado.</td></tr>';
    filterBookingRequestOrders();renderAcceptedQuotes();
    window.aesRefreshBookingAlerts();
+   renderBookingForecastPanel(pendingBookingOrders);
    const count=document.getElementById('aesBookingPendingCount');
    count.textContent=String(pendingBookingOrders.size);
    count.classList.toggle('has-pending',pendingBookingOrders.size>0);
@@ -8573,6 +8625,14 @@ Search upcoming vessels|Buscar próximos navios
 Cadastros e Comercial|Cadastros e Comercial
 Booking Request|Solicitação de booking
 Booking Pendency|Pendências do booking
+Forecast Deadline|Data limite de embarque
+Deadline Status|Situação do prazo
+Overdue without booking|Fora do prazo sem booking
+Within forecast|No prazo
+No forecast|Sem previsão
+View booking request|Ver solicitação de booking
+Loading booking pendencies…|Carregando pendências de booking…
+No booking pendencies.|Nenhuma pendência de booking.
 Booking Pending|Booking pendente
 Booking Confirmed|Booking confirmado
 Booking Requested|Booking solicitado
@@ -9276,6 +9336,8 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
       const booking=d.booking_request||{};
       row.dataset.bookingNumber=booking.brBookingNo||booking.booking_number||d.booking_number||'';
       row.dataset.bookingStatus=booking.status||booking.brStatus||'';
+      row.dataset.forecastStart=d.shippingForecastStart||'';
+      row.dataset.forecastEnd=d.shippingForecastEnd||'';
       row.dataset.cancelReason=d.cancel_reason||'';row.dataset.cancelDate=d.cancel_date||'';
       row.dataset.exporter=names.get(Number(c.exporter_id))||'';
       row.dataset.importer=names.get(Number(c.importer_id))||'';
