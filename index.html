@@ -3300,7 +3300,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
         <thead>
           <tr>
             <th>Claim ID</th>
-            <th>Order</th>
+            <th>Ordens / Bookings</th>
             <th>Importer</th>
             <th>Tipo</th>
             <th>Data Abertura</th>
@@ -6702,12 +6702,18 @@ function refreshClaimList(){
   tbody.innerHTML='';
   Object.values(window.claimData).forEach(d=>{
     const tr=document.createElement('tr');
-    const orderNumbers=(d.orderLinks||[]).map(link=>link.number).filter(Boolean).join(' / ')||d.order;
+    const links=Array.isArray(d.orderLinks)?d.orderLinks.filter(link=>link?.number):[];
+    const orderNumbers=links.map(link=>link.number).join(' / ')||d.order;
+    const linkedOrdersMarkup=links.length?links.map(link=>{
+      const bookings=Array.isArray(link.bookings)?link.bookings.filter(Boolean).join(' / '):'';
+      return '<div class="claim-linked-order"><strong>'+escHtml(link.number)+'</strong><small>'+escHtml(bookings?'Booking: '+bookings:'Sem booking vinculado')+'</small></div>';
+    }).join(''):'<div class="claim-linked-order"><strong>'+escHtml(orderNumbers||'—')+'</strong>'+
+      (d.booking?'<small>'+escHtml('Booking: '+d.booking)+'</small>':'')+'</div>';
     tr.dataset.id=d.id;tr.dataset.order=orderNumbers;tr.dataset.importer=d.importer;tr.dataset.status=d.status;
     let cls='warn'; if(d.status==='Open')cls='bad'; if(d.status==='Approved'||d.status==='Closed')cls='good'; if(d.status==='Waiting Importer')cls='info';
     tr.innerHTML=
       '<td><b>'+escHtml(d.id)+'</b></td>'+
-      '<td>'+escHtml(orderNumbers||'—')+'</td>'+
+      '<td>'+linkedOrdersMarkup+'</td>'+
       '<td>'+escHtml(d.importer||'—')+'</td>'+
       '<td>'+escHtml(d.type||'—')+'</td>'+
       '<td>'+formatDateBR(d.openDate)+'</td>'+
@@ -11834,6 +11840,11 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 <style>
 #claimOrdersDialog{width:min(970px,calc(100% - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto;border:1px solid #cbd9e6;border-radius:12px;padding:16px;color:#1b2c40;box-shadow:0 16px 45px #172e4850}
 #claimOrdersDialog::backdrop{background:#15263e80}
+.claim-order-pill{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center;max-width:100%;padding:4px 6px;border:1px solid #c9d7e6;border-radius:7px}
+.claim-order-pill small{grid-column:1;grid-row:2}
+.claim-order-pill button{grid-column:2;grid-row:1 / span 2}
+.claim-order-pill small,.claim-linked-order small{display:block;color:#475569;white-space:normal;overflow-wrap:anywhere}
+.claim-linked-order+.claim-linked-order{margin-top:4px}
 #claimOrdersDialog h3{margin:0 0 12px}
 #claimOrdersDialog .claim-orders-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;margin-bottom:10px}
 #claimOrdersDialog .claim-orders-list{max-height:45vh}
@@ -11843,7 +11854,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #claimOrdersDialog input[type=checkbox]{width:16px;height:16px;margin:0;vertical-align:middle;cursor:pointer}
 #claimOrdersDialog .claim-orders-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
 </style>
-<script src="js/claim-notes.js?v=20261126-claim-checklist"></script>
+<script src="js/claim-notes.js?v=20261126-linked-bookings"></script>
 <style id="tradeDocumentsEtaLayout">
 #trAllDocumentsPane>.tablewrap{height:calc(100vh - 215px)!important;min-height:350px}
 #trAllDocumentsPane th,#trAllDocumentsPane td{padding:3px 5px!important;line-height:1.1!important}

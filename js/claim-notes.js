@@ -53,7 +53,7 @@ function initClaimLookups(){
    button.type='button';
    button.className='btn';
    button.style.cssText='min-height:24px;padding:2px 6px;margin:0';
-   button.textContent=link.number+' ×';
+   button.textContent='×';
    button.setAttribute('aria-label','Remover ordem '+link.number);
    button.addEventListener('click',()=>{
     const previous=automaticBookings();
@@ -62,7 +62,14 @@ function initClaimLookups(){
     updateImporter();
     renderSelection();
    });
-   return button;
+   const item=document.createElement('span');
+   item.className='claim-order-pill';
+   const number=document.createElement('strong');
+   number.textContent=link.number;
+   const bookings=document.createElement('small');
+   bookings.textContent=link.bookings.length?'Booking: '+link.bookings.join(' / '):'Sem booking vinculado';
+   item.append(number,bookings,button);
+   return item;
   }));
  }
  const searchKey=value=>key(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
