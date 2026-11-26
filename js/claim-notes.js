@@ -4,6 +4,88 @@
 const details=document.createElement('div');while(root.firstChild)details.append(root.firstChild);root.append(details);const tabs=document.createElement('div');tabs.className='toolbar';tabs.style.marginBottom='10px';tabs.innerHTML='<button class="btn primary" type="button" data-tab="claims">Claims</button><button class="btn" type="button" data-tab="notes">Debit Note / Credit Note</button>';root.prepend(tabs);const panel=document.createElement('div');panel.hidden=true;root.append(panel);let records=[],companies=[],linkedOrders=[],banks=[],editing=null,saving=false,dirty=false;
 const msg=t=>{const el=panel.querySelector('[data-message]');if(el)el.textContent=t;};const option=(value,label,current)=>`<option value="${esc(value)}" ${String(value)===String(current)?'selected':''}>${esc(label)}</option>`;
 async function all(table,cols='*'){const rows=[];for(let i=0;;i+=500){const r=await db().from(table).select(cols).order('id').range(i,i+499);if(r.error)throw r.error;rows.push(...r.data);if(r.data.length<500)return rows;}}
+
+function initClaimLookups(){
+ const order=document.getElementById('claimOrder');
+ const booking=document.getElementById('claimBooking');
+ const importer=document.getElementById('claimImporter');
+ if(!order||!booking||!importer)return;
+ const lists=new Map();
+ for(const field of [order,booking,importer]){
+  const list=document.createElement('datalist');
+  list.id=field.id+'Suggestions';
+  field.setAttribute('list',list.id);
+  field.setAttribute('autocomplete','off');
+  field.after(list);
+  lists.set(field,list);
+ }
+ const key=value=>String(value??'').trim().toLowerCase();
+ const distinct=values=>[...new Set(values.map(v=>String(v??'').trim()).filter(v=>v&&v!=='—'&&v!=='-'))];
+ const fill=(field,options)=>lists.get(field).replaceChildren(...options);
+ let orders=new Map(),request,lastLoaded=0,selection=0;
+ const updateBookings=()=>{
+  const choices=orders.get(key(order.value))?.bookings||[];
+  fill(booking,choices.map(value=>new Option(value,value)));
+ };
+ function loadLookups(){
+  if(!db()||Date.now()-lastLoaded<30000)return Promise.resolve();
+  if(request)return request;
+  request=Promise.allSettled([
+   all('companies','id,name'),
+   all('contracts','id,order_number,importer_id,details'),
+   all('aes_trader_deals','id,trade_number,buyer_id,sale_flow,purchase_flow'),
+   all('aes_booking_requests','id,contract_id,order_number,booking_number,payload')
+  ]).then(results=>{
+   const [users,contracts,deals,bookings]=results.map(result=>result.status==='fulfilled'?result.value:[]);
+   const names=new Map(users.map(user=>[String(user.id),user.name]));
+   if(results[0].status==='fulfilled')fill(importer,distinct(users.map(user=>user.name)).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>new Option(name,name)));
+   if(results[1].status==='fulfilled'||results[2].status==='fulfilled'){
+    const next=new Map();
+    function add(number,importerId,bookingNumbers){
+     const value=String(number??'').trim();
+     if(!value)return;
+     const id=key(value),entry=next.get(id)||{value,importers:[],bookings:[]};
+     entry.importers=distinct([...entry.importers,names.get(String(importerId))]);
+     entry.bookings=distinct([...entry.bookings,...bookingNumbers]);
+     next.set(id,entry);
+    }
+    for(const contract of contracts){
+     const saved=contract.details?.booking_request||{};
+     const linked=bookings.filter(b=>String(b.contract_id)===String(contract.id)||(!b.contract_id&&key(b.order_number)===key(contract.order_number)));
+     add(contract.order_number,contract.importer_id,[...linked.map(b=>b.booking_number||b.payload?.brBookingNo),saved.brBookingNo,saved.booking_number,contract.details?.booking_number]);
+    }
+    for(const deal of deals){
+     if(deal.sale_flow?.deleted_at)continue;
+     add(deal.trade_number,deal.sale_flow?.parties?.importer||deal.buyer_id,[deal.sale_flow?.si?.booking||deal.purchase_flow?.si?.booking]);
+    }
+    orders=next;
+    fill(order,[...orders.values()].sort((a,b)=>a.value.localeCompare(b.value,'pt-BR',{numeric:true})).map(entry=>new Option(entry.importers.join(' / ')||entry.value,entry.value)));
+    updateBookings();
+   }
+   lastLoaded=Date.now();
+   if(results.some(result=>result.status==='rejected'))window.notify?.('Algumas sugestões de ordem, booking ou importador estão indisponíveis.');
+  }).finally(()=>{request=null;});
+  return request;
+ }
+ for(const field of [order,booking,importer])field.addEventListener('focus',loadLookups);
+ document.querySelectorAll('[data-view="claim"]').forEach(button=>button.addEventListener('click',loadLookups));
+ order.addEventListener('input',()=>{selection++;updateBookings();});
+ order.addEventListener('change',async()=>{
+  const current=++selection,claim=window.currentClaimId,value=order.value;
+  const previousBooking=booking.value,previousImporter=importer.value;
+  await loadLookups();
+  if(current!==selection||claim!==window.currentClaimId||value!==order.value)return;
+  const entry=orders.get(key(value));
+  if(!entry)return;
+  order.value=entry.value;
+  if(entry.importers.length===1&&importer.value===previousImporter)importer.value=entry.importers[0];
+  if(entry.bookings.length===1&&booking.value===previousBooking)booking.value=entry.bookings[0];
+  updateBookings();
+ });
+ booking.addEventListener('focus',updateBookings);
+}
+initClaimLookups();
+
 const companyName=id=>companies.find(c=>String(c.id)===String(id))?.name||'';
 function tradeOrder(d,side){const flow=d[side+'_flow']||{},c=flow.commercial||{},si={...(d.purchase_flow?.si||{}),...(flow.si||{})},qty=Number(c.quantity??d.quantity)||0,price=Number(c.unit_price??(side==='purchase'?d.purchase_unit_price:d.sale_unit_price))||0;
 return {key:'trade:'+d.id+':'+side,source:'trade',id:d.id,side,label:d.trade_number+' · '+(side==='purchase'?'Compra':'Revenda'),number:d.trade_number,contract:side==='purchase'?d.purchase_contract_number:d.sale_proforma_number,exporter:companyName(flow.parties?.exporter||(side==='purchase'?d.supplier_id:d.trader_company_id)),importer:companyName(flow.parties?.importer||(side==='purchase'?d.trader_company_id:d.buyer_id)),booking:si.booking||'',bl:si.bl||'',vessel:si.vessel||'',voyage:si.voyage||'',pol:si.pol||flow.model?.pol||'',pod:si.pod||flow.model?.pod||'',etd:si.etd||'',eta:si.eta||'',product:c.product||d.product||'',quantity:qty,unit:c.unit||d.unit||'',unit_price:price,total:Math.round(qty*price*100)/100,currency:d.currency||'USD'};}
