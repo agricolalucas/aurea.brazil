@@ -3348,7 +3348,23 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
       <h2 style="font-size:18px;margin-top:0">Dados do Claim</h2>
       <div class="grid4">
         <div><label>Claim ID</label><input id="claimId" readonly></div>
-        <div><label for="claimOrder">Ordens do processo</label><div style="display:flex;gap:6px"><input id="claimOrder" placeholder="Buscar ordem" style="min-width:0"><button id="claimAddOrder" type="button" class="btn" aria-label="Adicionar ordem">+ Adicionar</button></div><div id="claimSelectedOrders" aria-live="polite" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div></div>
+        <div><label for="claimAddOrder">Ordens do processo</label><input id="claimOrder" type="hidden">
+          <button id="claimAddOrder" type="button" class="btn" aria-haspopup="dialog">Selecionar ordens</button>
+          <dialog id="claimOrdersDialog" aria-labelledby="claimOrdersTitle">
+            <h3 id="claimOrdersTitle">Selecionar ordens do processo</h3>
+            <div class="claim-orders-filters">
+              <label for="claimOrderSearch">Ordem / Booking<input id="claimOrderSearch" type="search"></label>
+              <label for="claimExporterFilter">Exportador<input id="claimExporterFilter" type="search" list="claimExporterOptions"><datalist id="claimExporterOptions"></datalist></label>
+              <label for="claimImporterFilter">Importador<input id="claimImporterFilter" type="search" list="claimImporterOptions"><datalist id="claimImporterOptions"></datalist></label>
+            </div>
+            <div class="tablewrap claim-orders-list">
+              <table><thead><tr><th><input id="claimMarkVisibleOrders" type="checkbox" aria-label="Marcar ou desmarcar todas as ordens do filtro"></th><th>Ordem</th><th>Exportador</th><th>Importador</th><th>Booking</th></tr></thead><tbody id="claimOrderOptions"></tbody></table>
+            </div>
+            <div class="claim-orders-actions">
+              <span id="claimOrderCount" role="status"></span>
+              <div><button id="claimCancelOrders" type="button" class="btn">Cancelar</button> <button id="claimApplyOrders" type="button" class="btn primary">Aplicar seleção</button></div>
+            </div>
+          </dialog><div id="claimSelectedOrders" aria-live="polite" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div></div>
         <div><label for="claimBooking">Bookings</label><input id="claimBooking" placeholder="Bookings das ordens vinculadas"></div>
         <div><label>Importer</label><input id="claimImporter" placeholder="Importer"></div>
       </div>
@@ -11815,7 +11831,19 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #aesTraderRows td>div{margin-bottom:2px!important}#aesTraderRows td>div>div{margin-top:1px!important;line-height:1.2!important}
 @media(min-width:1400px){#trOperationFilters{grid-template-columns:repeat(8,minmax(0,1fr))}}
 </style>
-<script src="js/claim-notes.js?v=20261126-claim-multi-order"></script>
+<style>
+#claimOrdersDialog{width:min(970px,calc(100% - 24px));max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto;border:1px solid #cbd9e6;border-radius:12px;padding:16px;color:#1b2c40;box-shadow:0 16px 45px #172e4850}
+#claimOrdersDialog::backdrop{background:#15263e80}
+#claimOrdersDialog h3{margin:0 0 12px}
+#claimOrdersDialog .claim-orders-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;margin-bottom:10px}
+#claimOrdersDialog .claim-orders-list{max-height:45vh}
+#claimOrdersDialog table{min-width:640px}
+#claimOrdersDialog th{position:sticky;top:0;z-index:1}
+#claimOrdersDialog th,#claimOrdersDialog td{padding:5px 8px}
+#claimOrdersDialog input[type=checkbox]{width:16px;height:16px;margin:0;vertical-align:middle;cursor:pointer}
+#claimOrdersDialog .claim-orders-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+</style>
+<script src="js/claim-notes.js?v=20261126-claim-checklist"></script>
 <style id="tradeDocumentsEtaLayout">
 #trAllDocumentsPane>.tablewrap{height:calc(100vh - 215px)!important;min-height:350px}
 #trAllDocumentsPane th,#trAllDocumentsPane td{padding:3px 5px!important;line-height:1.1!important}

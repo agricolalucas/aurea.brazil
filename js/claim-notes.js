@@ -12,16 +12,18 @@ function initClaimLookups(){
  const addButton=document.getElementById('claimAddOrder');
  const selected=document.getElementById('claimSelectedOrders');
  const logo=document.getElementById('claimAureaLogo');
- if(!order||!booking||!importer||!addButton||!selected)return;
- const lists=new Map();
- for(const field of [order,importer]){
-  const list=document.createElement('datalist');
-  list.id=field.id+'Suggestions';
-  field.setAttribute('list',list.id);
-  field.setAttribute('autocomplete','off');
-  field.after(list);
-  lists.set(field,list);
- }
+ const dialog=document.getElementById('claimOrdersDialog');
+ if(!order||!booking||!importer||!addButton||!selected||!dialog)return;
+ const dialogField=id=>dialog.querySelector('#'+id);
+ const filters=['claimOrderSearch','claimExporterFilter','claimImporterFilter'].map(dialogField);
+ const orderBody=dialogField('claimOrderOptions'),markVisible=dialogField('claimMarkVisibleOrders');
+ const orderCount=dialogField('claimOrderCount');
+ let draft=new Set(),visible=[];
+ const importerList=document.createElement('datalist');
+ importerList.id='claimImporterSuggestions';
+ importer.setAttribute('list',importerList.id);
+ importer.setAttribute('autocomplete','off');
+ importer.after(importerList);
  const key=value=>String(value??'').trim().toLowerCase();
  function distinct(values){
   const unique=new Map();
@@ -32,7 +34,6 @@ function initClaimLookups(){
   return [...unique.values()];
  }
  const bookingValues=value=>String(value??'').split(/\s+\/\s+|[,;\n]/);
- const fill=(field,options)=>lists.get(field).replaceChildren(...options);
  let orders=new Map(),chosen=new Map(),request,lastLoaded=0,automaticImporter='';
  const automaticBookings=()=>distinct([...chosen.values()].flatMap(link=>link.bookings));
  function updateBookings(previous){
@@ -64,19 +65,56 @@ function initClaimLookups(){
    return button;
   }));
  }
- function addOrder(){
-  const id=key(order.value);
-  if(!id)return;
-  if(!chosen.has(id)){
-   const previous=automaticBookings(),entry=orders.get(id);
-   chosen.set(id,{number:entry?.value||order.value.trim(),bookings:[...(entry?.bookings||[])]});
-   updateBookings(previous);
-   updateImporter();
-   renderSelection();
-  }
-  order.value='';
+ const searchKey=value=>key(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ function updateChecklistCount(){
+  const checked=visible.filter(([id])=>draft.has(id)).length;
+  markVisible.disabled=!visible.length;
+  markVisible.checked=visible.length>0&&checked===visible.length;
+  markVisible.indeterminate=checked>0&&checked<visible.length;
+  orderCount.textContent=draft.size+(draft.size===1?' ordem selecionada':' ordens selecionadas');
  }
- function showLogo(users){
+ function renderChecklist(){
+  const [query,exporter,customer]=filters.map(field=>searchKey(field.value));
+  const entries=new Map(orders);
+  for(const [id,link] of chosen)if(!entries.has(id))entries.set(id,{value:link.number,bookings:link.bookings,exporters:[],importers:[]});
+  visible=[...entries.entries()]
+   .filter(([,entry])=>searchKey([entry.value,...entry.bookings].join(' ')).includes(query)
+     &&searchKey(entry.exporters.join(' / ')).includes(exporter)
+     &&searchKey(entry.importers.join(' / ')).includes(customer))
+   .sort((a,b)=>a[1].value.localeCompare(b[1].value,'pt-BR',{numeric:true}));
+  orderBody.replaceChildren();
+  if(!visible.length){
+   const cell=orderBody.insertRow().insertCell();
+   cell.colSpan=5;
+   cell.textContent=request?'Carregando ordens…':'Nenhuma ordem encontrada.';
+  }
+  for(const [id,entry] of visible){
+   const row=orderBody.insertRow(),checkbox=document.createElement('input'),label=document.createElement('label');
+   checkbox.type='checkbox';checkbox.id='claimOrderOption-'+row.rowIndex;checkbox.checked=draft.has(id);
+   checkbox.setAttribute('aria-label','Selecionar ordem '+entry.value);
+   checkbox.addEventListener('change',()=>{
+    if(checkbox.checked)draft.add(id);else draft.delete(id);
+    updateChecklistCount();
+   });
+   row.insertCell().append(checkbox);
+   label.htmlFor=checkbox.id;label.textContent=entry.value;label.style.cursor='pointer';row.insertCell().append(label);
+   for(const values of [entry.exporters,entry.importers,entry.bookings])row.insertCell().textContent=values.join(' / ')||'—';
+  }
+  updateChecklistCount();
+ }
+ function applyChecklist(){
+  const previous=automaticBookings(),next=new Map();
+  for(const id of draft){
+   const current=chosen.get(id),entry=orders.get(id);
+   if(entry||current)next.set(id,{number:entry?.value||current.number,bookings:distinct([...(entry?.bookings||[]),...(current?.bookings||[])])});
+  }
+  chosen=next;
+  updateBookings(previous);
+  updateImporter();
+  renderSelection();
+  dialog.close();
+ }
+  function showLogo(users){
   if(!logo)return;
   const branded=users.filter(user=>/\baurea\b/i.test(String(user.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&/^(data:image\/(?:png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(user.logo_data||''));
   const brand=branded.find(user=>/\binternacional\b/i.test(user.name||''))||branded.find(user=>/log[ií]stica/i.test(user.name||''))||branded[0];
@@ -89,22 +127,23 @@ function initClaimLookups(){
   if(request)return request;
   request=Promise.allSettled([
    all('companies','id,name,logo_data'),
-   all('contracts','id,order_number,importer_id,details'),
-   all('aes_trader_deals','id,trade_number,buyer_id,sale_flow,purchase_flow'),
+   all('contracts','id,order_number,exporter_id,importer_id,details'),
+   all('aes_trader_deals','id,trade_number,trader_company_id,buyer_id,sale_flow,purchase_flow'),
    all('aes_booking_requests','id,contract_id,order_number,booking_number,payload')
   ]).then(results=>{
    const [users,contracts,deals,bookings]=results.map(result=>result.status==='fulfilled'?result.value:[]);
    const names=new Map(users.map(user=>[String(user.id),user.name]));
    if(results[0].status==='fulfilled'){
-    fill(importer,distinct(users.map(user=>user.name)).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>new Option(name,name)));
+    importerList.replaceChildren(...distinct(users.map(user=>user.name)).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>new Option(name,name)));
     showLogo(users);
    }
    if(results[1].status==='fulfilled'||results[2].status==='fulfilled'){
     const next=new Map();
-    function add(number,importerId,bookingNumbers){
+    function add(number,exporterId,importerId,bookingNumbers){
      const value=String(number??'').trim();
      if(!value)return;
-     const id=key(value),entry=next.get(id)||{value,importers:[],bookings:[]};
+     const id=key(value),entry=next.get(id)||{value,exporters:[],importers:[],bookings:[]};
+     entry.exporters=distinct([...entry.exporters,names.get(String(exporterId))]);
      entry.importers=distinct([...entry.importers,names.get(String(importerId))]);
      entry.bookings=distinct([...entry.bookings,...bookingNumbers]);
      next.set(id,entry);
@@ -112,19 +151,22 @@ function initClaimLookups(){
     for(const contract of contracts){
      const saved=contract.details?.booking_request||{};
      const linked=bookings.filter(b=>String(b.contract_id)===String(contract.id)||(!b.contract_id&&key(b.order_number)===key(contract.order_number)));
-     add(contract.order_number,contract.importer_id,[...linked.map(b=>b.booking_number||b.payload?.brBookingNo),saved.brBookingNo,saved.booking_number,contract.details?.booking_number]);
+     add(contract.order_number,contract.exporter_id,contract.importer_id,[...linked.map(b=>b.booking_number||b.payload?.brBookingNo),saved.brBookingNo,saved.booking_number,contract.details?.booking_number]);
     }
     for(const deal of deals){
      if(deal.sale_flow?.deleted_at)continue;
-     add(deal.trade_number,deal.sale_flow?.parties?.importer||deal.buyer_id,[deal.sale_flow?.si?.booking,deal.purchase_flow?.si?.booking]);
+     add(deal.trade_number,deal.sale_flow?.parties?.exporter||deal.trader_company_id,deal.sale_flow?.parties?.importer||deal.buyer_id,[deal.sale_flow?.si?.booking,deal.purchase_flow?.si?.booking]);
     }
     orders=next;
-    fill(order,[...orders.values()].sort((a,b)=>a.value.localeCompare(b.value,'pt-BR',{numeric:true})).map(entry=>new Option(entry.importers.join(' / ')||entry.value,entry.value)));
+    for(const [id,side] of [['claimExporterOptions','exporters'],['claimImporterOptions','importers']]){
+     const choices=distinct([...orders.values()].flatMap(entry=>entry[side])).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+     dialogField(id).replaceChildren(...choices.map(name=>new Option(name,name)));
+    }
     syncSelection();
    }
    lastLoaded=Date.now();
    if(results.some(result=>result.status==='rejected'))window.notify?.('Algumas sugestões de ordem, booking ou importador estão indisponíveis.');
-  }).finally(()=>{request=null;});
+  }).finally(()=>{request=null;if(dialog.open)renderChecklist();});
   return request;
  }
  function syncSelection(){
@@ -142,22 +184,35 @@ function initClaimLookups(){
   restore(claim){
    const links=Array.isArray(claim.orderLinks)?claim.orderLinks:claim.order?[{number:claim.order,bookings:[]}]:[];
    chosen=new Map(links.filter(link=>key(link.number)).map(link=>[key(link.number),{number:link.number,bookings:distinct(link.bookings||[])}]));
-   order.value='';
+   if(dialog.open)dialog.close();
    automaticImporter='';
    renderSelection();
    syncSelection();
    loadLookups();
   },
   read(){
-   addOrder();
    return [...chosen.values()];
   }
  };
- for(const field of [order,importer])field.addEventListener('focus',loadLookups);
+ importer.addEventListener('focus',loadLookups);
  document.querySelectorAll('[data-view="claim"]').forEach(button=>button.addEventListener('click',loadLookups));
- addButton.addEventListener('click',addOrder);
- order.addEventListener('change',()=>{if(orders.has(key(order.value)))addOrder();});
- order.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addOrder();}});
+ addButton.addEventListener('click',()=>{
+  draft=new Set(chosen.keys());
+  for(const filter of filters)filter.value='';
+  loadLookups();
+  renderChecklist();
+  dialog.showModal();
+  filters[0].focus();
+ });
+ for(const filter of filters)filter.addEventListener('input',renderChecklist);
+ markVisible.addEventListener('change',()=>{
+  for(const [id] of visible){
+   if(markVisible.checked)draft.add(id);else draft.delete(id);
+  }
+  renderChecklist();
+ });
+ dialogField('claimApplyOrders').addEventListener('click',applyChecklist);
+ dialogField('claimCancelOrders').addEventListener('click',()=>dialog.close());
 }
 initClaimLookups();
 
