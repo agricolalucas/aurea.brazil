@@ -126,6 +126,7 @@ function initClaimLookups(){
   const branded=users.filter(user=>/\baurea\b/i.test(String(user.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&/^(data:image\/(?:png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(user.logo_data||''));
   const brand=branded.find(user=>/\binternacional\b/i.test(user.name||''))||branded.find(user=>/log[ií]stica/i.test(user.name||''))||branded[0];
   if(brand)logo.src=brand.logo_data;
+  else logo.removeAttribute('src');
   logo.hidden=!brand;
  }
  logo?.addEventListener('error',()=>{logo.hidden=true;});
@@ -199,6 +200,10 @@ function initClaimLookups(){
   },
   read(){
    return [...chosen.values()];
+  },
+  async reportLogo(){
+   await loadLookups();
+   return logo?.getAttribute('src')||'';
   }
  };
  importer.addEventListener('focus',loadLookups);
