@@ -9,9 +9,12 @@ function initClaimLookups(){
  const order=document.getElementById('claimOrder');
  const booking=document.getElementById('claimBooking');
  const importer=document.getElementById('claimImporter');
- if(!order||!booking||!importer)return;
+ const addButton=document.getElementById('claimAddOrder');
+ const selected=document.getElementById('claimSelectedOrders');
+ const logo=document.getElementById('claimAureaLogo');
+ if(!order||!booking||!importer||!addButton||!selected)return;
  const lists=new Map();
- for(const field of [order,booking,importer]){
+ for(const field of [order,importer]){
   const list=document.createElement('datalist');
   list.id=field.id+'Suggestions';
   field.setAttribute('list',list.id);
@@ -20,25 +23,82 @@ function initClaimLookups(){
   lists.set(field,list);
  }
  const key=value=>String(value??'').trim().toLowerCase();
- const distinct=values=>[...new Set(values.map(v=>String(v??'').trim()).filter(v=>v&&v!=='—'&&v!=='-'))];
+ function distinct(values){
+  const unique=new Map();
+  for(const value of values){
+   const text=String(value??'').trim(),id=key(text);
+   if(text&&!/^[-—–]+$/.test(text)&&!unique.has(id))unique.set(id,text);
+  }
+  return [...unique.values()];
+ }
+ const bookingValues=value=>String(value??'').split(/\s+\/\s+|[,;\n]/);
  const fill=(field,options)=>lists.get(field).replaceChildren(...options);
- let orders=new Map(),request,lastLoaded=0,selection=0;
- const updateBookings=()=>{
-  const choices=orders.get(key(order.value))?.bookings||[];
-  fill(booking,choices.map(value=>new Option(value,value)));
- };
+ let orders=new Map(),chosen=new Map(),request,lastLoaded=0,automaticImporter='';
+ const automaticBookings=()=>distinct([...chosen.values()].flatMap(link=>link.bookings));
+ function updateBookings(previous){
+  const automatic=new Set(previous.map(key));
+  const manual=bookingValues(booking.value).filter(value=>!automatic.has(key(value)));
+  booking.value=distinct([...automaticBookings(),...manual]).join(' / ');
+ }
+ function updateImporter(){
+  const names=distinct([...chosen.values()].flatMap(link=>orders.get(key(link.number))?.importers||[]));
+  if(importer.value&&importer.value!==automaticImporter)return;
+  automaticImporter=names.length===1?names[0]:'';
+  importer.value=automaticImporter;
+ }
+ function renderSelection(){
+  selected.replaceChildren(...[...chosen.entries()].map(([id,link])=>{
+   const button=document.createElement('button');
+   button.type='button';
+   button.className='btn';
+   button.style.cssText='min-height:24px;padding:2px 6px;margin:0';
+   button.textContent=link.number+' ×';
+   button.setAttribute('aria-label','Remover ordem '+link.number);
+   button.addEventListener('click',()=>{
+    const previous=automaticBookings();
+    chosen.delete(id);
+    updateBookings(previous);
+    updateImporter();
+    renderSelection();
+   });
+   return button;
+  }));
+ }
+ function addOrder(){
+  const id=key(order.value);
+  if(!id)return;
+  if(!chosen.has(id)){
+   const previous=automaticBookings(),entry=orders.get(id);
+   chosen.set(id,{number:entry?.value||order.value.trim(),bookings:[...(entry?.bookings||[])]});
+   updateBookings(previous);
+   updateImporter();
+   renderSelection();
+  }
+  order.value='';
+ }
+ function showLogo(users){
+  if(!logo)return;
+  const branded=users.filter(user=>/\baurea\b/i.test(String(user.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&/^(data:image\/(?:png|jpe?g|webp|gif);base64,|https?:\/\/)/i.test(user.logo_data||''));
+  const brand=branded.find(user=>/\binternacional\b/i.test(user.name||''))||branded.find(user=>/log[ií]stica/i.test(user.name||''))||branded[0];
+  if(brand)logo.src=brand.logo_data;
+  logo.hidden=!brand;
+ }
+ logo?.addEventListener('error',()=>{logo.hidden=true;});
  function loadLookups(){
   if(!db()||Date.now()-lastLoaded<30000)return Promise.resolve();
   if(request)return request;
   request=Promise.allSettled([
-   all('companies','id,name'),
+   all('companies','id,name,logo_data'),
    all('contracts','id,order_number,importer_id,details'),
    all('aes_trader_deals','id,trade_number,buyer_id,sale_flow,purchase_flow'),
    all('aes_booking_requests','id,contract_id,order_number,booking_number,payload')
   ]).then(results=>{
    const [users,contracts,deals,bookings]=results.map(result=>result.status==='fulfilled'?result.value:[]);
    const names=new Map(users.map(user=>[String(user.id),user.name]));
-   if(results[0].status==='fulfilled')fill(importer,distinct(users.map(user=>user.name)).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>new Option(name,name)));
+   if(results[0].status==='fulfilled'){
+    fill(importer,distinct(users.map(user=>user.name)).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>new Option(name,name)));
+    showLogo(users);
+   }
    if(results[1].status==='fulfilled'||results[2].status==='fulfilled'){
     const next=new Map();
     function add(number,importerId,bookingNumbers){
@@ -56,33 +116,48 @@ function initClaimLookups(){
     }
     for(const deal of deals){
      if(deal.sale_flow?.deleted_at)continue;
-     add(deal.trade_number,deal.sale_flow?.parties?.importer||deal.buyer_id,[deal.sale_flow?.si?.booking||deal.purchase_flow?.si?.booking]);
+     add(deal.trade_number,deal.sale_flow?.parties?.importer||deal.buyer_id,[deal.sale_flow?.si?.booking,deal.purchase_flow?.si?.booking]);
     }
     orders=next;
     fill(order,[...orders.values()].sort((a,b)=>a.value.localeCompare(b.value,'pt-BR',{numeric:true})).map(entry=>new Option(entry.importers.join(' / ')||entry.value,entry.value)));
-    updateBookings();
+    syncSelection();
    }
    lastLoaded=Date.now();
    if(results.some(result=>result.status==='rejected'))window.notify?.('Algumas sugestões de ordem, booking ou importador estão indisponíveis.');
   }).finally(()=>{request=null;});
   return request;
  }
- for(const field of [order,booking,importer])field.addEventListener('focus',loadLookups);
+ function syncSelection(){
+  if(!chosen.size)return;
+  const previous=automaticBookings();
+  for(const [id,link] of chosen){
+   const found=orders.get(id);
+   if(found)chosen.set(id,{number:found.value,bookings:distinct([...found.bookings,...link.bookings])});
+  }
+  updateBookings(previous);
+  updateImporter();
+  renderSelection();
+ }
+ window.aesClaimOrderPicker={
+  restore(claim){
+   const links=Array.isArray(claim.orderLinks)?claim.orderLinks:claim.order?[{number:claim.order,bookings:[]}]:[];
+   chosen=new Map(links.filter(link=>key(link.number)).map(link=>[key(link.number),{number:link.number,bookings:distinct(link.bookings||[])}]));
+   order.value='';
+   automaticImporter='';
+   renderSelection();
+   syncSelection();
+   loadLookups();
+  },
+  read(){
+   addOrder();
+   return [...chosen.values()];
+  }
+ };
+ for(const field of [order,importer])field.addEventListener('focus',loadLookups);
  document.querySelectorAll('[data-view="claim"]').forEach(button=>button.addEventListener('click',loadLookups));
- order.addEventListener('input',()=>{selection++;updateBookings();});
- order.addEventListener('change',async()=>{
-  const current=++selection,claim=window.currentClaimId,value=order.value;
-  const previousBooking=booking.value,previousImporter=importer.value;
-  await loadLookups();
-  if(current!==selection||claim!==window.currentClaimId||value!==order.value)return;
-  const entry=orders.get(key(value));
-  if(!entry)return;
-  order.value=entry.value;
-  if(entry.importers.length===1&&importer.value===previousImporter)importer.value=entry.importers[0];
-  if(entry.bookings.length===1&&booking.value===previousBooking)booking.value=entry.bookings[0];
-  updateBookings();
- });
- booking.addEventListener('focus',updateBookings);
+ addButton.addEventListener('click',addOrder);
+ order.addEventListener('change',()=>{if(orders.has(key(order.value)))addOrder();});
+ order.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addOrder();}});
 }
 initClaimLookups();
 

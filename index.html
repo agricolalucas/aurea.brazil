@@ -3338,7 +3338,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
   <div id="claimWorkspace" style="display:none">
     <div class="pagehead" style="margin-top:18px">
       <div>
-        <h2 style="margin:0">Claim — <span id="claimTitle"></span></h2>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px"><img id="claimAureaLogo" hidden alt="AUREA" style="max-width:115px;max-height:50px;object-fit:contain"><h2 style="margin:0">Claim — <span id="claimTitle"></span></h2></div>
         <div class="sub">Análise e resposta ao importador.</div>
       </div>
       <button class="btn" onclick="closeClaim()">Fechar</button>
@@ -3348,8 +3348,8 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
       <h2 style="font-size:18px;margin-top:0">Dados do Claim</h2>
       <div class="grid4">
         <div><label>Claim ID</label><input id="claimId" readonly></div>
-        <div><label>Order</label><input id="claimOrder" placeholder="Order"></div>
-        <div><label>Booking</label><input id="claimBooking" placeholder="Booking"></div>
+        <div><label for="claimOrder">Ordens do processo</label><div style="display:flex;gap:6px"><input id="claimOrder" placeholder="Buscar ordem" style="min-width:0"><button id="claimAddOrder" type="button" class="btn" aria-label="Adicionar ordem">+ Adicionar</button></div><div id="claimSelectedOrders" aria-live="polite" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div></div>
+        <div><label for="claimBooking">Bookings</label><input id="claimBooking" placeholder="Bookings das ordens vinculadas"></div>
         <div><label>Importer</label><input id="claimImporter" placeholder="Importer"></div>
       </div>
 
@@ -6637,6 +6637,7 @@ function openClaim(id){
   document.getElementById('claimTitle').textContent=id;
   const set=(id2,v)=>{const el=document.getElementById(id2);if(el)el.value=v??'';};
   set('claimId',d.id);set('claimOrder',d.order);set('claimBooking',d.booking);set('claimImporter',d.importer);
+  window.aesClaimOrderPicker?.restore(d);
   set('claimType',d.type);set('claimOpenDate',d.openDate);set('claimDeadline',d.deadline);set('claimPriority',d.priority);
   set('claimAmount',d.amount);set('claimCurrency',d.currency);set('claimStatus',d.status);set('claimDescription',d.description);
   set('claimTeam',d.team);set('claimOwner',d.owner);set('claimRootCause',d.rootCause);set('claimAnalysis',d.analysis);
@@ -6648,7 +6649,9 @@ function closeClaim(){document.getElementById('claimWorkspace').style.display='n
 async function saveClaim(){
   const id=window.currentClaimId; const d=window.claimData[id]; if(!d)return;
   const get=id2=>getVal(id2);
-  d.order=get('claimOrder');d.booking=get('claimBooking');d.importer=get('claimImporter');d.type=get('claimType');
+  const linkedOrders=window.aesClaimOrderPicker?.read();
+  if(linkedOrders)d.orderLinks=linkedOrders;
+  d.order=linkedOrders?(linkedOrders[0]?.number||''):get('claimOrder');d.booking=get('claimBooking');d.importer=get('claimImporter');d.type=get('claimType');
   d.openDate=get('claimOpenDate');d.deadline=get('claimDeadline');d.priority=get('claimPriority');d.amount=Number(get('claimAmount')||0);
   d.currency=get('claimCurrency');d.status=get('claimStatus');d.description=get('claimDescription');d.team=get('claimTeam');
   d.owner=get('claimOwner');d.rootCause=get('claimRootCause');d.analysis=get('claimAnalysis');d.corrective=get('claimCorrective');
@@ -6683,11 +6686,12 @@ function refreshClaimList(){
   tbody.innerHTML='';
   Object.values(window.claimData).forEach(d=>{
     const tr=document.createElement('tr');
-    tr.dataset.id=d.id;tr.dataset.order=d.order;tr.dataset.importer=d.importer;tr.dataset.status=d.status;
+    const orderNumbers=(d.orderLinks||[]).map(link=>link.number).filter(Boolean).join(' / ')||d.order;
+    tr.dataset.id=d.id;tr.dataset.order=orderNumbers;tr.dataset.importer=d.importer;tr.dataset.status=d.status;
     let cls='warn'; if(d.status==='Open')cls='bad'; if(d.status==='Approved'||d.status==='Closed')cls='good'; if(d.status==='Waiting Importer')cls='info';
     tr.innerHTML=
       '<td><b>'+escHtml(d.id)+'</b></td>'+
-      '<td>'+escHtml(d.order||'—')+'</td>'+
+      '<td>'+escHtml(orderNumbers||'—')+'</td>'+
       '<td>'+escHtml(d.importer||'—')+'</td>'+
       '<td>'+escHtml(d.type||'—')+'</td>'+
       '<td>'+formatDateBR(d.openDate)+'</td>'+
@@ -11811,7 +11815,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #aesTraderRows td>div{margin-bottom:2px!important}#aesTraderRows td>div>div{margin-top:1px!important;line-height:1.2!important}
 @media(min-width:1400px){#trOperationFilters{grid-template-columns:repeat(8,minmax(0,1fr))}}
 </style>
-<script src="js/claim-notes.js?v=20261126-claim-lookup"></script>
+<script src="js/claim-notes.js?v=20261126-claim-multi-order"></script>
 <style id="tradeDocumentsEtaLayout">
 #trAllDocumentsPane>.tablewrap{height:calc(100vh - 215px)!important;min-height:350px}
 #trAllDocumentsPane th,#trAllDocumentsPane td{padding:3px 5px!important;line-height:1.1!important}
