@@ -6968,7 +6968,7 @@ function contractFreightValues(total){
 function contractFreightPdf(){
   const {rate,totalFreight,fob}=contractFreightValues(Number(fieldVal('contractTotalPrice')));
   const format=value=>value===null?'—':'$ '+value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const rows=[['Maritime Freight per Container',rate],['Total Maritime Freight',totalFreight],['Total FOB Value',fob]];
+  const rows=[['FREIGHT MARITIME PER CONT.',rate],['TOTAL FREIGHT MARITIME',totalFreight],['VALUE TOTAL FOB',fob]];
   return '<table class="freight-summary" aria-label="Maritime freight and FOB value"><tbody>'+
     rows.map(([label,value])=>'<tr><td>'+label+'</td><td class="freight-amount">'+format(value)+'</td></tr>').join('')+'</tbody></table>';
 }
