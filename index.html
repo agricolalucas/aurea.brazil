@@ -603,7 +603,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
             </div>
           </div>
           <div><label>Transportation</label><select><option>Ocean Freight</option><option>Road</option><option>Air</option></select></div>
-          <div><label>Incoterm</label><select><option>CIF</option><option>CFR</option><option>FOB</option></select></div>
+          <div><label for="contractIncoterm">Incoterm</label><select id="contractIncoterm" onchange="calculateContractValues()"><option value="">Select</option><option>CIF</option><option>CFR</option><option>FOB</option></select></div>
           <div><label>Previsão de embarque — mês inicial</label><input id="shippingForecastStart" type="month" value="2026-10"></div>
           <div><label>Previsão de embarque — mês final</label><input id="shippingForecastEnd" type="month" value="2026-10"></div>
           <div><label>Container Type</label><select id="contractContainerType"><option>20' GP</option><option>40' GP</option><option selected>40' HC</option></select></div>
@@ -619,8 +619,13 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
         <div class="tablewrap">
           <table>
             <thead><tr><th>Description</th><th>Product</th><th>NCM / HS Code</th><th>Year</th><th>Quantity ton</th><th>Unit Price</th><th>Qty Container</th><th>Total Price</th><th>Advance Payment</th><th>Balance</th></tr></thead>
-            <tbody><tr><td><input id="contractDescription" value="Sesame Seeds – Crop 2026"></td><td><input id="contractProduct" value="Sesame Seeds"></td><td><div style="position:relative;min-width:240px"><input id="contractHsCode" autocomplete="off" placeholder="Digite o produto em português ou o NCM" title="Tabela oficial vigente em 24/09/2026; confirme a classificação no Classif" aria-label="Pesquisar NCM por produto ou código" aria-controls="aesNcmResults"><div id="aesNcmResults" role="listbox" hidden style="position:absolute;z-index:1000;top:100%;left:0;min-width:350px;max-width:min(650px,90vw);max-height:280px;overflow:auto;background:#fff;border:1px solid #cbd5e1;box-shadow:0 10px 22px #0002"></div></div></td><td><input value="2026"></td><td><input id="contractQuantityTon" type="number" step="0.001" value="540" oninput="calculateContractValues()"></td><td><input id="contractUnitPrice" type="number" step="0.01" value="1120" oninput="calculateContractValues()"></td><td><input id="contractQtyContainer" value="10"></td><td><input id="contractTotalPrice" value="604800.00" readonly></td><td><input id="contractAdvancePayment" value="120960.00" readonly></td><td><input id="contractBalance" value="483840.00" readonly></td></tr></tbody>
+            <tbody><tr><td><input id="contractDescription" value="Sesame Seeds – Crop 2026"></td><td><input id="contractProduct" value="Sesame Seeds"></td><td><div style="position:relative;min-width:240px"><input id="contractHsCode" autocomplete="off" placeholder="Digite o produto em português ou o NCM" title="Tabela oficial vigente em 24/09/2026; confirme a classificação no Classif" aria-label="Pesquisar NCM por produto ou código" aria-controls="aesNcmResults"><div id="aesNcmResults" role="listbox" hidden style="position:absolute;z-index:1000;top:100%;left:0;min-width:350px;max-width:min(650px,90vw);max-height:280px;overflow:auto;background:#fff;border:1px solid #cbd5e1;box-shadow:0 10px 22px #0002"></div></div></td><td><input value="2026"></td><td><input id="contractQuantityTon" type="number" step="0.001" value="540" oninput="calculateContractValues()"></td><td><input id="contractUnitPrice" type="number" step="0.01" value="1120" oninput="calculateContractValues()"></td><td><input id="contractQtyContainer" value="10" oninput="calculateContractValues()"></td><td><input id="contractTotalPrice" value="604800.00" readonly></td><td><input id="contractAdvancePayment" value="120960.00" readonly></td><td><input id="contractBalance" value="483840.00" readonly></td></tr></tbody>
           </table>
+        </div>
+        <div class="grid3" style="margin-top:10px">
+          <div><label for="contractFreightPerContainer">Maritime Freight per Container (USD)</label><input id="contractFreightPerContainer" data-contract-freight type="number" min="0" step="0.01" oninput="calculateContractValues()"></div>
+          <div><label for="contractTotalFreight">Total Maritime Freight (USD)</label><input id="contractTotalFreight" data-contract-freight readonly></div>
+          <div><label for="contractFobValue">Total FOB Value (USD)</label><input id="contractFobValue" data-contract-freight type="number" min="0" step="0.01" oninput="calculateContractValues()"><div id="contractFobHint" class="sub"></div></div>
         </div>
       </div>
 
@@ -6946,6 +6951,27 @@ function deleteAccess(i){
 }
 
 
+function contractFreightValues(total){
+  const read=id=>{
+    const text=String(document.getElementById(id)?.value??'').trim(),value=Number(text);
+    return text&&Number.isFinite(value)&&value>=0?value:null;
+  };
+  const rate=read('contractFreightPerContainer');
+  const count=read('contractQtyContainer');
+  const totalFreight=rate!==null&&Number.isSafeInteger(count)?Math.round(rate*100)*count/100:null;
+  const incoterm=document.getElementById('contractIncoterm')?.value||'';
+  const priceProvided=read('contractQuantityTon')!==null&&read('contractUnitPrice')!==null;
+  const calculatedFob=priceProvided&&incoterm==='FOB'?total:
+    priceProvided&&incoterm==='CFR'&&totalFreight!==null&&total>=totalFreight?total-totalFreight:null;
+  return {rate,totalFreight,calculatedFob,fob:read('contractFobValue')??calculatedFob};
+}
+function contractFreightPdf(){
+  const {rate,totalFreight,fob}=contractFreightValues(Number(fieldVal('contractTotalPrice')));
+  const format=value=>value===null?'—':'$ '+value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rows=[['Maritime Freight per Container',rate],['Total Maritime Freight',totalFreight],['Total FOB Value',fob]];
+  return '<table class="freight-summary" aria-label="Maritime freight and FOB value"><tbody>'+
+    rows.map(([label,value])=>'<tr><td>'+label+'</td><td class="freight-amount">'+format(value)+'</td></tr>').join('')+'</tbody></table>';
+}
 function calculateContractValues(){
   const qty=parseFloat(document.getElementById('contractQuantityTon')?.value)||0;
   const price=parseFloat(document.getElementById('contractUnitPrice')?.value)||0;
@@ -6960,6 +6986,13 @@ function calculateContractValues(){
   if(totalEl) totalEl.value=total.toFixed(2);
   if(advEl) advEl.value=advance.toFixed(2);
   if(balEl) balEl.value=balance.toFixed(2);
+  const freight=contractFreightValues(Number(total.toFixed(2)));
+  const freightTotal=document.getElementById('contractTotalFreight');
+  if(freightTotal)freightTotal.value=freight.totalFreight?.toFixed(2)??'';
+  const fob=document.getElementById('contractFobValue');
+  const hint=document.getElementById('contractFobHint');
+  if(fob)fob.placeholder=freight.calculatedFob?.toFixed(2)??'';
+  if(hint)hint.textContent=document.getElementById('contractIncoterm')?.value==='CIF'?'Informe o valor FOB sem frete e seguro.':'';
   const wrap=document.getElementById('contractAdvancePercentWrap');
   if(wrap) wrap.style.display=required?'':'none';
 }
@@ -7192,12 +7225,13 @@ function generateContractDocument(printNow){
   const w=window.open('','_blank');
   if(!w){notify('Permita pop-ups para visualizar o contrato.');return;}
   aesWriteOrderPdf(w.document,`<!doctype html><html><head><meta charset="utf-8"><title>Contract ${escContract(fieldVal('contractOrderNumber'))}</title><style>
-  @page{size:A4;margin:15mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172033;margin:34px;font-size:11.5px;line-height:1.5;background:#fff}header{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;border-bottom:3px solid #172033;padding:0 0 16px;margin-bottom:22px}.company{font-size:10.5px;line-height:1.55;text-align:right;color:#4b5563}.company b{font-size:14px;color:#172033}.title{text-align:center;margin:24px 0 22px}.title h1{font-size:22px;letter-spacing:1.8px;margin:0 0 5px;color:#111827}.title div{color:#6b7280;font-size:10.5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.party{border:1px solid #d7dce3;padding:12px 14px;border-radius:4px;min-height:92px;background:#fff}.party b{display:block;font-size:10px;letter-spacing:.7px;color:#6b7280;margin-bottom:4px}h2{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#172033;background:#eef1f5;border-left:4px solid #172033;padding:8px 10px;margin:22px 0 9px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-top:7px;font-size:10.5px}th,td{border:1px solid #d9dde3;padding:7px 6px;text-align:left;vertical-align:top}th{background:#f1f3f6;color:#374151;font-size:9.5px;text-transform:uppercase;letter-spacing:.25px}tbody tr:nth-child(even){background:#fafbfc}.kv{display:grid;grid-template-columns:175px 1fr;border-bottom:1px solid #e7e9ed;padding:6px 8px}.kv b{color:#4b5563}.terms{white-space:pre-wrap;border:1px solid #e1e4e8;padding:12px 14px;border-radius:4px;background:#fcfcfd}.footer{margin-top:30px;border-top:1px solid #cfd4da;padding-top:11px;font-size:9.5px;color:#6b7280}.noprint button{background:#172033;color:white;border:0;border-radius:5px;cursor:pointer}@media print{body{margin:0}.noprint{display:none}header,.party,table,.terms{break-inside:avoid}}.spec-compact{font-size:10px;line-height:1.3;margin:5px 0 8px}.spec-caption{font-weight:700;padding:5px 7px;background:#eef1f5;border:1px solid #d9dee5}.spec-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;font-size:10px}.spec-table td{width:50%;padding:4px 7px;border:1px solid #d9dee5;vertical-align:top;overflow-wrap:anywhere;line-height:1.3}.spec-table td b{display:inline;color:#374151;font-size:10px;letter-spacing:0;margin:0}.spec-table td b:after{content:': ';font-weight:400}.spec-table tr{break-inside:avoid}.spec-table td span{white-space:pre-wrap}@media print{.spec-table{break-inside:auto}}.commercial-bottom{display:grid;grid-template-columns:1.1fr 1fr;gap:12px;align-items:start;margin-top:8px}.commercial-label{font-size:10px;font-weight:700;color:#4b5563;margin:0 0 4px}.commercial-payment .kv{grid-template-columns:110px 1fr;padding:5px 6px;font-size:10px;line-height:1.35}.commercial-specs .spec-compact{margin:0}.commercial-specs .spec-table td{padding:4px 5px;font-size:9.5px}.commercial-specs .spec-table td b{font-size:9.5px}@media print{.commercial-bottom{break-inside:avoid}}.commercial-bottom{grid-template-columns:1fr 1fr;gap:0;margin-top:0;border:1px solid #d9dee5}.commercial-payment{display:grid;grid-auto-rows:minmax(34px,auto);align-content:start}.commercial-payment:first-child{border-right:1px solid #d9dee5}.commercial-payment .kv{grid-template-columns:125px minmax(0,1fr);gap:8px;min-height:34px;padding:6px 8px;margin:0;align-items:start;font-size:10px;line-height:1.35}.commercial-payment .kv b,.commercial-payment .kv span{overflow-wrap:anywhere}.commercial-specs .spec-table td{font-size:10px;padding:4px 7px}.commercial-specs .spec-table td b{font-size:10px}.commercial-aligned{table-layout:fixed;margin-top:0;font-size:10px;line-height:1.35}.commercial-aligned td{padding:6px 8px;vertical-align:top;overflow-wrap:anywhere;width:29%}.commercial-aligned td.condition-label{width:21%;font-weight:700;color:#4b5563}.commercial-aligned tr{break-inside:avoid}.commercial-aligned tbody tr:nth-child(even){background:white}.spec-compact{margin:5px 0 10px}.spec-caption{border:0;background:transparent;padding:3px 0 7px;font-size:10.5px;color:#172033}.spec-table td{border:0;padding:4px 10px 4px 0;background:white}.spec-table tbody tr:nth-child(even){background:white}.spec-table td b{color:#475569;font-weight:600}.spec-table td span{color:#172033}.spec-table{border:0}</style></head><body>
+  @page{size:A4;margin:15mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172033;margin:34px;font-size:11.5px;line-height:1.5;background:#fff}header{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;border-bottom:3px solid #172033;padding:0 0 16px;margin-bottom:22px}.company{font-size:10.5px;line-height:1.55;text-align:right;color:#4b5563}.company b{font-size:14px;color:#172033}.title{text-align:center;margin:24px 0 22px}.title h1{font-size:22px;letter-spacing:1.8px;margin:0 0 5px;color:#111827}.title div{color:#6b7280;font-size:10.5px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.party{border:1px solid #d7dce3;padding:12px 14px;border-radius:4px;min-height:92px;background:#fff}.party b{display:block;font-size:10px;letter-spacing:.7px;color:#6b7280;margin-bottom:4px}h2{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#172033;background:#eef1f5;border-left:4px solid #172033;padding:8px 10px;margin:22px 0 9px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-top:7px;font-size:10.5px}th,td{border:1px solid #d9dde3;padding:7px 6px;text-align:left;vertical-align:top}th{background:#f1f3f6;color:#374151;font-size:9.5px;text-transform:uppercase;letter-spacing:.25px}tbody tr:nth-child(even){background:#fafbfc}.kv{display:grid;grid-template-columns:175px 1fr;border-bottom:1px solid #e7e9ed;padding:6px 8px}.kv b{color:#4b5563}.terms{white-space:pre-wrap;border:1px solid #e1e4e8;padding:12px 14px;border-radius:4px;background:#fcfcfd}.footer{margin-top:30px;border-top:1px solid #cfd4da;padding-top:11px;font-size:9.5px;color:#6b7280}.noprint button{background:#172033;color:white;border:0;border-radius:5px;cursor:pointer}@media print{body{margin:0}.noprint{display:none}header,.party,table,.terms{break-inside:avoid}}.spec-compact{font-size:10px;line-height:1.3;margin:5px 0 8px}.spec-caption{font-weight:700;padding:5px 7px;background:#eef1f5;border:1px solid #d9dee5}.spec-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0;font-size:10px}.spec-table td{width:50%;padding:4px 7px;border:1px solid #d9dee5;vertical-align:top;overflow-wrap:anywhere;line-height:1.3}.spec-table td b{display:inline;color:#374151;font-size:10px;letter-spacing:0;margin:0}.spec-table td b:after{content:': ';font-weight:400}.spec-table tr{break-inside:avoid}.spec-table td span{white-space:pre-wrap}@media print{.spec-table{break-inside:auto}}.commercial-bottom{display:grid;grid-template-columns:1.1fr 1fr;gap:12px;align-items:start;margin-top:8px}.commercial-label{font-size:10px;font-weight:700;color:#4b5563;margin:0 0 4px}.commercial-payment .kv{grid-template-columns:110px 1fr;padding:5px 6px;font-size:10px;line-height:1.35}.commercial-specs .spec-compact{margin:0}.commercial-specs .spec-table td{padding:4px 5px;font-size:9.5px}.commercial-specs .spec-table td b{font-size:9.5px}@media print{.commercial-bottom{break-inside:avoid}}.commercial-bottom{grid-template-columns:1fr 1fr;gap:0;margin-top:0;border:1px solid #d9dee5}.commercial-payment{display:grid;grid-auto-rows:minmax(34px,auto);align-content:start}.commercial-payment:first-child{border-right:1px solid #d9dee5}.commercial-payment .kv{grid-template-columns:125px minmax(0,1fr);gap:8px;min-height:34px;padding:6px 8px;margin:0;align-items:start;font-size:10px;line-height:1.35}.commercial-payment .kv b,.commercial-payment .kv span{overflow-wrap:anywhere}.commercial-specs .spec-table td{font-size:10px;padding:4px 7px}.commercial-specs .spec-table td b{font-size:10px}.commercial-aligned{table-layout:fixed;margin-top:0;font-size:10px;line-height:1.35}.commercial-aligned td{padding:6px 8px;vertical-align:top;overflow-wrap:anywhere;width:29%}.commercial-aligned td.condition-label{width:21%;font-weight:700;color:#4b5563}.commercial-aligned tr{break-inside:avoid}.commercial-aligned tbody tr:nth-child(even){background:white}.freight-summary{margin:8px 0 0;max-width:100%;break-inside:avoid}.freight-summary td{padding:5px 7px}.freight-summary .freight-amount{text-align:right;white-space:nowrap;font-weight:700}.freight-summary{width:55%}.spec-compact{margin:5px 0 10px}.spec-caption{border:0;background:transparent;padding:3px 0 7px;font-size:10.5px;color:#172033}.spec-table td{border:0;padding:4px 10px 4px 0;background:white}.spec-table tbody tr:nth-child(even){background:white}.spec-table td b{color:#475569;font-weight:600}.spec-table td span{color:#172033}.spec-table{border:0}</style></head><body>
   <header><div>${headLogo}</div><div class="company"><b>${escContract(exporter.company||fieldVal('cExporter'))}</b><br>${escContract(exporter.address)}<br>${escContract(exporter.country)}${exporter.email?'<br>'+escContract(exporter.email):''}${exporter.contact?'<br>Contact: '+escContract(exporter.contact):''}${exporter.tax?'<br>Tax ID: '+escContract(exporter.tax):''}</div></header>
   <div class="title"><h1>SALES CONTRACT</h1><div>Order / Contract: <b>${escContract(fieldVal('contractOrderNumber'))}</b></div></div>
   <h2>Parties</h2><div class="grid">${party('EXPORTER',exporter)}${party('IMPORTER',importer)}${party('CONSIGNEE',consignee)}${party('NOTIFY PARTY',notifyParty)}</div>
-  <h2>Commercial & Logistics Conditions</h2>
+  <h2>Shipment Details & Commercial Conditions</h2>
   <table class="commercial-aligned"><tbody>
+<tr><td class="condition-label">Incoterm</td><td colspan="3">${escContract(fieldVal('contractIncoterm')||'—')}</td></tr>
 <tr><td class="condition-label">Shipping Forecast</td><td>${escContract(aesShippingMonth(fieldVal('shippingForecastStart')))} to ${escContract(aesShippingMonth(fieldVal('shippingForecastEnd')))}</td><td class="condition-label">Packing</td><td>${escContract(fieldVal('contractPacking'))}</td></tr>
 <tr><td class="condition-label">Payment - Advance</td><td>${fieldVal('contractAdvanceRequired')==='yes'?escContract(fieldVal('contractAdvancePercent'))+'%':'No Advance Payment'}</td><td class="condition-label">Port of Loading</td><td>${escContract(fieldVal('contractPortOrigin'))}</td></tr>
 <tr><td class="condition-label">Payment Description / Terms</td><td>${escContract(fieldVal('contractPaymentDescription'))}</td><td class="condition-label">Port of Discharge</td><td>${escContract(fieldVal('contractPortDestiny'))}</td></tr>
@@ -7206,6 +7240,7 @@ function generateContractDocument(printNow){
   <div class="commercial-specs" style="margin-top:14px"><div class="commercial-label">Specifications</div>${compactPdfSpecifications(fieldVal('contractSpecifications'))}</div>
   ${hasBroker?'<div class="kv"><b>Broker</b><span>'+escContract(fieldVal('contractBroker'))+'</span></div><div class="kv"><b>Broker Commission</b><span>'+escContract(fieldVal('contractBrokerCommission'))+'</span></div>':''}
   <h2>Product and Values</h2><table><thead><tr><th>Description</th><th>Product</th><th>Quantity ton</th><th>Unit Price</th><th>Total Price</th><th>Advance Payment</th><th>Balance</th></tr></thead><tbody><tr><td>${escContract(fieldVal('contractDescription'))}</td><td>${escContract(fieldVal('contractProduct'))}</td><td>${escContract(fieldVal('contractQuantityTon'))}</td><td>$ ${money(fieldVal('contractUnitPrice'))}</td><td>$ ${money(fieldVal('contractTotalPrice'))}</td><td>$ ${money(fieldVal('contractAdvancePayment'))}</td><td>$ ${money(fieldVal('contractBalance'))}</td></tr></tbody></table>
+  ${contractFreightPdf()}
   <h2>Required Documents</h2><table><thead><tr><th>Document</th><th>Original</th><th>Copies</th><th>Required</th><th>Observation / Requirement</th></tr></thead><tbody>${docRows}</tbody></table>
   <h2>Bank Details</h2>${renderPdfBankDetails(window.selectedBankData)}
   <h2>Standard Clauses</h2><div class="terms">${escContract(standardClauses)}</div>
@@ -7244,7 +7279,8 @@ function generateModernProforma(printNow){
   .parties{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d9dee5;border-radius:5px;padding:13px;min-height:105px}.label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#7a8492;margin-bottom:5px}
   h2{font-size:10px;text-transform:uppercase;letter-spacing:.8px;background:#eef1f5;border-left:4px solid #172033;padding:8px 10px;margin:20px 0 8px}
   table{width:100%;border-collapse:collapse}th,td{border:1px solid #d9dee5;padding:8px 7px;text-align:left;vertical-align:top}th{font-size:9px;text-transform:uppercase;letter-spacing:.3px;background:#f2f4f7;color:#4b5563}
-  .amount{text-align:right;white-space:nowrap}.summary{width:46%;margin:10px 0 0 auto}.summary .row{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #e4e7eb}.summary .total{font-size:13px;font-weight:700;border-top:2px solid #172033;border-bottom:0;margin-top:3px}
+  .freight-summary{margin:8px 0 0;max-width:100%;break-inside:avoid}.freight-summary td{padding:5px 7px}.freight-summary .freight-amount{text-align:right;white-space:nowrap;font-weight:700}.goods-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;break-inside:avoid}
+  .amount{text-align:right;white-space:nowrap}.summary{width:100%;margin:8px 0 0 auto}.summary .row{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #e4e7eb}.summary .total{font-size:13px;font-weight:700;border-top:2px solid #172033;border-bottom:0;margin-top:3px}
   .info{display:grid;grid-template-columns:1fr 1fr;gap:12px}.kv{display:grid;grid-template-columns:120px 1fr;padding:5px 0;border-bottom:1px solid #eceef1}.kv b{color:#596273}
   .spec-list{border:1px solid #d9dee5;border-radius:5px;overflow:hidden}.spec-row{display:grid;grid-template-columns:34px 1fr;gap:8px;padding:7px 10px;border-bottom:1px solid #e8ebef;break-inside:avoid}.spec-row:last-child{border:0}.spec-row:nth-child(even){background:#f8fafc}.spec-row span{color:#718096;font-weight:700}.spec-empty{color:#718096}.bank{white-space:pre-line}.note{border:1px solid #e0e4e9;background:#fbfcfd;border-radius:4px;padding:11px;white-space:pre-wrap}
   footer{margin-top:28px;padding-top:10px;border-top:1px solid #ccd2d9;display:flex;align-items:center;gap:12px;color:#6b7280;font-size:9.5px}
@@ -7260,14 +7296,16 @@ function generateModernProforma(printNow){
   <h2>Goods & Commercial Values</h2>
   <table><thead><tr><th>Description</th><th>Product</th><th>HS Code</th><th>Quantity MT</th><th>Unit Price</th><th>Qty Container</th><th>Total</th></tr></thead>
   <tbody><tr><td>${escContract(fieldVal('contractDescription'))}</td><td>${escContract(fieldVal('contractProduct'))}</td><td>${escContract(fieldVal('contractHsCode'))}</td><td>${escContract(fieldVal('contractQuantityTon'))}</td><td class="amount">$ ${money(fieldVal('contractUnitPrice'))}</td><td>${escContract(fieldVal('contractQtyContainer'))}</td><td class="amount"><b>$ ${money(fieldVal('contractTotalPrice'))}</b></td></tr></tbody></table>
+  <div class="goods-summary"><div>${contractFreightPdf()}</div>
   <div class="summary">
     <div class="row"><span>Advance Payment</span><b>$ ${money(fieldVal('contractAdvancePayment'))}</b></div>
     <div class="row"><span>Balance</span><b>$ ${money(fieldVal('contractBalance'))}</b></div>
     <div class="row total"><span>Total Price</span><span>$ ${money(fieldVal('contractTotalPrice'))}</span></div>
-  </div>
+  </div></div>
   <h2>Shipment Details</h2>
   <div class="info">
     <div>
+      <div class="kv"><b>Incoterm</b><span>${escContract(fieldVal('contractIncoterm')||'—')}</span></div>
       <div class="kv"><b>Packing</b><span>${escContract(fieldVal('contractPacking'))}</span></div>
       <div class="kv"><b>Container Type</b><span>${escContract(fieldVal('contractContainerType'))}</span></div>
     </div>
@@ -9284,7 +9322,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   const names=new Map(), contracts=new Map();
   let companies=[];
   let editingId=null;
-  const fields=()=>[...$('contractFormView').querySelectorAll('input,select,textarea')].filter(el=>el.type!=='file' && !el.closest('#contractListView'));
+  const fields=()=>[...$('contractFormView').querySelectorAll('input,select,textarea')].filter(el=>el.type!=='file' && !el.hasAttribute('data-contract-freight') && !el.closest('#contractListView'));
   const notifyError=e=>window.notify?.('Contrato não salvo: '+(e?.message||String(e)));
   const val=id=>($(id)?.value||'').trim();
   const status=value=>{if($('contractCloudStatus'))$('contractCloudStatus').textContent=value};
@@ -9305,17 +9343,21 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   function snapshot(){
     const data={}; fields().forEach((el,index)=>{data[el.id||'field_'+index]=el.type==='checkbox'?el.checked:el.value});
+    data.contractFreightPerContainer=val('contractFreightPerContainer');
+    data.contractFobValue=val('contractFobValue');
     data._docs=[...$('contractDocumentsBody').rows].map(row=>[...row.querySelectorAll('input,select')].map(el=>el.value));
     if(window.selectedBankData)data._selectedBankData=window.selectedBankData;
     if(window.selectedSIBankData)data._selectedSIBankData=window.selectedSIBankData;
     return data;
   }
-  function restore(data){
-    if(!data)return;
+  function restore(data={}){
+    data=data||{};
+    $('contractFreightPerContainer').value=data.contractFreightPerContainer??'';
+    $('contractFobValue').value=data.contractFobValue??'';
     window.aesRestoreContractDocuments?.(data._docs);
     window.selectedBankData=data._selectedBankData||null;
     window.selectedSIBankData=data._selectedSIBankData||null;
-    fields().forEach((el,index)=>{const key=el.id||'field_'+index;if(Object.hasOwn(data,key)){if(el.type==='checkbox')el.checked=Boolean(data[key]);else el.value=el.type==='month'?String(data[key]||'').slice(0,7):data[key]}});
+    fields().forEach((el,index)=>{const key=el.id||'field_'+index;if(key==='contractIncoterm'){el.value=data.contractIncoterm??data.cIncoterm??data['field_'+index]??'';return}if(Object.hasOwn(data,key)){if(el.type==='checkbox')el.checked=Boolean(data[key]);else el.value=el.type==='month'?String(data[key]||'').slice(0,7):data[key]}});
     window.calculateContractValues?.();window.toggleContractBroker?.();
   }
   async function load(){
@@ -9473,7 +9515,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
   }
   document.addEventListener('DOMContentLoaded',()=>{
     const original=window.showContractForm;
-    window.showContractForm=function(order){original(order);closeCompanyMenus();if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){$('consigneeSameAsImporter').checked=false;restore(c.details);$('contractOrderNumber').value=c.order_number;for(const [id,searchId,hiddenId] of companyFields){const companyId=id==='contractImporterId'?c.importer_id:c.exporter_id;$(id).value=String(companyId||'');$(searchId).value=names.get(Number(companyId))||'';$(hiddenId).value=$(searchId).value}$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;window.selectedBankData=null;window.selectedSIBankData=null;for(const el of fields()){if(el.type==='checkbox')el.checked=false;else if(el.id)el.value=''}$('contractOrderNumber').value=window.aesNextOrderNumber?.()||'';}syncConsignee()};
+    window.showContractForm=function(order){original(order);closeCompanyMenus();if(order){const c=contracts.get(order);editingId=c?.id||null;if(c){$('consigneeSameAsImporter').checked=false;restore(c.details);$('contractOrderNumber').value=c.order_number;for(const [id,searchId,hiddenId] of companyFields){const companyId=id==='contractImporterId'?c.importer_id:c.exporter_id;$(id).value=String(companyId||'');$(searchId).value=names.get(Number(companyId))||'';$(hiddenId).value=$(searchId).value}$('contractProduct').value=c.product||'';$('contractQuantityTon').value=c.quantity_mt??'';$('contractUnitPrice').value=c.unit_price??'';$('contractPortOrigin').value=c.port_of_loading||'';$('contractPortDestiny').value=c.port_of_discharge||'';}}else{editingId=null;window.selectedBankData=null;window.selectedSIBankData=null;for(const el of fields()){if(el.type==='checkbox')el.checked=false;else if(el.id)el.value=''}$('contractFreightPerContainer').value='';$('contractFobValue').value='';$('contractOrderNumber').value=window.aesNextOrderNumber?.()||'';}syncConsignee();window.calculateContractValues?.()};
     for(const [id,searchId,hiddenId] of companyFields){const input=$(searchId),menu=$(searchId+'Results');input.addEventListener('input',()=>{$(id).value='';$(hiddenId).value='';if(id==='contractImporterId')syncConsignee();showCompanySuggestions(id,searchId,hiddenId)});input.addEventListener('focus',()=>showCompanySuggestions(id,searchId,hiddenId,true));input.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')];const current=options.indexOf(document.activeElement);if(event.key==='Escape'){closeCompanyMenus();input.blur()}else if(event.key==='ArrowDown' && !menu.hidden){event.preventDefault();options[0]?.focus()}else if(event.key==='Enter' && !menu.hidden && options.length){event.preventDefault();options[0].click()}});menu.addEventListener('keydown',event=>{const options=[...menu.querySelectorAll('button')],i=options.indexOf(document.activeElement);if(event.key==='ArrowDown'){event.preventDefault();options[(i+1)%options.length]?.focus()}else if(event.key==='ArrowUp'){event.preventDefault();if(i===0)input.focus();else options[i-1]?.focus()}else if(event.key==='Escape'){event.preventDefault();closeCompanyMenus();input.focus()}})}
     document.addEventListener('click',event=>{if(!event.target.closest('.company-combobox'))closeCompanyMenus()});
     $('consigneeSameAsImporter').addEventListener('change',syncConsignee);
