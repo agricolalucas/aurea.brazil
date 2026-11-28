@@ -216,6 +216,7 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #financeOrderWorkspace input[readonly]{height:30px;font-size:11px}
 </style><style>
 .shell{min-width:0}
+.export-flow-tabs[hidden]{display:none}
 .export-flow-tabs{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;padding:10px 18px;background:#fff;border-bottom:1px solid #dce5ee;scrollbar-width:thin}
 .export-flow-tabs .export-flow-tab{display:flex;align-items:center;justify-content:center;gap:6px;flex:1 0 auto;width:auto;margin:0;padding:10px 9px;border:1px solid #dce5ee;border-radius:7px;color:#40556b;background:#f6f8fb;text-align:center;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:none}
 .export-flow-tabs .export-flow-tab:hover{color:#1558b0;background:#edf4ff;border-color:#b4cef4}
@@ -367,6 +368,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
     <button class="navbtn" data-view="user"><span class="ico">◉</span>User</button>
     <button class="navbtn" data-view="bank"><span class="ico">▰</span>Bank data</button>
     <button class="navbtn" data-view="access"><span class="ico">🔐</span>Access</button>
+    <button type="button" class="navbtn" id="allOrdersExportMenu" data-view="allOrdersExport" aria-controls="exportFlowTabs" aria-expanded="false" data-no-translate><span class="ico" aria-hidden="true">▤</span>All Orders Export</button>
     <button class="navbtn" data-view="trader"><span class="ico">◇</span>Compra e revenda</button>
     <button class="navbtn" data-view="freightTrade"><span class="ico">≋</span>Freight Trade</button>
     <div class="group">Operação</div>
@@ -387,7 +389,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
       <div class="userbox"><label for="aesLanguage" class="language-label">Language</label><select id="aesLanguage" aria-label="Interface language" onchange="aesSetLanguage(this.value)"><option value="en">English</option><option value="pt">Português</option></select><div class="avatar">PG</div><div><b style="font-size:12px">Paula Gobbi</b><div class="sub" style="margin:0">Administrador</div></div></div>
     </div>
 
-    <nav id="exportFlowTabs" class="export-flow-tabs" aria-label="Etapas da exportação"><button type="button" class="navbtn export-flow-tab" data-view="contract"><span class="export-step">01</span><span>Contratos</span></button><button type="button" class="navbtn export-flow-tab" data-view="booking"><span class="export-step">02</span><span>Pendências do booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="schedule"><span class="export-step">03</span><span>Programação de Exportação</span></button><button type="button" class="navbtn export-flow-tab" data-view="bookingrequest"><span class="export-step">04</span><span>Solicitação de Booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="loading"><span class="export-step">05</span><span>Carregamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="releasing"><span class="export-step">06</span><span>Liberação em andamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="after"><span class="export-step">07</span><span>Após o embarque</span></button><button type="button" class="navbtn export-flow-tab" data-view="docs"><span class="export-step">08</span><span>Documentos</span></button></nav>
+    <nav id="exportFlowTabs" class="export-flow-tabs" aria-label="Etapas da exportação" hidden><button type="button" class="navbtn export-flow-tab" data-view="contract"><span class="export-step">01</span><span>Contratos</span></button><button type="button" class="navbtn export-flow-tab" data-view="booking"><span class="export-step">02</span><span>Pendências do booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="schedule"><span class="export-step">03</span><span>Programação de Exportação</span></button><button type="button" class="navbtn export-flow-tab" data-view="bookingrequest"><span class="export-step">04</span><span>Solicitação de Booking</span></button><button type="button" class="navbtn export-flow-tab" data-view="loading"><span class="export-step">05</span><span>Carregamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="releasing"><span class="export-step">06</span><span>Liberação em andamento</span></button><button type="button" class="navbtn export-flow-tab" data-view="after"><span class="export-step">07</span><span>Após o embarque</span></button><button type="button" class="navbtn export-flow-tab" data-view="docs"><span class="export-step">08</span><span>Documentos</span></button></nav>
     <main class="content">
       <section id="dashboard" class="view active">
         <div class="pagehead"><div><h1>Dashboard Executivo</h1><div class="sub">Controle geral das exportações e pendências críticas.</div></div><button class="btn primary" onclick="go('contract')">+ Novo Contrato</button></div>
@@ -4691,9 +4693,16 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
 <script>
 let lookupTarget=null;
 function go(id){
+  if(id==='allOrdersExport')id='contract';
+  const exportTabs=document.getElementById('exportFlowTabs');
+  const exportMenu=document.getElementById('allOrdersExportMenu');
+  const inExportFlow=[...exportTabs.querySelectorAll('.export-flow-tab')].some(tab=>tab.dataset.view===id);
+  exportTabs.hidden=!inExportFlow;
+  exportMenu.setAttribute('aria-expanded',String(inExportFlow));
+
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b===exportMenu?inExportFlow:b.dataset.view===id));
   window.scrollTo({top:0,behavior:'smooth'});
 }
 document.querySelectorAll('.navbtn').forEach(btn=>btn.addEventListener('click',()=>go(btn.dataset.view)));
