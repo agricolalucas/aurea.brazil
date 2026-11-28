@@ -1100,4 +1100,42 @@ window.addEventListener('focus',()=>cashReload().catch(e=>notify(e.message)));
 
 
 </script>
+<style id="compactCashFilters">
+.card:has(> div > .field > #expenseFilterCurrency) {
+  padding-block:6px;
+  margin-bottom:7px !important;
+}
+div:has(> .field > #expenseFilterCurrency) {
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,115px),1fr));
+  gap:5px 7px !important;
+}
+div:has(> .field > #expenseFilterCurrency) > .field {
+  gap:2px;
+  min-width:0;
+}
+#cashClosingForm .reconcile-filters {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));
+  align-items:end;
+  gap:5px 7px;
+  margin-block:4px;
+}
+#cashClosingForm .reconcile-filters label:first-child {
+  grid-column:auto;
+}
+:is(div:has(> .field > #expenseFilterCurrency),#cashClosingForm .reconcile-filters) label {
+  font-size:11px;
+}
+:is(div:has(> .field > #expenseFilterCurrency),#cashClosingForm .reconcile-filters) :is(input,select,button),
+#bankMatchFilter {
+  box-sizing:border-box;
+  min-height:29px;
+  padding:3px 6px;
+  font-size:12px;
+}
+:is(div:has(> .field > #expenseFilterCurrency),#cashClosingForm .reconcile-filters) :is(input,select) {
+  width:100%;
+  min-width:0;
+}
+</style>
 </body></html>
