@@ -254,13 +254,15 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #bookingPendencyTable th,
 #bookingPendencyTable td{padding:6px 8px}
 #bookingPendencyTable tbody td{line-height:1.3}
-#bookingPendencyTable tbody td:nth-child(n+2):nth-child(-n+8),
+#bookingPendencyTable tbody td:nth-child(n+2):nth-child(-n+6),
 #bookingPendencyTable tbody td:nth-child(10){
   white-space:normal;
   overflow-wrap:anywhere
 }
 #bookingPendencyTable tbody td:nth-child(2),
-#bookingPendencyTable tbody td:nth-child(3){min-width:229px;max-width:245px;text-wrap:balance}
+#bookingPendencyTable tbody td:nth-child(3){min-width:229px;max-width:245px}
+#bookingPendencyTable .booking-company-part{display:inline-block;max-width:100%}
+#bookingPendencyTable .booking-port{white-space:pre}
 #bookingPendencyTable tbody td:nth-child(10){min-width:215px;max-width:225px}
 #bookingPendencyTable .badge{padding:3px 6px}
 @media(max-width:650px){#booking .booking-pendency-tall{height:420px}}
@@ -5128,16 +5130,16 @@ function applyBookingFilters(){
   const headers=[...table.tHead.rows[0].cells].map(c=>c.innerText.toLowerCase().trim());
   const idx=(...names)=>headers.findIndex(h=>names.some(n=>h.includes(n)));
   const iNumber=idx('number','order');
-  const iImporter=idx('importer');
-  const iExporter=idx('exporter');
+  const iImporter=idx('importer','importador');
+  const iExporter=idx('exporter','exportador');
   const iContainer=idx('cntrs type','container');
   const iProduct=idx('products','product');
-  const iOrigin=idx('origin');
-  const iDestiny=idx('destiny');
+  const iOrigin=idx('origin','origem');
+  const iDestiny=idx('destiny','destino');
   const iShipment=idx('shipment');
 
   [...table.tBodies[0].rows].forEach(row=>{
-    const cells=[...row.cells].map(c=>c.innerText.toLowerCase().trim());
+    const cells=[...row.cells].map(c=>(c.dataset.bookingValue??c.innerText).toLowerCase().trim());
     const match=(filter,index)=>!filter || index<0 || (cells[index]||'').includes(filter);
     let shipmentOk=true;
     if(shipment && iShipment>=0){
@@ -5172,7 +5174,7 @@ function exportBookingExcel(){
   const visibleRows=[...table.rows].filter((row,i)=>i===0 || row.style.display!=='none');
   const csv=visibleRows.map(row=>
     [...row.cells].map(cell=>{
-      let v=(cell.querySelector('.aes-booking-task')?.value??cell.innerText).replace(/\n/g,' ').replace(/"/g,'""').trim();
+      let v=(cell.querySelector('.aes-booking-task')?.value??cell.dataset.bookingValue??cell.innerText).replace(/\n/g,' ').replace(/"/g,'""').trim();
       return '"'+v+'"';
     }).join(';')
   ).join('\n');
@@ -9730,6 +9732,23 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
 (() => {
  const $=id=>document.getElementById(id);
  const text=(cell,value)=>{cell.textContent=String(value??'—')};
+ function companyCell(cell, name){
+  const parts=name.match(/^(\S+(?:\s+\S+){2})(\s+)(\S.*)$/s);
+  if(!parts){text(cell,name);return}
+  cell.dataset.bookingValue=name;
+  const first=document.createElement('span'), rest=document.createElement('span');
+  first.className=rest.className='booking-company-part';
+  first.textContent=parts[1];
+  rest.textContent=parts[3];
+  cell.append(first,parts[2],rest);
+ }
+ function portCell(cell, value){
+  const port=String(value||'—');
+  cell.className='booking-port';
+  cell.dataset.bookingValue=port;
+  const parts=port.trim().match(/^(.+?)\s+\(([A-Z]{2}[A-Z0-9]{3})\)(?:\s*[·–-]?\s*(.+))?$/i);
+  cell.textContent=parts?[parts[1],`(${parts[2]})`,parts[3]?.trim()].filter(Boolean).join('\n'):port;
+ }
  window.renderBookingPendencyOrders=function(contracts,names,companies){
   const body=$('bookingPendencyTable')?.tBodies[0];if(!body)return;
   body.replaceChildren();
@@ -9741,7 +9760,13 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
    const destination=countries.get(Number(contract.importer_id))||d.contractPortDestiny||contract.port_of_discharge||'—';
    const shipment=d.shippingForecastStart||d.shippingForecastEnd||'';
    row.dataset.order=order;row.dataset.destination=destination;row.dataset.advance=d.contractAdvanceRequired==='yes'?(d.contractAdvancePercent ? d.contractAdvancePercent+'%' : d.contractAdvancePayment||'') : ''; 
-   for(const value of [order,importer,exporter,d.contractPacking||'—',d.contractContainerType||'—',contract.product||'—',contract.port_of_loading||'—',contract.port_of_discharge||'—',shipment||'—'])text(row.insertCell(),value);
+   text(row.insertCell(),order);
+   companyCell(row.insertCell(),importer);
+   companyCell(row.insertCell(),exporter);
+   for(const value of [d.contractPacking,d.contractContainerType,contract.product])text(row.insertCell(),value||'—');
+   portCell(row.insertCell(),contract.port_of_loading);
+   portCell(row.insertCell(),contract.port_of_discharge);
+   text(row.insertCell(),shipment||'—');
    const pending=row.insertCell();const badge=document.createElement('span');badge.className='badge warn';badge.textContent='Verificar pendências';pending.append(badge);
    const action=row.insertCell(),button=document.createElement('button');button.type='button';button.className='btn primary';button.textContent='Abrir pendências';button.addEventListener('click',()=>window.openBookingPendencyDetail(order));action.append(button);
    const note=row.insertCell();const state=document.createElement('span');state.className='badge warn';state.textContent='Aguardando verificação';note.append(state);
