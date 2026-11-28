@@ -11530,7 +11530,7 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #brokerFinance .bc-orders select,#brokerFinance .bc-orders input{height:22px!important;min-height:22px!important;padding:1px 3px!important;margin:0!important;font-size:11px!important}
 #brokerFinance .bc-orders .btn{padding:1px 4px!important;min-height:20px!important;margin:0!important;line-height:1.1!important}
 </style><script>
-(()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');const cashUrl='expenses_cash.html?v=20261127-conciliacao-ampliada';if(frame.getAttribute('src')!==cashUrl)frame.src=cashUrl;else frame.contentWindow.cashReload?.(true).catch(e=>window.notify?.(e.message));}else original(tab);};})();
+(()=>{const original=window.switchFinanceTab;window.switchFinanceTab=function(tab){const cash=tab==='cash';document.getElementById('financeCashPanel').hidden=!cash;if(cash){for(const id of ['financeFilters','financeOrderList','financeOrderWorkspace','financeHedgeStandalone'])document.getElementById(id).style.display='none';document.querySelectorAll('#financeTabs button').forEach(b=>b.classList.toggle('primary',b.dataset.tab==='cash'));window.financeActiveTab='cash';const frame=document.getElementById('financeCashFrame');const cashUrl='expenses_cash.html?v=20261128-compact-filters';if(frame.getAttribute('src')!==cashUrl)frame.src=cashUrl;else frame.contentWindow.cashReload?.(true).catch(e=>window.notify?.(e.message));}else original(tab);};})();
 </script>
 <script>
 /* Financeiro: append trader purchase and resale to the existing export orders. */
@@ -12029,6 +12029,85 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 }
 #bookingPendencyTable td:nth-child(10) {
   max-width:20ch;
+}
+</style>
+<style id="compactFilterLayout">
+:is(
+  .grid2,.grid3,.grid4,.grid5,.fh-filters,.ft-grid,
+  .contract-filter-grid,div:has(> #bcBrokerClientFilter)
+):has(
+  > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(#aesUserName,#aesPortsSearch,#s2AllInvoicesSearch,#siUserSearchName,#financeAllHistorySearch)
+) {
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr)) !important;
+  align-items:end;
+  gap:5px 7px;
+  margin-block:4px !important;
+}
+:is(
+  .grid2,.grid3,.grid4,.grid5,.fh-filters,.ft-grid,
+  .contract-filter-grid,div:has(> #bcBrokerClientFilter)
+):has(
+  > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(#aesUserName,#aesPortsSearch,#s2AllInvoicesSearch,#siUserSearchName,#financeAllHistorySearch)
+) :is(input,select) {
+  min-width:0 !important;
+  width:100%;
+}
+:is(:is(
+  .grid2,.grid3,.grid4,.grid5,.fh-filters,.ft-grid,
+  .contract-filter-grid,div:has(> #bcBrokerClientFilter)
+):has(
+  > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(#aesUserName,#aesPortsSearch,#s2AllInvoicesSearch,#siUserSearchName,#financeAllHistorySearch)
+),:is(.toolbar,.aes-specs-toolbar):has(
+  > :is(#aesRemessaSearch,#trAllDocumentsSearch,#aesSpecsSearch),
+  > button:is([onclick^="applyBookingFilters"],[onclick^="applyAfterFilters"],[onclick^="filterFinance"],[onclick*="clear"][onclick*="Filters"])
+)) :is(input,select,.btn),
+:is(#provisionSearch,#userLookupSearch,#bankLookupSearch,#siBankLookupSearch,#docResponsibleSearch) {
+  min-height:29px;
+  padding:3px 6px;
+  font-size:12px;
+}
+:is(:is(
+  .grid2,.grid3,.grid4,.grid5,.fh-filters,.ft-grid,
+  .contract-filter-grid,div:has(> #bcBrokerClientFilter)
+):has(
+  > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(input,select):is([id*="filter" i],[data-filter],[data-fin],[data-list]),
+  > * > :is(#aesUserName,#aesPortsSearch,#s2AllInvoicesSearch,#siUserSearchName,#financeAllHistorySearch)
+),:is(.toolbar,.aes-specs-toolbar):has(
+  > :is(#aesRemessaSearch,#trAllDocumentsSearch,#aesSpecsSearch),
+  > button:is([onclick^="applyBookingFilters"],[onclick^="applyAfterFilters"],[onclick^="filterFinance"],[onclick*="clear"][onclick*="Filters"])
+)) label {
+  font-size:10px;
+  margin-bottom:2px;
+}
+:is(
+  .card:has(> .contract-filter-grid, > .br-filters, > :is(.grid2,.grid3,.grid4,.grid5) > * > :is(input,select)[id*="filter" i], > .grid4 > * > #aesUserName),
+  .card.ft-grid:has(> label > :is([data-fin],[data-list])),
+  .card.grid3:has(> label > [data-filter])
+) {
+  padding-block:7px;
+  margin-bottom:7px;
+}
+:is(
+  .card:has(> .contract-filter-grid, > .br-filters, > :is(.grid2,.grid3,.grid4,.grid5) > * > :is(input,select)[id*="filter" i], > .grid4 > * > #aesUserName),
+  .card.ft-grid:has(> label > :is([data-fin],[data-list])),
+  .card.grid3:has(> label > [data-filter])
+) > h3 {
+  margin:0 0 4px;
+}
+:is(.toolbar,.aes-specs-toolbar):has(
+  > :is(#aesRemessaSearch,#trAllDocumentsSearch,#aesSpecsSearch),
+  > button:is([onclick^="applyBookingFilters"],[onclick^="applyAfterFilters"],[onclick^="filterFinance"],[onclick*="clear"][onclick*="Filters"])
+) {
+  gap:4px;
+  margin-block:4px !important;
 }
 </style>
 </body>
