@@ -12000,35 +12000,49 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 </style>
 <style id="exportFlowTableLayout">
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap table {
-  width:auto;
+  width:max-content;
   min-width:0;
+  border-spacing:0;
+  font-size:11px;
+  line-height:1.15;
 }
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap :is(th,td) {
-  padding:3px 4px;
-  line-height:1.25;
-  white-space:normal;
-  overflow-wrap:normal;
+  padding:2px 4px;
+  line-height:1.15;
+  vertical-align:middle;
 }
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap th {
-  max-width:16ch;
+  max-width:14ch;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td {
+  max-width:27ch;
+  white-space:normal;
+  overflow-wrap:break-word;
 }
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td .btn {
-  min-height:26px;
-  padding:3px 5px;
-  margin:1px;
+  min-height:23px;
+  padding:2px 5px;
+  margin:0;
+  line-height:1.1;
 }
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td .badge {
-  padding:2px 4px;
+  margin-block:0;
+  padding:1px 4px;
+  line-height:1.15;
 }
 :is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td :is(input:not([type=checkbox],[type=radio],[type=file],[type=hidden]),select,textarea) {
-  min-height:28px;
-  padding:3px 5px;
+  min-height:25px;
+  padding:2px 5px;
+  font-size:11px;
 }
 #contractsTable td:nth-child(3),#contractsTable td:nth-child(4),#releasedContractsTable td:nth-child(2),#releasedContractsTable td:nth-child(3) {
-  max-width:26ch;
+  max-width:24ch;
 }
 #bookingPendencyTable td:nth-child(10) {
-  max-width:20ch;
+  max-width:24ch;
+}
+#bookingPendencyTable td[data-booking-value] {
+  max-width:none;
 }
 </style>
 <style id="compactFilterLayout">
