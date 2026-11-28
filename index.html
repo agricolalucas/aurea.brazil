@@ -145,10 +145,6 @@ input::placeholder,textarea::placeholder{color:#76869a}
 <style>
 #aesSchedulingPanel{min-width:0}
 .aes-scheduling-tablewrap{max-height:520px;overflow:auto}
-.aes-scheduling-table{width:100%;table-layout:fixed}
-.aes-scheduling-table th,.aes-scheduling-table td{white-space:normal;padding:9px 8px;vertical-align:top}
-.aes-scheduling-table th:nth-child(1){width:86px}.aes-scheduling-table th:nth-child(2){width:24%}.aes-scheduling-table th:nth-child(3){width:32%}.aes-scheduling-table th:nth-child(4){width:22%}.aes-scheduling-table th:nth-child(5){width:90px}
-@media(max-width:1180px){.aes-scheduling-table{min-width:720px}}
 </style>
 <style>#aesTraderEditor[hidden],#aesTraderList[hidden]{display:none!important}.aes-trader-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:17px}.aes-trader-totals>div{padding:15px;border:1px solid #d8e4ef;border-radius:10px;background:#f6f9fd}.aes-trader-totals small{display:block;color:#5e7086;font-size:11px;margin-bottom:5px}.aes-trader-totals strong{font-size:17px;color:#183d66}.aes-trader-totals .negative{color:#ad2535}@media(max-width:850px){.aes-trader-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}</style><style>
 .aes-trader-pane[hidden]{display:none!important}.aes-trader-pane{padding:18px 4px}
@@ -190,13 +186,12 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #bookingrequest .br-catalogue{background:#fbfdff}
 #bookingrequest #brQuoteCatalogueBody[hidden],#bookingrequest #brRouteQuotesDetail[hidden]{display:none!important}
 #bookingrequest .br-filters{background:#f7faff;padding:12px;border-radius:9px;border:1px solid #e0e9f3}
-#bookingrequest #brAcceptedQuotesTable{min-width:1150px!important}#bookingrequest #brQuotesTable{min-width:1150px!important}
 #bookingrequest .aes-freight-row{background:#f7fbff;border:1px solid #e2ebf5;border-radius:10px;padding:12px}
 #bookingrequest.br-workspace-active .br-orders-card,#bookingrequest.br-workspace-active .br-catalogue{display:none}
-#bookingrequest #bookingRequestWorkspace{display:none!important}#bookingrequest .br-inline-responsible{display:block;margin-top:6px;min-width:170px;width:100%}#bookingrequest .br-agent-row{display:flex;gap:6px}#bookingrequest .br-agent-row input{flex:1;min-width:180px}#bookingrequest .br-agent-row button{white-space:nowrap}#bookingrequest .br-agent-field{grid-column:span 2}#bookingrequest .br-inline-proposal{min-width:270px;max-width:350px;width:100%}#bookingrequest .br-quote-hint{display:block;color:#647c95;margin-top:4px}#bookingrequest .br-inline-actions .btn{white-space:nowrap}#bookingrequest .br-inline-actions{flex-wrap:wrap;min-width:230px}
+#bookingrequest #bookingRequestWorkspace{display:none!important}#bookingrequest .br-inline-responsible{display:block;margin-top:6px;width:100%}#bookingrequest .br-agent-row{display:flex;gap:6px}#bookingrequest .br-agent-row input{flex:1;min-width:180px}#bookingrequest .br-agent-row button{white-space:nowrap}#bookingrequest .br-agent-field{grid-column:span 2}#bookingrequest .br-inline-proposal{width:20ch}#bookingrequest .br-quote-hint{display:block;color:#647c95;margin-top:4px}#bookingrequest .br-inline-actions .btn{white-space:nowrap}#bookingrequest .br-inline-actions{flex-wrap:wrap}
 #bookingrequest .br-booking-overlay:not([hidden]){position:fixed;inset:0;z-index:1000;background:#102a43a8;display:grid;place-items:center;padding:16px}
 #bookingrequest .br-booking-overlay[hidden]{display:none!important}#bookingrequest .br-booking-dialog{width:min(1050px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:16px;padding:14px;box-shadow:0 24px 70px #071c3670}#bookingrequest .br-booking-dialog-head{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 14px;color:#173b63;border-bottom:1px solid #dce6f0}#bookingrequest .br-booking-dialog-head h2{margin:4px 0 0;font-size:20px}#bookingrequest .br-booking-dialog{width:min(940px,96vw);padding:14px 18px}#bookingrequest .br-modal-section{padding:15px 12px;border-bottom:1px solid #e3eaf2}#bookingrequest .br-modal-section h3{font-size:15px;color:#183f69;margin:0 0 11px}#bookingrequest .br-modal-section .sub{margin:-5px 0 10px}#bookingrequest .br-modal-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}#bookingrequest .br-modal-grid label{display:block;margin-bottom:4px;font-size:12px;font-weight:700;color:#3a5470}#bookingrequest .br-modal-grid input{width:100%;box-sizing:border-box}#bookingrequest .br-span-all{grid-column:1/-1}#bookingrequest .br-agent-field{grid-column:span 2}#bookingrequest .br-text-add{border:0;background:none;color:#23649e;font-size:11px;font-weight:700;padding:3px 0;white-space:nowrap;cursor:pointer}#bookingrequest .br-manual-agent:not([hidden]){display:flex;gap:6px;margin-top:6px}#bookingrequest .br-manual-agent[hidden]{display:none}#bookingrequest .br-modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 12px 4px}@media(max-width:760px){#bookingrequest .br-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#bookingrequest .br-agent-field{grid-column:1/-1}}@media(max-width:540px){#bookingrequest .br-modal-grid{grid-template-columns:1fr}#bookingrequest .br-agent-field{grid-column:auto}}
-#bookingrequest .br-inline-number{min-width:145px;width:155px}#bookingrequest .br-inline-status{min-width:170px;width:180px}#bookingrequest .br-inline-actions{display:flex;gap:5px}#bookingrequest .br-schedule-summary{padding:14px 16px;border:1px solid #c9dced;border-radius:10px;background:#f5faff;color:#234562;line-height:1.6}
+#bookingrequest .br-inline-number{min-width:145px;width:155px}#bookingrequest .br-inline-status{width:17ch}#bookingrequest .br-inline-actions{display:flex;gap:3px}#bookingrequest .br-schedule-summary{padding:14px 16px;border:1px solid #c9dced;border-radius:10px;background:#f5faff;color:#234562;line-height:1.6}
 #bookingrequest .br-stage-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
 @media(max-width:900px){#bookingrequest .br-hero{align-items:flex-start;flex-direction:column}#bookingrequest .br-flow{grid-template-columns:repeat(2,1fr)}#bookingrequest .br-section-head{flex-wrap:wrap}.br-catalogue-actions{width:100%}}
 </style><style>
@@ -237,35 +232,23 @@ input::placeholder,textarea::placeholder{color:#76869a}
 #contract .contract-list-wide{margin-left:calc(-1 * clamp(15px,2.2vw,32px) + 6px);margin-right:calc(-1 * clamp(15px,2.2vw,32px) + 6px);padding:14px 8px}
 #contract .contract-list-wide>.pagehead{padding:0 8px}
 #contract .contract-list-wide>.tablewrap{width:100%;border-radius:8px}
-#contractsTable th,#contractsTable td{padding-left:10px;padding-right:10px}
-#contractsTable th:nth-child(3),#contractsTable th:nth-child(4){min-width:210px}
-#contractsTable td:nth-child(3),#contractsTable td:nth-child(4){min-width:210px;max-width:270px;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
 @media(max-width:980px){#contract .contract-list-wide{margin-left:-9px;margin-right:-9px;padding:12px 6px}}
 </style><style>
 /* Área vertical ampliada para a Lista de Contratos. */
 #contract .contract-list-wide>.tablewrap{height:clamp(380px,55vh,700px);overflow:auto}
 #contractsTable thead{position:sticky;top:0;z-index:2}
 #contractsTable thead th{background:#eaf0f7}
-#contractsTable tbody td{padding-top:18px;padding-bottom:18px}
 @media(max-width:650px){#contract .contract-list-wide>.tablewrap{height:420px}}
 </style><style>
 #booking .booking-pendency-tall{height:clamp(380px,55vh,700px);overflow:auto}
 #bookingPendencyTable thead{position:sticky;top:0;z-index:2}
 #bookingPendencyTable thead th{background:#eaf0f7}
-#bookingPendencyTable th,
-#bookingPendencyTable td{padding:6px 8px}
-#bookingPendencyTable tbody td{line-height:1.3}
-#bookingPendencyTable tbody td:nth-child(n+2):nth-child(-n+6),
-#bookingPendencyTable tbody td:nth-child(10){
-  white-space:normal;
-  overflow-wrap:anywhere
+#bookingPendencyTable .booking-cell-line{
+  display:block;
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal
 }
-#bookingPendencyTable tbody td:nth-child(2),
-#bookingPendencyTable tbody td:nth-child(3){min-width:229px;max-width:245px}
-#bookingPendencyTable .booking-company-part{display:inline-block;max-width:100%}
-#bookingPendencyTable .booking-port{white-space:pre}
-#bookingPendencyTable tbody td:nth-child(10){min-width:215px;max-width:225px}
-#bookingPendencyTable .badge{padding:3px 6px}
 @media(max-width:650px){#booking .booking-pendency-tall{height:420px}}
 </style><style>
 #aesTraderList>.tablewrap{height:clamp(380px,55vh,700px);overflow:auto}
@@ -961,7 +944,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
         <div class="aes-schedule-top-grid">
           <div class="card" id="aesSchedulingPanel">
             <div class="pagehead"><div><h3 style="margin:0">Scheduling</h3><p class="sub" id="aesSchedulingInfo">Selecione uma Order liberada. As tarefas aparecem aqui desde o primeiro lançamento.</p></div></div>
-            <div class="tablewrap aes-scheduling-tablewrap"><table class="aes-scheduling-table" style="min-width:0"><thead><tr><th>Date</th><th>Stage</th><th>Description</th><th>Owner</th><th>Status</th></tr></thead><tbody id="aesSchedulingBody"><tr><td colspan="5" class="sub">Selecione uma Order liberada.</td></tr></tbody></table></div>
+            <div class="tablewrap aes-scheduling-tablewrap"><table class="aes-scheduling-table"><thead><tr><th>Date</th><th>Stage</th><th>Description</th><th>Owner</th><th>Status</th></tr></thead><tbody id="aesSchedulingBody"><tr><td colspan="5" class="sub">Selecione uma Order liberada.</td></tr></tbody></table></div>
           </div>
           <div class="card aes-stage-card">
             <div class="aes-calendar-head"><div><h3 style="margin:0">Calendário operacional</h3><div class="sub">Mês completo · tarefas e etapas operacionais por data.</div></div><div class="aes-stage-tools aes-stage-tools-compact"><button class="aes-icon-btn" type="button" id="aesStagePrev" title="Mês anterior" aria-label="Mês anterior">‹</button><strong id="aesStageMonth" class="aes-month-label"></strong><button class="aes-icon-btn" type="button" id="aesStageNext" title="Próximo mês" aria-label="Próximo mês">›</button><button class="btn primary aes-add-task-compact" type="button" id="aesAddStageTask" title="Adicionar tarefa">＋ Tarefa</button></div></div>
@@ -1326,7 +1309,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
             <div><label>Status</label><select id="brAcceptedFilterRoute" onchange="renderAcceptedQuotes()"><option value="">Todos</option><option>Received</option><option>Negotiating</option><option>Revised</option><option>Accepted</option><option>Rejected</option><option>Archived</option></select></div>
             <div><label>Currency</label><select id="brAcceptedFilterCurrency" onchange="renderAcceptedQuotes()"><option value="">Todas</option><option>USD</option><option>EUR</option><option>BRL</option></select></div>
           </div>
-          <div class="tablewrap"><table id="brAcceptedQuotesTable" style="min-width:2450px"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="19" class="sub">Nenhuma cotação cadastrada. Clique em “+ Adicionar Cotação”.</td></tr></tbody></table></div>
+          <div class="tablewrap"><table id="brAcceptedQuotesTable"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody><tr><td colspan="19" class="sub">Nenhuma cotação cadastrada. Clique em “+ Adicionar Cotação”.</td></tr></tbody></table></div>
           <div id="centralCheapestComparison" style="margin-top:14px"></div>
           </div>
         </div>
@@ -1347,7 +1330,7 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
           <div class="card br-route-quotes">
             <div id="brMarketTab">
               <div class="br-section-head"><span class="br-step">01</span><div><h3>Cotação de frete aceita</h3><p>Compare e aceite a proposta marítima antes de programar o navio.</p></div><button class="btn" type="button" onclick="aesToggleBookingRouteQuotes()" id="brRouteToggle" aria-expanded="false">Ver valores ▾</button></div>
-              <div id="brRouteQuotesDetail" hidden><div class="tablewrap"><table id="brQuotesTable" style="min-width:2250px"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Total Cntr Charges</th><th>Total BL Charges</th><th>Grand Total</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
+              <div id="brRouteQuotesDetail" hidden><div class="tablewrap"><table id="brQuotesTable"><thead><tr><th>Proposal No.</th><th>Proposal PDF / JPG</th><th>Company</th><th>Shipping Line</th><th>Port of Loading</th><th>Port of Discharge</th><th>Currency</th><th>Ocean Freight / Cntr</th><th>THC / Cntr</th><th>Seal / Cntr</th><th>Other / Cntr</th><th>BL Fee / BL</th><th>Doc Fee / BL</th><th>Other / BL</th><th>Total Cntr Charges</th><th>Total BL Charges</th><th>Grand Total</th><th>Free Time</th><th>Transit</th><th>Validity</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
               <div id="brCheapestComparison" style="margin-top:14px"></div></div>
             </div>
           </div>
@@ -9741,22 +9724,29 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
 (() => {
  const $=id=>document.getElementById(id);
  const text=(cell,value)=>{cell.textContent=String(value??'—')};
+ function bookingCellLines(cell, original, lines){
+  cell.dataset.bookingValue=original;
+  cell.setAttribute('data-no-translate','');
+  cell.translate=false;
+  for(const line of lines){
+   if(cell.firstChild)cell.append(' ');
+   const part=document.createElement('span');
+   part.className='booking-cell-line';
+   part.textContent=line;
+   cell.append(part);
+  }
+ }
  function companyCell(cell, name){
-  const parts=name.match(/^(\S+(?:\s+\S+){2})(\s+)(\S.*)$/s);
-  if(!parts){text(cell,name);return}
-  cell.dataset.bookingValue=name;
-  const first=document.createElement('span'), rest=document.createElement('span');
-  first.className=rest.className='booking-company-part';
-  first.textContent=parts[1];
-  rest.textContent=parts[3];
-  cell.append(first,parts[2],rest);
+  const words=name.trim().split(/\s+/);
+  const lines=[words.slice(0,3).join(' ')];
+  if(words.length>3)lines.push(words.slice(3).join(' '));
+  bookingCellLines(cell,name,lines);
  }
  function portCell(cell, value){
   const port=String(value||'—');
-  cell.className='booking-port';
-  cell.dataset.bookingValue=port;
-  const parts=port.trim().match(/^(.+?)\s+\(([A-Z]{2}[A-Z0-9]{3})\)(?:\s*[·–-]?\s*(.+))?$/i);
-  cell.textContent=parts?[parts[1],`(${parts[2]})`,parts[3]?.trim()].filter(Boolean).join('\n'):port;
+  const parts=port.trim().match(/^(.+?)\s*\(([A-Z]{2}[A-Z0-9]{3})\)\s*[·–—-]?\s*(.*)$/i);
+  const lines=parts?[parts[1].trim(),`(${parts[2]})`,parts[3].trim()].filter(Boolean):[port];
+  bookingCellLines(cell,port,lines);
  }
  window.renderBookingPendencyOrders=function(contracts,names,companies){
   const body=$('bookingPendencyTable')?.tBodies[0];if(!body)return;
@@ -10330,7 +10320,7 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
      const number=saved.brBookingNo||booking.brBookingNo||booking.booking_number||c.details?.booking_number||'—';
      const dr=docs.insertRow();dr.dataset.product=product;
      td(dr,order).style.fontWeight='700';td(dr,number);
-     for(const key of docKeys){const status=td(dr,'');const b=document.createElement('button');b.id=`gridBtn-${order}-${key}`;b.type='button';b.className='btn';b.style.padding='6px 8px';b.disabled=true;b.onclick=()=>window.openDocumentFromGrid?.(order,key);const s=document.createElement('span');s.id=`gridStatus-${order}-${key}`;s.className='badge bad';s.textContent='Pending';b.append(s);status.append(b)}
+     for(const key of docKeys){const status=td(dr,'');const b=document.createElement('button');b.id=`gridBtn-${order}-${key}`;b.type='button';b.className='btn';b.disabled=true;b.onclick=()=>window.openDocumentFromGrid?.(order,key);const s=document.createElement('span');s.id=`gridStatus-${order}-${key}`;s.className='badge bad';s.textContent='Pending';b.append(s);status.append(b)}
      action(dr,'Abrir',()=>window.openDocumentContract(order,importer));
      if(docTemplate){const panel=docTemplate.cloneNode(true);replace(panel,'EX-1026',order);const head=panel.querySelector('.pagehead .sub');if(head)head.textContent=`${importer} · ${product}`;panel.style.display='none';$('docs')?.append(panel)}
      const br=broker.insertRow();Object.assign(br.dataset,{order,booking:number,importer});
@@ -10661,11 +10651,8 @@ const init=()=>{document.querySelectorAll('select option:not([value])').forEach(
 <style>
 .aes-remessa-table{width:100%;min-width:1240px;border-collapse:separate;border-spacing:0}
 .aes-remessa-table th{background:#f2f6fb;color:#405b76;font-size:11px;text-transform:uppercase;letter-spacing:.035em;white-space:nowrap;padding:12px;text-align:left}
-.aes-remessa-table td{vertical-align:top;padding:14px 12px;border-bottom:1px solid #e3ebf2;min-width:115px;line-height:1.45}
-.aes-remessa-table th:first-child,.aes-remessa-table td:first-child{min-width:75px;width:75px;text-align:center}.aes-remessa-table td:first-child input{width:17px;height:17px;cursor:pointer}
-.aes-remessa-table td:nth-child(4){min-width:180px;max-width:240px}
-.aes-remessa-table td:nth-child(5){min-width:145px}
-.aes-remessa-table td:nth-child(6){min-width:165px}
+.aes-remessa-table td{vertical-align:top;border-bottom:1px solid #e3ebf2}
+.aes-remessa-table th:first-child,.aes-remessa-table td:first-child{text-align:center}.aes-remessa-table td:first-child input{width:17px;height:17px;cursor:pointer}
 .aes-remessa-table tbody tr:hover{background:#f8fbff}
 .aes-remessa-table strong{color:#173b63;font-size:13px;display:block;margin-bottom:3px}
 .aes-remessa-table small{display:block;color:#62778b;font-size:11px;margin-top:3px;overflow-wrap:anywhere}
@@ -11998,6 +11985,39 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
 #aesDashboardArrivals .aes-vessel-courier{padding:4px 6px;border-radius:5px}
 #aesDashboardArrivals .btn{min-height:24px!important;padding:3px 7px!important;font-size:10px;line-height:1.2;margin:0!important}
 #aesArrivalsInfo{margin-top:5px!important;font-size:11px;line-height:1.2}
+</style>
+<style id="exportFlowTableLayout">
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap table {
+  width:auto;
+  min-width:0;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap :is(th,td) {
+  padding:3px 4px;
+  line-height:1.25;
+  white-space:normal;
+  overflow-wrap:normal;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap th {
+  max-width:16ch;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td .btn {
+  min-height:26px;
+  padding:3px 5px;
+  margin:1px;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td .badge {
+  padding:2px 4px;
+}
+:is(#contract,#booking,#schedule,#bookingrequest,#loading,#releasing,#after,#docs) .tablewrap td :is(input:not([type=checkbox],[type=radio],[type=file],[type=hidden]),select,textarea) {
+  min-height:28px;
+  padding:3px 5px;
+}
+#contractsTable td:nth-child(3),#contractsTable td:nth-child(4),#releasedContractsTable td:nth-child(2),#releasedContractsTable td:nth-child(3) {
+  max-width:26ch;
+}
+#bookingPendencyTable td:nth-child(10) {
+  max-width:20ch;
+}
 </style>
 </body>
 </html>
