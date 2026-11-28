@@ -12124,5 +12124,139 @@ window.addEventListener('aes-contracts-updated',e=>{const select=$('finHedgeOrde
   margin-block:4px !important;
 }
 </style>
+<style id="exportOrderListFocus">
+#exportFlowTabs:not([hidden]) {
+  gap:4px;
+  padding:4px 10px;
+}
+#exportFlowTabs .export-flow-tab {
+  padding:6px 8px;
+}
+#exportFlowTabs:not([hidden]) + .content {
+  padding-top:8px;
+}
+:is(#contract,#booking,#schedule,#loading,#releasing,#after,#docs) .pagehead {
+  align-items:center;
+  gap:5px 8px;
+  margin-bottom:5px;
+}
+:is(#contract,#booking,#schedule,#loading,#releasing,#after,#docs) .pagehead :is(h1,h2,h3),
+#bookingrequest .br-hero h1 {
+  margin:0;
+  line-height:1.2;
+}
+:is(#contract,#booking,#schedule,#loading,#releasing,#after,#docs) .pagehead h1,
+#bookingrequest .br-hero h1 {
+  font-size:18px;
+}
+:is(#contract,#booking,#schedule,#loading,#releasing,#after,#docs) .pagehead h2,
+#bookingrequest .br-section-head :is(h2,h3) {
+  font-size:14px;
+}
+:is(#contract,#booking,#schedule,#loading,#releasing,#after,#docs) .pagehead .sub,
+#bookingrequest .br-hero p,
+#bookingrequest .br-section-head p {
+  font-size:11px;
+  line-height:1.25;
+  margin:2px 0 0;
+}
+:is(#booking,#after,#docs) .card:has(> :is(.grid3,.grid4) > div > :is(#bookingFilterNumber,#afterFilterBooking,#docFilterOrder)) {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:4px 8px;
+  margin-bottom:5px;
+  padding:6px 8px;
+}
+:is(#booking,#after,#docs) .card:has(> :is(.grid3,.grid4) > div > :is(#bookingFilterNumber,#afterFilterBooking,#docFilterOrder)) > :is(.grid3,.grid4,.toolbar) {
+  margin:0 !important;
+}
+#after .card:has(> .grid3 #afterFilterBooking) > h3,
+#booking .booking-pendency-tall,
+#booking .card:has(> .booking-pendency-tall) > .toolbar:last-child {
+  grid-column:1/-1;
+}
+:is(#after,#releasing) > .card:has(> .tablewrap),
+#documentsContractList > .card:has(> .tablewrap),
+#aesLoadingTrucks > .card:has(> .tablewrap),
+#bookingrequest .br-orders-card {
+  padding:5px 6px;
+  margin-bottom:6px;
+}
+#releasing > .pagehead + .card {
+  padding:4px 7px;
+  margin-bottom:5px;
+}
+#loading > .tabs {
+  margin-bottom:5px;
+  gap:4px;
+}
+#loading > .tabs .tab {
+  padding:4px 7px;
+}
+#schedule :is(.aes-plan-overview,.aes-plan-flow,.aes-plan-order-chooser) {
+  margin-bottom:5px;
+}
+#schedule .aes-plan-order-chooser > summary {
+  padding:5px 8px;
+  font-size:12px;
+}
+#schedule .aes-plan-order-chooser > .card {
+  padding:5px 6px;
+}
+#schedule .aes-plan-order-chooser > .card > h3 {
+  margin:0 0 2px;
+  font-size:13px;
+}
+#bookingrequest .br-hero {
+  padding:6px 9px;
+  gap:5px 8px;
+  margin-bottom:5px;
+}
+#bookingrequest .br-kicker {
+  font-size:9px;
+}
+#bookingrequest .br-hero-actions .btn,
+#bookingrequest .br-section-head .btn {
+  min-height:27px;
+  padding:3px 7px;
+}
+#bookingrequest .br-flow {
+  gap:4px;
+  margin-bottom:5px;
+}
+#bookingrequest .br-flow > div {
+  padding:3px 6px;
+  gap:5px;
+  font-size:11px;
+}
+#bookingrequest .br-flow b,
+#bookingrequest .br-section-head .br-step {
+  width:19px;
+  height:19px;
+  font-size:10px;
+}
+#bookingrequest .br-section-head {
+  gap:5px 7px;
+  margin-bottom:4px;
+}
+#bookingrequest .br-filters {
+  padding:4px 6px;
+}
+.tablewrap:has(> :is(#contractsTable,#bookingPendencyTable,#releasedContractsTable,#bookingRequestOrdersTable,#afterShippingTable,#documentContractsTable)),
+:is(#aesLoadingTrucks,#releasing) .tablewrap {
+  border-color:#a9c2df;
+}
+:is(#contractsTable,#bookingPendencyTable,#releasedContractsTable,#bookingRequestOrdersTable,#afterShippingTable,#documentContractsTable) thead th,
+:is(#aesLoadingTrucks,#releasing) .tablewrap thead th {
+  background:#dbe8f7;
+  color:#183e68;
+}
+@media(max-width:740px) {
+  :is(#booking,#after,#docs) .card:has(> :is(.grid3,.grid4) > div > :is(#bookingFilterNumber,#afterFilterBooking,#docFilterOrder)) {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+</style>
 </body>
 </html>
