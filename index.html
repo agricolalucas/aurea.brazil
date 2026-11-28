@@ -229,16 +229,28 @@ input::placeholder,textarea::placeholder{color:#76869a}
 .export-flow-tabs .export-flow-tab.active .export-step{color:#fff}
 </style><style>
 /* Lista de contratos ampliada até as laterais da área de trabalho. */
-#contract .contract-list-wide{margin-left:calc(-1 * clamp(15px,2.2vw,32px) + 6px);margin-right:calc(-1 * clamp(15px,2.2vw,32px) + 6px);padding:14px 8px}
+#contract .contract-list-wide{margin-left:calc(-1 * clamp(15px,2.2vw,32px) + 6px);margin-right:calc(-1 * clamp(15px,2.2vw,32px) + 6px);padding:7px 8px}
 #contract .contract-list-wide>.pagehead{padding:0 8px}
 #contract .contract-list-wide>.tablewrap{width:100%;border-radius:8px}
-@media(max-width:980px){#contract .contract-list-wide{margin-left:-9px;margin-right:-9px;padding:12px 6px}}
+@media(max-width:980px){#contract .contract-list-wide{margin-left:-9px;margin-right:-9px;padding-inline:6px}}
 </style><style>
 /* Área vertical ampliada para a Lista de Contratos. */
-#contract .contract-list-wide>.tablewrap{height:clamp(380px,55vh,700px);overflow:auto}
+#contract .contract-list-wide>.tablewrap{height:clamp(380px,calc(100dvh - 250px),1000px);overflow:auto}
 #contractsTable thead{position:sticky;top:0;z-index:2}
 #contractsTable thead th{background:#eaf0f7}
-@media(max-width:650px){#contract .contract-list-wide>.tablewrap{height:420px}}
+@media(max-width:650px){#contract .contract-list-wide>.tablewrap{height:clamp(320px,62dvh,680px)}}
+#contract .contract-pagehead{align-items:center;margin-bottom:7px}
+#contract .contract-pagehead h1{font-size:21px;margin:0}
+#contract .contract-pagehead .btn,#contractListView .contract-filters .btn{min-height:29px;padding:4px 8px;font-size:11px}
+#contractListView .contract-filters{padding:7px 9px;margin-bottom:7px}
+#contractListView .contract-filters h3{font-size:13px;margin:0 0 4px}
+#contractListView .contract-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:5px 7px;align-items:end}
+#contractListView .contract-filter-grid label{font-size:10px;margin-bottom:2px}
+#contractListView .contract-filter-grid input,#contractListView .contract-filter-grid select{min-height:29px;padding:3px 6px;font-size:12px}
+#contractListView .contract-filter-grid .toolbar{gap:4px}
+#contractListView .contract-list-title{justify-content:flex-start;align-items:baseline;gap:8px;margin-bottom:5px}
+#contractListView .contract-list-title h3{margin:0}
+@media(max-width:650px){#contract .contract-pagehead>.btn{width:auto}}
 </style><style>
 #booking .booking-pendency-tall{height:clamp(380px,55vh,700px);overflow:auto}
 #bookingPendencyTable thead{position:sticky;top:0;z-index:2}
@@ -521,27 +533,27 @@ tr.aes-booking-overdue > td:first-child { box-shadow:inset 3px 0 #b91c1c; color:
 </section>
 
 <section id="contract" class="view">
-<div class="pagehead">
-  <div><h1>Contratos</h1><div class="sub">Consulta geral, filtros, exportação para Excel e cadastro de contratos.</div></div>
+<div class="pagehead contract-pagehead">
+  <h1>Contratos</h1>
   <button class="btn primary" onclick="showContractForm()">+ Cadastrar Contrato</button>
 </div>
 
 <div id="contractListView">
-  <div class="card">
+  <div class="card contract-filters">
     <h3>Filtros</h3>
-    <div class="grid4">
+    <div class="contract-filter-grid">
       <div><label>Data Inicial</label><input id="contractDateFrom" type="date"></div>
       <div><label>Data Final</label><input id="contractDateTo" type="date"></div>
       <div><label>Exportador</label><input id="contractExporterFilter" list="aesCompanyNames" placeholder="Buscar USER" oninput="filterContracts()"></div>
       <div><label>Importador</label><input id="contractImporterFilter" list="aesCompanyNames" placeholder="Buscar USER" oninput="filterContracts()"></div>
       <div><label>Produto</label><select id="contractProductFilter"><option value="">Todos</option><option>Sesame Seeds</option><option>Kidney Beans</option><option>Green Mung Beans</option><option>Popcorn</option></select></div>
       <div><label>Visualizar Contratos Cancelados</label><select id="contractCancelledFilter" onchange="filterContracts()"><option value="no">Não</option><option value="yes">Sim — somente cancelados</option><option value="all">Todos</option></select></div>
-      <div style="display:flex;align-items:end"><div class="toolbar"><button class="btn primary" onclick="filterContracts()">Aplicar Filtros</button><button class="btn" onclick="clearContractFilters()">Limpar</button></div></div>
+      <div class="toolbar"><button class="btn primary" onclick="filterContracts()">Aplicar Filtros</button><button class="btn" onclick="clearContractFilters()">Limpar</button></div>
     </div>
   </div>
 
   <div class="card contract-list-wide">
-    <div class="pagehead" style="margin-bottom:10px"><div><h3 style="margin:0">Lista de Contratos</h3><div class="sub"><span id="contractCount">6</span> contratos encontrados</div></div></div>
+    <div class="pagehead contract-list-title"><h3>Lista de Contratos</h3><div class="sub"><span id="contractCount">6</span> contratos encontrados</div></div>
     <div class="tablewrap">
       <table id="contractsTable">
         <thead><tr><th>Number</th><th>Contract</th><th>Importer</th><th>Exporter</th><th>Packing</th><th>Cntrs Type</th><th>Cntrs Amount</th><th>Description</th><th>Quantity ton</th><th>Product</th><th>Unit Price</th><th>Unit Commission</th><th>Current Balance</th><th>Shipping Forecast - Initial Date</th><th>Shipping Forecast - Final Date</th><th>Ação</th></tr></thead>
